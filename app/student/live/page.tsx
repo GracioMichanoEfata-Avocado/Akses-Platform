@@ -78,6 +78,7 @@ function QuestionPanel({ sessionId, studentName }: { sessionId: string; studentN
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionId]);
 
   const handleSend = async (e: React.FormEvent) => {

@@ -57,6 +57,7 @@ function CaptionSender({ sessionId }: { sessionId: string }) {
     };
 
     setRecognition(rec);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionId]);
 
   const toggleListening = () => {
@@ -139,6 +140,7 @@ function QAPanel({ sessionId }: { sessionId: string }) {
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionId]);
 
   const handleAnswer = async (questionId: string) => {
@@ -410,7 +412,7 @@ function SessionSelector({ teacherName, onStart, error }: {
           <div className="text-center py-12">
             <div className="text-4xl mb-3">📅</div>
             <p className="text-slate-500 text-sm">Belum ada sesi terjadwal.</p>
-            <p className="text-slate-400 text-xs mt-1">Buat sesi baru lewat menu "Buat Sesi".</p>
+            <p className="text-slate-400 text-xs mt-1">Buat sesi baru lewat menu &quot;Buat Sesi&quot;.</p>
           </div>
         ) : (
           <div className="space-y-3">
