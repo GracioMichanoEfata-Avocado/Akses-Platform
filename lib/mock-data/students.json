@@ -1,0 +1,241 @@
+[
+  {
+    "id": "s1",
+    "nama": "Alex Pratama",
+    "email": "alex@akses.id",
+    "avatar": "AP",
+    "avatarColor": "#1E40AF",
+    "disabilitas": "tunanetra",
+    "progress": 72,
+    "lastActive": "2026-05-05",
+    "kelas": "X IPA 1",
+    "materiDiakses": ["m1", "m2", "m5"],
+    "catatan": "Memerlukan audio deskriptif untuk semua materi visual",
+    "prestasi": ["Juara Quiz Matematika", "Pengguna TTS Terbaik"],
+    "waktuBelajar": 340,
+    "skorRataRata": 78,
+    "streakHari": 7,
+    "progressMateri": [
+      { "materiId": "m1", "progress": 100, "skorTerakhir": 85 },
+      { "materiId": "m2", "progress": 80, "skorTerakhir": 72 },
+      { "materiId": "m5", "progress": 45, "skorTerakhir": 60 }
+    ],
+    "riwayatKuis": [
+      { "nama": "Kuis Fotosintesis", "tanggal": "2026-05-01", "skor": 85, "lulus": true },
+      { "nama": "Kuis Siklus Air", "tanggal": "2026-04-28", "skor": 70, "lulus": true },
+      { "nama": "Kuis Matematika Bab 3", "tanggal": "2026-04-20", "skor": 55, "lulus": false },
+      { "nama": "Kuis IPA Sel", "tanggal": "2026-04-15", "skor": 90, "lulus": true },
+      { "nama": "Kuis Fisika Gerak", "tanggal": "2026-04-10", "skor": 65, "lulus": false }
+    ],
+    "aktivitas7Hari": [60, 45, 90, 30, 75, 80, 55],
+    "catatanPendamping": ""
+  },
+  {
+    "id": "s2",
+    "nama": "Sari Dewi",
+    "email": "sari@akses.id",
+    "avatar": "SD",
+    "avatarColor": "#7C3AED",
+    "disabilitas": "tunarungu",
+    "progress": 85,
+    "lastActive": "2026-05-04",
+    "kelas": "X IPA 1",
+    "materiDiakses": ["m1", "m3", "m4", "m6"],
+    "catatan": "Memerlukan subtitle dan konten visual yang jelas",
+    "prestasi": ["Nilai Kuis Tertinggi", "Konsisten Belajar 7 Hari"],
+    "waktuBelajar": 520,
+    "skorRataRata": 88,
+    "streakHari": 12,
+    "progressMateri": [
+      { "materiId": "m1", "progress": 100, "skorTerakhir": 92 },
+      { "materiId": "m3", "progress": 95, "skorTerakhir": 88 },
+      { "materiId": "m4", "progress": 85, "skorTerakhir": 84 },
+      { "materiId": "m6", "progress": 60, "skorTerakhir": 80 }
+    ],
+    "riwayatKuis": [
+      { "nama": "Kuis Fotosintesis", "tanggal": "2026-05-04", "skor": 92, "lulus": true },
+      { "nama": "Kuis Siklus Air", "tanggal": "2026-04-30", "skor": 88, "lulus": true },
+      { "nama": "Kuis Biologi Sel", "tanggal": "2026-04-22", "skor": 84, "lulus": true },
+      { "nama": "Kuis Kimia Dasar", "tanggal": "2026-04-18", "skor": 90, "lulus": true }
+    ],
+    "aktivitas7Hari": [80, 95, 70, 100, 85, 90, 75],
+    "catatanPendamping": ""
+  },
+  {
+    "id": "s3",
+    "nama": "Budi Santoso",
+    "email": "budi@akses.id",
+    "avatar": "BS",
+    "avatarColor": "#059669",
+    "disabilitas": "both",
+    "progress": 45,
+    "lastActive": "2026-05-03",
+    "kelas": "X IPA 2",
+    "materiDiakses": ["m2", "m5"],
+    "catatan": "Memerlukan semua fitur aksesibilitas aktif",
+    "prestasi": [],
+    "waktuBelajar": 180,
+    "skorRataRata": 58,
+    "streakHari": 3,
+    "progressMateri": [
+      { "materiId": "m2", "progress": 55, "skorTerakhir": 60 },
+      { "materiId": "m5", "progress": 30, "skorTerakhir": 50 }
+    ],
+    "riwayatKuis": [
+      { "nama": "Kuis Siklus Air", "tanggal": "2026-04-25", "skor": 60, "lulus": true },
+      { "nama": "Kuis IPA Dasar", "tanggal": "2026-04-15", "skor": 50, "lulus": false },
+      { "nama": "Kuis Matematika Bab 1", "tanggal": "2026-04-05", "skor": 65, "lulus": false }
+    ],
+    "aktivitas7Hari": [20, 40, 0, 60, 30, 50, 25],
+    "catatanPendamping": ""
+  },
+  {
+    "id": "s4",
+    "nama": "Fitri Handayani",
+    "email": "fitri@akses.id",
+    "avatar": "FH",
+    "avatarColor": "#DC2626",
+    "disabilitas": "tunarungu",
+    "progress": 90,
+    "lastActive": "2026-05-05",
+    "kelas": "X IPS 1",
+    "materiDiakses": ["m1", "m2", "m3", "m4", "m5", "m6"],
+    "catatan": "Aktif dan mandiri, hanya butuh subtitle",
+    "prestasi": ["Siswa Terbaik Bulan April", "100% Kehadiran Live"],
+    "waktuBelajar": 680,
+    "skorRataRata": 92,
+    "streakHari": 21,
+    "progressMateri": [
+      { "materiId": "m1", "progress": 100, "skorTerakhir": 96 },
+      { "materiId": "m2", "progress": 100, "skorTerakhir": 90 },
+      { "materiId": "m3", "progress": 95, "skorTerakhir": 92 },
+      { "materiId": "m4", "progress": 90, "skorTerakhir": 88 },
+      { "materiId": "m5", "progress": 80, "skorTerakhir": 94 },
+      { "materiId": "m6", "progress": 75, "skorTerakhir": 89 }
+    ],
+    "riwayatKuis": [
+      { "nama": "Kuis Fotosintesis", "tanggal": "2026-05-05", "skor": 96, "lulus": true },
+      { "nama": "Kuis Siklus Air", "tanggal": "2026-05-02", "skor": 90, "lulus": true },
+      { "nama": "Kuis Biologi Sel", "tanggal": "2026-04-28", "skor": 92, "lulus": true },
+      { "nama": "Kuis Kimia Dasar", "tanggal": "2026-04-24", "skor": 88, "lulus": true },
+      { "nama": "Kuis Matematika Bab 2", "tanggal": "2026-04-18", "skor": 94, "lulus": true }
+    ],
+    "aktivitas7Hari": [100, 95, 90, 100, 85, 100, 95],
+    "catatanPendamping": ""
+  },
+  {
+    "id": "s5",
+    "nama": "Agus Riyanto",
+    "email": "agus@akses.id",
+    "avatar": "AR",
+    "avatarColor": "#D97706",
+    "disabilitas": "tunanetra",
+    "progress": 60,
+    "lastActive": "2026-05-02",
+    "kelas": "X IPA 2",
+    "materiDiakses": ["m1", "m3"],
+    "catatan": "Perlu pendampingan untuk materi matematika",
+    "prestasi": ["Aktif di Forum Diskusi"],
+    "waktuBelajar": 250,
+    "skorRataRata": 65,
+    "streakHari": 4,
+    "progressMateri": [
+      { "materiId": "m1", "progress": 75, "skorTerakhir": 70 },
+      { "materiId": "m3", "progress": 50, "skorTerakhir": 58 }
+    ],
+    "riwayatKuis": [
+      { "nama": "Kuis Fotosintesis", "tanggal": "2026-04-29", "skor": 70, "lulus": true },
+      { "nama": "Kuis Biologi Sel", "tanggal": "2026-04-20", "skor": 55, "lulus": false },
+      { "nama": "Kuis Matematika Bab 1", "tanggal": "2026-04-10", "skor": 70, "lulus": true }
+    ],
+    "aktivitas7Hari": [50, 0, 70, 40, 80, 0, 60],
+    "catatanPendamping": ""
+  },
+  {
+    "id": "s6",
+    "nama": "Maya Silitonga",
+    "email": "maya@akses.id",
+    "avatar": "MS",
+    "avatarColor": "#0891B2",
+    "disabilitas": "tunarungu",
+    "progress": 78,
+    "lastActive": "2026-05-05",
+    "kelas": "X IPS 1",
+    "materiDiakses": ["m2", "m4", "m7"],
+    "catatan": "Suka konten interaktif dan animasi visual",
+    "prestasi": ["Kreator Rangkuman Terbaik"],
+    "waktuBelajar": 390,
+    "skorRataRata": 80,
+    "streakHari": 9,
+    "progressMateri": [
+      { "materiId": "m2", "progress": 90, "skorTerakhir": 82 },
+      { "materiId": "m4", "progress": 80, "skorTerakhir": 78 },
+      { "materiId": "m7", "progress": 65, "skorTerakhir": 80 }
+    ],
+    "riwayatKuis": [
+      { "nama": "Kuis Siklus Air", "tanggal": "2026-05-03", "skor": 82, "lulus": true },
+      { "nama": "Kuis Kimia Dasar", "tanggal": "2026-04-26", "skor": 78, "lulus": true },
+      { "nama": "Kuis Fisika Cahaya", "tanggal": "2026-04-19", "skor": 80, "lulus": true }
+    ],
+    "aktivitas7Hari": [70, 85, 60, 90, 75, 80, 70],
+    "catatanPendamping": ""
+  },
+  {
+    "id": "s7",
+    "nama": "Rizky Ramadhan",
+    "email": "rizky@akses.id",
+    "avatar": "RR",
+    "avatarColor": "#BE185D",
+    "disabilitas": "none",
+    "progress": 55,
+    "lastActive": "2026-05-01",
+    "kelas": "X IPA 1",
+    "materiDiakses": ["m3", "m5", "m8"],
+    "catatan": "Tidak ada kebutuhan aksesibilitas khusus",
+    "prestasi": [],
+    "waktuBelajar": 210,
+    "skorRataRata": 62,
+    "streakHari": 2,
+    "progressMateri": [
+      { "materiId": "m3", "progress": 70, "skorTerakhir": 65 },
+      { "materiId": "m5", "progress": 55, "skorTerakhir": 60 },
+      { "materiId": "m8", "progress": 35, "skorTerakhir": 58 }
+    ],
+    "riwayatKuis": [
+      { "nama": "Kuis Biologi Sel", "tanggal": "2026-04-28", "skor": 65, "lulus": false },
+      { "nama": "Kuis Matematika Bab 2", "tanggal": "2026-04-18", "skor": 60, "lulus": true },
+      { "nama": "Kuis Sejarah Indonesia", "tanggal": "2026-04-10", "skor": 58, "lulus": false }
+    ],
+    "aktivitas7Hari": [40, 60, 0, 50, 70, 0, 45],
+    "catatanPendamping": ""
+  },
+  {
+    "id": "s8",
+    "nama": "Dewi Lestari",
+    "email": "dewi@akses.id",
+    "avatar": "DL",
+    "avatarColor": "#4F46E5",
+    "disabilitas": "tunanetra",
+    "progress": 67,
+    "lastActive": "2026-05-04",
+    "kelas": "X IPS 1",
+    "materiDiakses": ["m1", "m6", "m8"],
+    "catatan": "Menggunakan TTS dengan kecepatan rendah",
+    "prestasi": ["Rajin Mengerjakan Kuis"],
+    "waktuBelajar": 290,
+    "skorRataRata": 72,
+    "streakHari": 5,
+    "progressMateri": [
+      { "materiId": "m1", "progress": 85, "skorTerakhir": 76 },
+      { "materiId": "m6", "progress": 70, "skorTerakhir": 72 },
+      { "materiId": "m8", "progress": 40, "skorTerakhir": 68 }
+    ],
+    "riwayatKuis": [
+      { "nama": "Kuis Fotosintesis", "tanggal": "2026-05-04", "skor": 76, "lulus": true },
+      { "nama": "Kuis Kimia Dasar", "tanggal": "2026-04-24", "skor": 72, "lulus": true },
+      { "nama": "Kuis Sejarah Indonesia", "tanggal": "2026-04-14", "skor": 68, "lulus": false }
+    ],
+    "aktivitas7Hari": [55, 70, 80, 60, 75, 65, 70],
+    "catatanPendamping": ""
+  }
+]

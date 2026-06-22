@@ -1,0 +1,186 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-scale: 1;
+  --background: 248 250 252;
+  --foreground: 30 41 59;
+  --card: 255 255 255;
+  --card-foreground: 30 41 59;
+  --popover: 255 255 255;
+  --popover-foreground: 30 41 59;
+  --primary: 30 64 175;
+  --primary-foreground: 255 255 255;
+  --secondary: 59 130 246;
+  --secondary-foreground: 255 255 255;
+  --muted: 241 245 249;
+  --muted-foreground: 100 116 139;
+  --accent: 245 158 11;
+  --accent-foreground: 30 41 59;
+  --destructive: 239 68 68;
+  --destructive-foreground: 255 255 255;
+  --border: 226 232 240;
+  --input: 226 232 240;
+  --ring: 30 64 175;
+  --radius: 0.75rem;
+}
+
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+html,
+body {
+  max-width: 100vw;
+  overflow-x: hidden;
+  font-family: 'Inter', sans-serif;
+  font-size: calc(1rem * var(--font-scale));
+}
+
+body {
+  color: rgb(var(--foreground));
+  background: hsl(210, 40%, 98%);
+  transition: background-color 0.3s, color 0.3s;
+}
+
+/* High Contrast Mode */
+body.high-contrast {
+  --background: 0 0 0;
+  --foreground: 255 255 255;
+  --card: 17 17 17;
+  --card-foreground: 255 255 255;
+  --muted: 30 30 30;
+  --muted-foreground: 200 200 200;
+  --border: 100 100 100;
+  background-color: #000 !important;
+  color: #fff !important;
+}
+
+body.high-contrast * {
+  border-color: #555 !important;
+}
+
+body.high-contrast .bg-white,
+body.high-contrast .bg-gray-50,
+body.high-contrast .bg-slate-50,
+body.high-contrast [class*="bg-blue"],
+body.high-contrast [class*="bg-indigo"] {
+  background-color: #111 !important;
+  color: #fff !important;
+}
+
+body.high-contrast .text-gray-500,
+body.high-contrast .text-slate-500,
+body.high-contrast .text-gray-600,
+body.high-contrast .text-slate-600 {
+  color: #ccc !important;
+}
+
+body.high-contrast a:focus,
+body.high-contrast button:focus,
+body.high-contrast input:focus,
+body.high-contrast [tabindex]:focus {
+  outline: 3px solid #FFD700 !important;
+  outline-offset: 2px !important;
+}
+
+/* Font Scale Utilities */
+.font-scale-sm { font-size: calc(0.875rem * var(--font-scale)); }
+.font-scale-base { font-size: calc(1rem * var(--font-scale)); }
+.font-scale-lg { font-size: calc(1.125rem * var(--font-scale)); }
+.font-scale-xl { font-size: calc(1.25rem * var(--font-scale)); }
+.font-scale-2xl { font-size: calc(1.5rem * var(--font-scale)); }
+.font-scale-3xl { font-size: calc(1.875rem * var(--font-scale)); }
+
+/* Focus Rings */
+*:focus-visible {
+  outline: 2px solid #1E40AF;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Smooth transitions */
+.transition-smooth {
+  transition: all 0.2s ease-in-out;
+}
+
+/* TTS highlight */
+.tts-word-highlight {
+  background-color: #FEF3C7;
+  color: #92400E;
+  border-radius: 2px;
+  transition: background-color 0.1s;
+}
+
+/* Card hover effects */
+.card-hover {
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(30, 64, 175, 0.15);
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Skip to content */
+.skip-to-content {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 9999;
+  padding: 8px 16px;
+  background: #1E40AF;
+  color: white;
+  border-radius: 0 0 8px 0;
+  font-weight: 600;
+}
+
+.skip-to-content:focus {
+  left: 0;
+}
+
+/* Live indicator */
+@keyframes pulse-ring {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+  70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+}
+
+.live-indicator {
+  animation: pulse-ring 1.5s cubic-bezier(0.455, 0.03, 0.515, 0.955) infinite;
+}
+
+/* Transcript typing animation */
+@keyframes typing-cursor {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+.typing-cursor::after {
+  content: '|';
+  animation: typing-cursor 0.8s infinite;
+  color: #1E40AF;
+  margin-left: 2px;
+}

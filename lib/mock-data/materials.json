@@ -1,0 +1,544 @@
+[
+  {
+    "id": "m1",
+    "judul": "Ekosistem Laut: Kehidupan Bawah Air",
+    "mataPelajaran": "Biologi",
+    "deskripsi": "Pelajari tentang ekosistem laut yang kaya dan beragam. Dari terumbu karang hingga zona abisal, temukan bagaimana kehidupan berkembang di lingkungan air asin yang luas.",
+    "durasi": 25,
+    "mode": "both",
+    "thumbnailColor": "#0891B2",
+    "thumbnailEmoji": "🌊",
+    "progress": 100,
+    "langkah": [
+      {
+        "id": "l1",
+        "judul": "Pengenalan Ekosistem Laut",
+        "deskripsi": "Ekosistem laut mencakup 71% permukaan bumi. Terdiri dari zona litoral, pelagik, dan abisal yang masing-masing memiliki karakteristik unik.",
+        "selesai": true
+      },
+      {
+        "id": "l2",
+        "judul": "Rantai Makanan Bawah Laut",
+        "deskripsi": "Fitoplankton sebagai produsen utama menjadi dasar rantai makanan laut. Zooplankton, ikan kecil, hingga predator puncak seperti hiu membentuk jaringan makanan yang kompleks.",
+        "selesai": true
+      },
+      {
+        "id": "l3",
+        "judul": "Terumbu Karang dan Biodiversitas",
+        "deskripsi": "Terumbu karang dijuluki 'hutan hujan laut' karena kekayaan biodiversitasnya. Lebih dari 25% spesies laut bergantung pada ekosistem terumbu karang.",
+        "selesai": true
+      },
+      {
+        "id": "l4",
+        "judul": "Ancaman terhadap Ekosistem Laut",
+        "deskripsi": "Polusi plastik, pemanasan global, dan penangkapan ikan berlebihan mengancam keseimbangan ekosistem laut. Pemahaman akan ancaman ini penting untuk konservasi.",
+        "selesai": false
+      },
+      {
+        "id": "l5",
+        "judul": "Upaya Pelestarian Laut",
+        "deskripsi": "Berbagai upaya konservasi seperti kawasan laut yang dilindungi, rehabilitasi terumbu karang, dan kampanye pengurangan plastik menjadi kunci pelestarian ekosistem laut.",
+        "selesai": false
+      }
+    ],
+    "transkrip": "Selamat datang di materi Ekosistem Laut. Laut menutupi lebih dari tujuh puluh persen permukaan bumi dan merupakan sumber kehidupan bagi jutaan spesies makhluk hidup. Dalam pelajaran ini, kita akan menjelajahi keajaiban bawah laut mulai dari zona pesisir yang dangkal hingga palung terdalam yang gelap gulita. Ekosistem laut terbagi dalam beberapa zona utama berdasarkan kedalaman dan cahaya matahari yang dapat menembus. Zona litoral adalah area pasang surut yang menjadi peralihan antara daratan dan laut. Di sinilah kita menemukan kepiting, bintang laut, dan anemon laut yang adaptif terhadap perubahan air. Selanjutnya adalah zona pelagik, area laut terbuka yang menjadi rumah bagi ikan-ikan besar, lumba-lumba, dan paus. Cahaya matahari masih dapat menembus hingga zona ini, mendukung pertumbuhan fitoplankton yang menjadi dasar rantai makanan laut.",
+    "soal": [
+      {
+        "id": "q1",
+        "pertanyaan": "Berapa persen permukaan bumi yang ditutupi oleh laut?",
+        "pilihan": ["50%", "61%", "71%", "81%"],
+        "jawaban": 2,
+        "penjelasan": "Laut menutupi sekitar 71% permukaan bumi, menjadikannya ekosistem terluas di planet kita."
+      },
+      {
+        "id": "q2",
+        "pertanyaan": "Apa yang dimaksud dengan zona litoral?",
+        "pilihan": [
+          "Area laut dalam yang gelap",
+          "Area pasang surut antara daratan dan laut",
+          "Permukaan laut terbuka",
+          "Dasar laut paling dalam"
+        ],
+        "jawaban": 1,
+        "penjelasan": "Zona litoral adalah area pasang surut yang menjadi peralihan antara daratan dan laut, dihuni oleh organisme yang adaptif terhadap perubahan kondisi."
+      },
+      {
+        "id": "q3",
+        "pertanyaan": "Mengapa terumbu karang disebut 'hutan hujan laut'?",
+        "pilihan": [
+          "Karena berwarna hijau seperti hutan",
+          "Karena tumbuh di air hujan",
+          "Karena memiliki biodiversitas yang sangat tinggi",
+          "Karena menghasilkan oksigen lebih banyak"
+        ],
+        "jawaban": 2,
+        "penjelasan": "Terumbu karang dijuluki 'hutan hujan laut' karena kekayaan biodiversitasnya yang luar biasa, dengan lebih dari 25% spesies laut bergantung padanya."
+      },
+      {
+        "id": "q4",
+        "pertanyaan": "Organisme apa yang menjadi dasar rantai makanan laut?",
+        "pilihan": ["Zooplankton", "Ikan kecil", "Fitoplankton", "Hiu"],
+        "jawaban": 2,
+        "penjelasan": "Fitoplankton adalah produsen utama di ekosistem laut yang mengkonversi energi matahari menjadi makanan melalui fotosintesis."
+      },
+      {
+        "id": "q5",
+        "pertanyaan": "Manakah yang BUKAN ancaman terhadap ekosistem laut?",
+        "pilihan": [
+          "Polusi plastik",
+          "Pemanasan global",
+          "Wisata menyelam yang bertanggung jawab",
+          "Penangkapan ikan berlebihan"
+        ],
+        "jawaban": 2,
+        "penjelasan": "Wisata menyelam yang dilakukan secara bertanggung jawab justru dapat mendukung konservasi laut melalui peningkatan kesadaran dan ekonomi lokal."
+      }
+    ]
+  },
+  {
+    "id": "m2",
+    "judul": "Tata Surya: Mengenal Planet-Planet",
+    "mataPelajaran": "IPA",
+    "deskripsi": "Jelajahi tata surya kita mulai dari Matahari sebagai pusat hingga planet-planet yang mengorbit dengan karakteristik uniknya masing-masing.",
+    "durasi": 30,
+    "mode": "audio",
+    "thumbnailColor": "#7C3AED",
+    "thumbnailEmoji": "🪐",
+    "progress": 60,
+    "langkah": [
+      {
+        "id": "l1",
+        "judul": "Matahari: Pusat Tata Surya",
+        "deskripsi": "Matahari adalah bintang di pusat tata surya yang menghasilkan energi melalui fusi nuklir. Massanya mencakup 99.8% total massa tata surya.",
+        "selesai": true
+      },
+      {
+        "id": "l2",
+        "judul": "Planet-Planet Terrestrial",
+        "deskripsi": "Merkurius, Venus, Bumi, dan Mars adalah planet terrestrial berbatu yang terletak di bagian dalam tata surya.",
+        "selesai": true
+      },
+      {
+        "id": "l3",
+        "judul": "Planet-Planet Gas Raksasa",
+        "deskripsi": "Yupiter dan Saturnus adalah planet gas raksasa terbesar di tata surya dengan puluhan bulan yang mengorbit mereka.",
+        "selesai": false
+      },
+      {
+        "id": "l4",
+        "judul": "Planet Es Raksasa",
+        "deskripsi": "Uranus dan Neptunus adalah planet es raksasa dengan komposisi utama air, amonia, dan metana dalam bentuk es.",
+        "selesai": false
+      }
+    ],
+    "transkrip": "Tata Surya kita adalah sistem bintang yang terdiri dari Matahari dan semua benda langit yang terikat gravitasinya. Di dalam tata surya, terdapat delapan planet, ratusan satelit alami, jutaan asteroid, dan miliaran komet. Matahari adalah bintang tipe G yang berusia sekitar 4,6 miliar tahun. Di pusatnya, terjadi reaksi fusi nuklir yang mengubah hidrogen menjadi helium dengan melepaskan energi yang luar biasa besar. Energi inilah yang menjadi sumber kehidupan di Bumi. Planet-planet di tata surya terbagi menjadi dua kelompok utama. Kelompok pertama adalah planet terrestrial atau planet kebumian, yaitu Merkurius, Venus, Bumi, dan Mars. Keempat planet ini memiliki permukaan padat berbatu dan ukuran relatif kecil. Kelompok kedua adalah planet jovian atau planet gas dan es raksasa, yaitu Yupiter, Saturnus, Uranus, dan Neptunus.",
+    "soal": [
+      {
+        "id": "q1",
+        "pertanyaan": "Berapa persen massa tata surya yang dimiliki oleh Matahari?",
+        "pilihan": ["89.8%", "95.2%", "99.8%", "97.5%"],
+        "jawaban": 2,
+        "penjelasan": "Matahari memiliki massa yang mencakup 99.8% dari total massa tata surya, jauh mendominasi semua planet dan benda langit lainnya."
+      },
+      {
+        "id": "q2",
+        "pertanyaan": "Planet manakah yang merupakan planet terrestrial?",
+        "pilihan": [
+          "Yupiter, Saturnus, Uranus, Neptunus",
+          "Merkurius, Venus, Bumi, Mars",
+          "Saturnus, Mars, Venus, Bumi",
+          "Neptunus, Uranus, Mars, Merkurius"
+        ],
+        "jawaban": 1,
+        "penjelasan": "Planet terrestrial adalah Merkurius, Venus, Bumi, dan Mars - semua planet berbatu yang berada di bagian dalam tata surya."
+      },
+      {
+        "id": "q3",
+        "pertanyaan": "Proses apa yang menghasilkan energi di Matahari?",
+        "pilihan": [
+          "Pembakaran hidrogen",
+          "Fisi nuklir",
+          "Fusi nuklir",
+          "Reaksi kimia"
+        ],
+        "jawaban": 2,
+        "penjelasan": "Matahari menghasilkan energi melalui fusi nuklir, di mana atom hidrogen bergabung menjadi helium dan melepaskan energi dalam jumlah besar."
+      }
+    ]
+  },
+  {
+    "id": "m3",
+    "judul": "Matematika: Bangun Ruang 3D",
+    "mataPelajaran": "Matematika",
+    "deskripsi": "Pahami konsep bangun ruang tiga dimensi mulai dari kubus, balok, bola, kerucut, dan tabung beserta rumus luas dan volumenya.",
+    "durasi": 40,
+    "mode": "visual",
+    "thumbnailColor": "#059669",
+    "thumbnailEmoji": "📐",
+    "progress": 30,
+    "langkah": [
+      {
+        "id": "l1",
+        "judul": "Pengenalan Bangun Ruang",
+        "deskripsi": "Bangun ruang adalah objek tiga dimensi yang memiliki panjang, lebar, dan tinggi. Berbeda dengan bangun datar yang hanya memiliki dua dimensi.",
+        "selesai": true
+      },
+      {
+        "id": "l2",
+        "judul": "Kubus dan Balok",
+        "deskripsi": "Kubus memiliki 6 sisi persegi yang sama besar. Volume kubus = s³. Balok memiliki 6 sisi persegi panjang. Volume balok = p × l × t.",
+        "selesai": false
+      },
+      {
+        "id": "l3",
+        "judul": "Tabung dan Kerucut",
+        "deskripsi": "Tabung memiliki 2 lingkaran sebagai alas dan tutup. Volume tabung = πr²t. Kerucut memiliki satu lingkaran alas. Volume kerucut = ⅓πr²t.",
+        "selesai": false
+      },
+      {
+        "id": "l4",
+        "judul": "Bola dan Latihan Soal",
+        "deskripsi": "Volume bola = (4/3)πr³. Luas permukaan bola = 4πr². Mari berlatih menghitung volume dan luas berbagai bangun ruang.",
+        "selesai": false
+      }
+    ],
+    "transkrip": "Selamat datang di materi Bangun Ruang Tiga Dimensi. Dalam kehidupan sehari-hari, kita dikelilingi oleh benda-benda berbentuk tiga dimensi. Kotak susu, bola sepak, dan kaleng minuman semuanya adalah contoh bangun ruang. Bangun ruang memiliki tiga ukuran yaitu panjang, lebar, dan tinggi. Berbeda dengan bangun datar seperti persegi dan segitiga yang hanya memiliki dua dimensi. Kubus adalah bangun ruang yang paling sederhana dengan enam sisi berbentuk persegi yang sama besar. Untuk menghitung volume kubus, kita menggunakan rumus V sama dengan s pangkat tiga, di mana s adalah panjang rusuk. Sementara untuk luas permukaannya, kita menggunakan rumus L sama dengan enam kali s kuadrat.",
+    "soal": [
+      {
+        "id": "q1",
+        "pertanyaan": "Sebuah kubus memiliki rusuk sepanjang 5 cm. Berapakah volumenya?",
+        "pilihan": ["25 cm³", "75 cm³", "100 cm³", "125 cm³"],
+        "jawaban": 3,
+        "penjelasan": "Volume kubus = s³ = 5³ = 125 cm³. Rusuk dikali rusuk dikali rusuk menghasilkan 5 × 5 × 5 = 125 cm³."
+      },
+      {
+        "id": "q2",
+        "pertanyaan": "Rumus luas permukaan kubus adalah...",
+        "pilihan": ["6s²", "4s²", "s³", "3s²"],
+        "jawaban": 0,
+        "penjelasan": "Kubus memiliki 6 sisi yang sama besar berbentuk persegi, sehingga luas permukaannya = 6 × s² = 6s²."
+      }
+    ]
+  },
+  {
+    "id": "m4",
+    "judul": "Bahasa Indonesia: Sastra dan Puisi",
+    "mataPelajaran": "Bahasa Indonesia",
+    "deskripsi": "Mengenal dunia sastra Indonesia yang kaya. Dari puisi tradisional pantun hingga puisi modern, temukan keindahan bahasa dalam karya-karya sastrawan Indonesia.",
+    "durasi": 20,
+    "mode": "both",
+    "thumbnailColor": "#DC2626",
+    "thumbnailEmoji": "📝",
+    "progress": 80,
+    "langkah": [
+      {
+        "id": "l1",
+        "judul": "Pengenalan Sastra Indonesia",
+        "deskripsi": "Sastra Indonesia memiliki kekayaan yang luar biasa dari tradisi lisan hingga tulisan modern. Puisi, prosa, dan drama menjadi tiga genre utama.",
+        "selesai": true
+      },
+      {
+        "id": "l2",
+        "judul": "Pantun dan Syair",
+        "deskripsi": "Pantun adalah puisi tradisional dengan struktur 4 baris, 2 sampiran dan 2 isi, dengan rima AB-AB. Syair terdiri dari 4 baris dengan rima AA-AA.",
+        "selesai": true
+      },
+      {
+        "id": "l3",
+        "judul": "Puisi Modern Indonesia",
+        "deskripsi": "Puisi modern bebas dari aturan metrik kaku. Chairil Anwar, W.S. Rendra, dan Sapardi Djoko Damono adalah pelopor puisi modern Indonesia.",
+        "selesai": true
+      }
+    ],
+    "transkrip": "Sastra adalah ekspresi keindahan dan kedalaman jiwa manusia melalui bahasa. Indonesia memiliki tradisi sastra yang sangat kaya, berakar dari tradisi lisan nenek moyang yang kemudian berkembang menjadi bentuk tulisan. Dalam materi ini, kita akan menjelajahi ragam bentuk puisi Indonesia dari yang tradisional hingga modern. Pantun adalah salah satu bentuk puisi tertua dalam sastra Melayu dan Indonesia. Pantun memiliki struktur yang khas: terdiri dari empat baris, dua baris pertama disebut sampiran dan dua baris terakhir disebut isi. Pola rimanya adalah AB-AB, artinya baris pertama dan ketiga berima, begitu pula baris kedua dan keempat. Contoh pantun: Buah pepaya buah mangga, Jatuh ke tanah buah manggis; Rajin belajar jadilah guna, Kelak hidupmu pasti manis.",
+    "soal": [
+      {
+        "id": "q1",
+        "pertanyaan": "Berapa baris yang dimiliki oleh pantun?",
+        "pilihan": ["2 baris", "4 baris", "6 baris", "8 baris"],
+        "jawaban": 1,
+        "penjelasan": "Pantun terdiri dari 4 baris, dengan 2 baris pertama sebagai sampiran dan 2 baris terakhir sebagai isi."
+      },
+      {
+        "id": "q2",
+        "pertanyaan": "Siapa yang merupakan pelopor puisi modern Indonesia?",
+        "pilihan": [
+          "Hamka dan Pramoedya",
+          "Chairil Anwar dan W.S. Rendra",
+          "R.A. Kartini dan Bung Hatta",
+          "Marah Rusli dan Sultan Takdir"
+        ],
+        "jawaban": 1,
+        "penjelasan": "Chairil Anwar, W.S. Rendra, dan Sapardi Djoko Damono adalah nama-nama besar yang menjadi pelopor puisi modern Indonesia."
+      }
+    ]
+  },
+  {
+    "id": "m5",
+    "judul": "Fisika: Siklus Air dan Cuaca",
+    "mataPelajaran": "Fisika",
+    "deskripsi": "Pahami siklus air yang menakjubkan dan proses pembentukan cuaca. Dari evaporasi, kondensasi, hingga presipitasi, pelajari bagaimana air bergerak di atmosfer.",
+    "durasi": 35,
+    "mode": "audio",
+    "thumbnailColor": "#0369A1",
+    "thumbnailEmoji": "☁️",
+    "progress": 0,
+    "langkah": [
+      {
+        "id": "l1",
+        "judul": "Evaporasi dan Transpirasi",
+        "deskripsi": "Evaporasi adalah penguapan air dari permukaan bumi akibat panas matahari. Transpirasi adalah penguapan air melalui stomata tumbuhan.",
+        "selesai": false
+      },
+      {
+        "id": "l2",
+        "judul": "Kondensasi",
+        "deskripsi": "Uap air yang naik ke atmosfer mengalami pendinginan dan berubah menjadi tetes air kecil yang membentuk awan dan kabut.",
+        "selesai": false
+      },
+      {
+        "id": "l3",
+        "judul": "Presipitasi",
+        "deskripsi": "Ketika tetes air di awan cukup berat, mereka jatuh ke bumi sebagai hujan, salju, atau hujan es tergantung suhu atmosfer.",
+        "selesai": false
+      },
+      {
+        "id": "l4",
+        "judul": "Infiltrasi dan Aliran Permukaan",
+        "deskripsi": "Air hujan yang jatuh ke tanah akan meresap ke dalam tanah (infiltrasi) atau mengalir di permukaan menuju sungai dan laut.",
+        "selesai": false
+      }
+    ],
+    "transkrip": "Siklus air atau siklus hidrologi adalah proses pergerakan air di, pada, dan di atas permukaan bumi. Proses ini berlangsung terus-menerus tanpa henti, menjaga keseimbangan air di planet kita. Terdapat beberapa tahapan utama dalam siklus air. Yang pertama adalah evaporasi, yaitu proses penguapan air dari permukaan bumi, terutama dari laut dan danau, akibat energi panas matahari. Setiap hari, miliaran ton air menguap dari permukaan bumi menjadi uap air yang naik ke atmosfer. Selain evaporasi dari permukaan air, tumbuhan juga berkontribusi melalui proses transpirasi, yaitu penguapan air melalui stomata atau pori-pori daun. Gabungan keduanya disebut evapotranspirasi.",
+    "soal": [
+      {
+        "id": "q1",
+        "pertanyaan": "Apa yang dimaksud dengan evaporasi?",
+        "pilihan": [
+          "Penguapan air melalui daun tumbuhan",
+          "Jatuhnya air hujan ke bumi",
+          "Penguapan air dari permukaan bumi akibat panas matahari",
+          "Pembentukan awan dari uap air"
+        ],
+        "jawaban": 2,
+        "penjelasan": "Evaporasi adalah proses penguapan air dari permukaan bumi (terutama dari laut, danau, sungai) akibat energi panas matahari."
+      },
+      {
+        "id": "q2",
+        "pertanyaan": "Gabungan evaporasi dan transpirasi disebut...",
+        "pilihan": ["Infiltrasi", "Presipitasi", "Kondensasi", "Evapotranspirasi"],
+        "jawaban": 3,
+        "penjelasan": "Evapotranspirasi adalah istilah yang menggabungkan evaporasi (penguapan dari permukaan) dan transpirasi (penguapan dari tumbuhan)."
+      }
+    ]
+  },
+  {
+    "id": "m6",
+    "judul": "Sejarah: Proklamasi Kemerdekaan RI",
+    "mataPelajaran": "Sejarah",
+    "deskripsi": "Telusuri peristiwa bersejarah yang mengubah nasib bangsa Indonesia. Dari peristiwa Rengasdengklok hingga pembacaan proklamasi di Jalan Pegangsaan Timur 56.",
+    "durasi": 45,
+    "mode": "both",
+    "thumbnailColor": "#B91C1C",
+    "thumbnailEmoji": "🏛️",
+    "progress": 50,
+    "langkah": [
+      {
+        "id": "l1",
+        "judul": "Latar Belakang Proklamasi",
+        "deskripsi": "Kekalahan Jepang dalam Perang Dunia II menjadi peluang emas bagi Indonesia untuk menyatakan kemerdekaan. Bom atom di Hiroshima dan Nagasaki mempercepat kekalahan Jepang.",
+        "selesai": true
+      },
+      {
+        "id": "l2",
+        "judul": "Peristiwa Rengasdengklok",
+        "deskripsi": "Para pemuda membawa Soekarno dan Hatta ke Rengasdengklok untuk mendesak segera memproklamasikan kemerdekaan tanpa menunggu Jepang.",
+        "selesai": true
+      },
+      {
+        "id": "l3",
+        "judul": "Perumusan Teks Proklamasi",
+        "deskripsi": "Teks proklamasi dirumuskan di rumah Laksamana Maeda. Soekarno, Hatta, dan Ahmad Subardjo berperan utama dalam perumusannya.",
+        "selesai": false
+      }
+    ],
+    "transkrip": "Proklamasi Kemerdekaan Indonesia adalah peristiwa paling bersejarah dan bermakna bagi bangsa Indonesia. Pada tanggal 17 Agustus 1945, Soekarno membacakan teks proklamasi kemerdekaan yang mengakhiri penjajahan dan melahirkan sebuah negara baru bernama Indonesia. Proses menuju proklamasi tidak berlangsung mudah. Kekalahan Jepang dalam Perang Dunia II, yang ditandai dengan dijatuhkannya bom atom di Hiroshima pada 6 Agustus dan Nagasaki pada 9 Agustus 1945, menciptakan kekosongan kekuasaan yang menjadi peluang bagi para pejuang kemerdekaan Indonesia. Para pemuda yang mengetahui kekalahan Jepang lebih awal mendesak Soekarno dan Hatta untuk segera memproklamasikan kemerdekaan. Perbedaan pandangan antara golongan tua dan golongan muda memuncak dalam peristiwa Rengasdengklok pada 16 Agustus 1945.",
+    "soal": [
+      {
+        "id": "q1",
+        "pertanyaan": "Kapan proklamasi kemerdekaan Indonesia dibacakan?",
+        "pilihan": [
+          "15 Agustus 1945",
+          "16 Agustus 1945",
+          "17 Agustus 1945",
+          "18 Agustus 1945"
+        ],
+        "jawaban": 2,
+        "penjelasan": "Proklamasi kemerdekaan Indonesia dibacakan oleh Soekarno pada tanggal 17 Agustus 1945 di Jalan Pegangsaan Timur 56, Jakarta."
+      }
+    ]
+  },
+  {
+    "id": "m7",
+    "judul": "Kimia: Reaksi Asam dan Basa",
+    "mataPelajaran": "Kimia",
+    "deskripsi": "Pelajari sifat-sifat asam dan basa, cara mengidentifikasinya menggunakan indikator, serta reaksi netralisasi yang terjadi antara keduanya.",
+    "durasi": 30,
+    "mode": "visual",
+    "thumbnailColor": "#7C3AED",
+    "thumbnailEmoji": "⚗️",
+    "progress": 0,
+    "langkah": [
+      {
+        "id": "l1",
+        "judul": "Mengenal Asam dan Basa",
+        "deskripsi": "Asam adalah zat yang melepas ion H⁺ dalam larutan. Basa adalah zat yang melepas ion OH⁻ dalam larutan. Skala pH 0-14 menentukan tingkat keasaman.",
+        "selesai": false
+      },
+      {
+        "id": "l2",
+        "judul": "Indikator Asam-Basa",
+        "deskripsi": "Indikator adalah zat yang berubah warna berdasarkan pH larutan. Kertas lakmus merah berubah biru dalam basa, lakmus biru berubah merah dalam asam.",
+        "selesai": false
+      },
+      {
+        "id": "l3",
+        "judul": "Reaksi Netralisasi",
+        "deskripsi": "Reaksi antara asam dan basa menghasilkan garam dan air. Contoh: HCl + NaOH → NaCl + H₂O. Reaksi ini disebut netralisasi.",
+        "selesai": false
+      }
+    ],
+    "transkrip": "Dalam kehidupan sehari-hari, kita dikelilingi oleh berbagai zat yang bersifat asam maupun basa. Jeruk nipis dan cuka adalah contoh asam yang familiar, sementara sabun dan detergen adalah contoh basa yang sering kita gunakan. Memahami sifat asam dan basa sangat penting dalam ilmu kimia maupun dalam kehidupan praktis. Asam adalah zat yang ketika dilarutkan dalam air akan melepaskan ion hidrogen atau H positif. Makin banyak ion H positif yang dilepaskan, makin kuat sifat asamnya. Sebaliknya, basa adalah zat yang ketika dilarutkan dalam air akan melepaskan ion hidroksida atau OH negatif. Skala pH adalah skala logaritmik dari 0 hingga 14 yang digunakan untuk mengukur tingkat keasaman atau kebasaan suatu larutan.",
+    "soal": [
+      {
+        "id": "q1",
+        "pertanyaan": "Apa yang dilepaskan oleh asam ketika dilarutkan dalam air?",
+        "pilihan": ["Ion OH⁻", "Ion H⁺", "Ion Na⁺", "Ion Cl⁻"],
+        "jawaban": 1,
+        "penjelasan": "Asam adalah zat yang ketika dilarutkan dalam air melepaskan ion hidrogen (H⁺), yang menyebabkan nilai pH di bawah 7."
+      }
+    ]
+  },
+  {
+    "id": "m8",
+    "judul": "Geografi: Peta dan Kartografi",
+    "mataPelajaran": "Geografi",
+    "deskripsi": "Pelajari cara membaca dan membuat peta. Dari simbol kartografi, skala, hingga proyeksi peta, kuasai dasar-dasar ilmu pemetaan.",
+    "durasi": 25,
+    "mode": "visual",
+    "thumbnailColor": "#065F46",
+    "thumbnailEmoji": "🗺️",
+    "progress": 0,
+    "langkah": [
+      {
+        "id": "l1",
+        "judul": "Komponen Peta",
+        "deskripsi": "Setiap peta harus memiliki komponen lengkap: judul, skala, legenda, orientasi arah mata angin, dan sumber data.",
+        "selesai": false
+      },
+      {
+        "id": "l2",
+        "judul": "Skala Peta",
+        "deskripsi": "Skala adalah perbandingan jarak pada peta dengan jarak sebenarnya. Skala 1:50.000 artinya 1 cm di peta = 50.000 cm = 500 m di lapangan.",
+        "selesai": false
+      },
+      {
+        "id": "l3",
+        "judul": "Membaca Simbol Kartografi",
+        "deskripsi": "Simbol peta terdiri dari simbol titik (kota, gunung), simbol garis (jalan, sungai), dan simbol area (hutan, danau).",
+        "selesai": false
+      }
+    ],
+    "transkrip": "Peta adalah representasi dua dimensi dari permukaan bumi yang dibuat menggunakan skala tertentu. Sejak zaman kuno, manusia telah membuat peta untuk membantu navigasi dan pemahaman tentang wilayah di sekitar mereka. Kartografi modern telah berkembang pesat dengan bantuan teknologi satelit dan sistem informasi geografis. Sebuah peta yang baik harus memiliki komponen-komponen tertentu agar dapat dibaca dan digunakan dengan benar. Komponen utama peta meliputi judul yang menjelaskan isi peta, skala yang menunjukkan perbandingan jarak, legenda yang menjelaskan simbol-simbol yang digunakan, orientasi yang biasanya ditunjukkan dengan tanda panah utara, serta sumber data dan tahun pembuatan peta.",
+    "soal": [
+      {
+        "id": "q1",
+        "pertanyaan": "Jika skala peta adalah 1:100.000, berapa jarak sebenarnya jika jarak di peta adalah 5 cm?",
+        "pilihan": ["500 m", "5 km", "50 km", "500 km"],
+        "jawaban": 1,
+        "penjelasan": "Jarak sebenarnya = 5 cm × 100.000 = 500.000 cm = 5.000 m = 5 km."
+      }
+    ]
+  },
+  {
+    "id": "m9",
+    "judul": "Musik: Teori Dasar dan Notasi",
+    "mataPelajaran": "Seni Budaya",
+    "deskripsi": "Pelajari dasar-dasar teori musik, membaca notasi balok, dan memahami ritme serta melodi dalam komposisi musik Indonesia dan Barat.",
+    "durasi": 30,
+    "mode": "audio",
+    "thumbnailColor": "#B45309",
+    "thumbnailEmoji": "🎵",
+    "progress": 0,
+    "langkah": [
+      {
+        "id": "l1",
+        "judul": "Do Re Mi: Skala Nada",
+        "deskripsi": "Skala diatonis terdiri dari 7 nada: Do, Re, Mi, Fa, Sol, La, Si. Setiap nada memiliki frekuensi tertentu yang membedakannya dari nada lain.",
+        "selesai": false
+      },
+      {
+        "id": "l2",
+        "judul": "Notasi Balok",
+        "deskripsi": "Notasi balok menggunakan 5 garis paranada. Posisi not pada garis atau spasi menentukan tinggi rendahnya nada.",
+        "selesai": false
+      }
+    ],
+    "transkrip": "Musik adalah bahasa universal yang dapat dinikmati oleh semua orang di seluruh dunia. Dari musik tradisional gamelan Jawa hingga musik klasik Barat, semuanya menggunakan prinsip-prinsip dasar yang sama. Dalam materi ini, kita akan mempelajari teori dasar musik yang akan membantu Anda memahami dan menikmati musik dengan lebih mendalam. Tangga nada atau skala adalah urutan nada dari yang paling rendah ke yang paling tinggi. Skala diatonis yang paling umum digunakan dalam musik Barat terdiri dari tujuh nada yang kita kenal sebagai Do, Re, Mi, Fa, Sol, La, dan Si. Setiap nada dalam skala ini memiliki interval atau jarak tertentu satu sama lain.",
+    "soal": [
+      {
+        "id": "q1",
+        "pertanyaan": "Berapa jumlah nada dalam skala diatonis?",
+        "pilihan": ["5 nada", "6 nada", "7 nada", "8 nada"],
+        "jawaban": 2,
+        "penjelasan": "Skala diatonis terdiri dari 7 nada: Do, Re, Mi, Fa, Sol, La, Si (dengan Do oktaf sebagai pengulangan)."
+      }
+    ]
+  },
+  {
+    "id": "m10",
+    "judul": "Teknologi: Pengantar Pemrograman",
+    "mataPelajaran": "Informatika",
+    "deskripsi": "Mulai perjalanan coding Anda! Pelajari konsep dasar pemrograman seperti variabel, kondisi, dan perulangan melalui contoh sederhana yang mudah dipahami.",
+    "durasi": 50,
+    "mode": "visual",
+    "thumbnailColor": "#374151",
+    "thumbnailEmoji": "💻",
+    "progress": 0,
+    "langkah": [
+      {
+        "id": "l1",
+        "judul": "Apa itu Algoritma?",
+        "deskripsi": "Algoritma adalah serangkaian langkah terurut untuk menyelesaikan masalah. Seperti resep masakan, algoritma harus jelas dan tidak ambigu.",
+        "selesai": false
+      },
+      {
+        "id": "l2",
+        "judul": "Variabel dan Tipe Data",
+        "deskripsi": "Variabel adalah wadah untuk menyimpan data. Tipe data dasar meliputi integer (bilangan bulat), float (desimal), string (teks), dan boolean (benar/salah).",
+        "selesai": false
+      },
+      {
+        "id": "l3",
+        "judul": "Kondisi dan Perulangan",
+        "deskripsi": "Pernyataan if-else memungkinkan program mengambil keputusan. Perulangan for dan while memungkinkan program mengulang instruksi.",
+        "selesai": false
+      }
+    ],
+    "transkrip": "Pemrograman komputer adalah kemampuan untuk berkomunikasi dengan komputer menggunakan bahasa yang dapat dipahami mesin. Di era digital ini, pemrograman menjadi salah satu keterampilan paling berharga yang dapat Anda miliki. Dalam materi pengantar ini, kita akan mempelajari konsep-konsep fundamental yang menjadi dasar semua bahasa pemrograman. Sebelum belajar menulis kode, kita perlu memahami apa itu algoritma. Algoritma adalah serangkaian instruksi yang terurut dan terbatas yang dirancang untuk menyelesaikan masalah tertentu. Bayangkan algoritma seperti resep masakan: setiap langkah harus jelas, tidak ambigu, dan dilakukan dalam urutan yang benar agar hasilnya sesuai harapan.",
+    "soal": [
+      {
+        "id": "q1",
+        "pertanyaan": "Apa yang dimaksud dengan algoritma?",
+        "pilihan": [
+          "Bahasa pemrograman",
+          "Serangkaian langkah terurut untuk menyelesaikan masalah",
+          "Program komputer",
+          "Tipe data dalam pemrograman"
+        ],
+        "jawaban": 1,
+        "penjelasan": "Algoritma adalah serangkaian langkah yang terurut dan terbatas untuk menyelesaikan masalah tertentu, seperti resep masakan untuk memasak."
+      }
+    ]
+  }
+]

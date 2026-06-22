@@ -1,0 +1,26 @@
+[
+  {
+    "id": "t1",
+    "nama": "Bu Sari Dewi",
+    "email": "sari.dewi@akses.id",
+    "avatar": "SD",
+    "avatarColor": "#1E40AF",
+    "mataPelajaran": ["Biologi", "IPA"],
+    "totalSiswa": 24,
+    "siswaAktif": 18,
+    "sesibulanIni": 12,
+    "kelas": ["X IPA 1", "X IPA 2"]
+  },
+  {
+    "id": "t2",
+    "nama": "Pak Budi Hartono",
+    "email": "budi.hartono@akses.id",
+    "avatar": "BH",
+    "avatarColor": "#059669",
+    "mataPelajaran": ["Matematika", "Fisika", "Kimia"],
+    "totalSiswa": 30,
+    "siswaAktif": 22,
+    "sesibulanIni": 15,
+    "kelas": ["X IPA 1", "X IPA 2", "X IPS 1"]
+  }
+]

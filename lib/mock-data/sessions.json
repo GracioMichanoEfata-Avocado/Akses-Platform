@@ -1,0 +1,138 @@
+[
+  {
+    "id": "sess1",
+    "judul": "Kelas Live: Interaksi Real-Time Ekosistem Laut",
+    "guru": "Bu Sari Dewi",
+    "guruId": "t1",
+    "mataPelajaran": "Biologi",
+    "tanggal": "2026-05-05",
+    "waktu": "09:00",
+    "durasi": 60,
+    "status": "live",
+    "topik": "Ekosistem Laut dan Biodiversitas",
+    "deskripsi": "Sesi live interaktif membahas ekosistem laut dengan fokus pada terumbu karang dan ancaman yang dihadapinya. Siswa dapat berinteraksi langsung dengan guru.",
+    "peserta": ["s1", "s2", "s4", "s6"],
+    "fitur": {
+      "speechToText": true,
+      "subtitle": true,
+      "audioDeskriptif": true
+    },
+    "transcript": [
+      "Selamat pagi semua, hari ini kita akan membahas ekosistem laut yang sangat menarik...",
+      "Seperti yang telah kalian pelajari di materi sebelumnya, ekosistem laut mencakup berbagai zona...",
+      "Sekarang mari kita fokus pada terumbu karang sebagai ekosistem yang paling terancam...",
+      "Siapa yang bisa menjawab: mengapa terumbu karang sangat penting bagi kehidupan laut?",
+      "Bagus sekali! Terumbu karang memang menjadi rumah bagi 25% spesies laut meskipun hanya menutupi 1% dasar laut...",
+      "Sekarang kita akan melihat video pendek tentang bleaching atau pemutihan karang...",
+      "Pemutihan karang terjadi karena suhu air laut yang meningkat akibat pemanasan global...",
+      "Para ilmuwan memperkirakan jika suhu terus naik, 70-90% terumbu karang di dunia bisa hilang sebelum 2050..."
+    ],
+    "pertanyaan": [
+      {
+        "id": "q1",
+        "siswa": "Alex Pratama",
+        "siswaId": "s1",
+        "pertanyaan": "Bu, apakah terumbu karang bisa dipulihkan setelah bleaching?",
+        "waktu": "09:25",
+        "terjawab": true,
+        "jawaban": "Ya, terumbu karang bisa pulih jika suhu air kembali normal dan tidak ada stres tambahan. Prosesnya bisa memakan waktu 10-15 tahun."
+      },
+      {
+        "id": "q2",
+        "siswa": "Sari Dewi",
+        "siswaId": "s2",
+        "pertanyaan": "Apa yang bisa kita lakukan sebagai pelajar untuk membantu pelestarian terumbu karang?",
+        "waktu": "09:40",
+        "terjawab": false,
+        "jawaban": null
+      }
+    ]
+  },
+  {
+    "id": "sess2",
+    "judul": "Matematika: Bangun Ruang dan Volumenya",
+    "guru": "Pak Budi Hartono",
+    "guruId": "t2",
+    "mataPelajaran": "Matematika",
+    "tanggal": "2026-05-06",
+    "waktu": "10:00",
+    "durasi": 90,
+    "status": "scheduled",
+    "topik": "Bangun Ruang 3D",
+    "deskripsi": "Sesi pembelajaran matematika tentang menghitung volume dan luas permukaan bangun ruang dengan pendekatan visual dan audio.",
+    "peserta": ["s3", "s5", "s7"],
+    "fitur": {
+      "speechToText": false,
+      "subtitle": true,
+      "audioDeskriptif": true
+    },
+    "transcript": [],
+    "pertanyaan": []
+  },
+  {
+    "id": "sess3",
+    "judul": "Fisika: Siklus Air dan Dampaknya",
+    "guru": "Pak Budi Hartono",
+    "guruId": "t2",
+    "mataPelajaran": "Fisika",
+    "tanggal": "2026-05-03",
+    "waktu": "13:00",
+    "durasi": 60,
+    "status": "done",
+    "topik": "Siklus Hidrologi",
+    "deskripsi": "Pembahasan mendalam tentang siklus air dan dampaknya terhadap iklim dan kehidupan sehari-hari.",
+    "peserta": ["s1", "s3", "s5", "s6", "s8"],
+    "fitur": {
+      "speechToText": true,
+      "subtitle": true,
+      "audioDeskriptif": false
+    },
+    "transcript": [
+      "Hari ini kita akan membahas siklus air yang sangat penting untuk kehidupan di bumi...",
+      "Proses evaporasi dimulai ketika matahari memanaskan permukaan air laut dan danau..."
+    ],
+    "pertanyaan": []
+  },
+  {
+    "id": "sess4",
+    "judul": "Bahasa Indonesia: Analisis Puisi Chairil Anwar",
+    "guru": "Bu Sari Dewi",
+    "guruId": "t1",
+    "mataPelajaran": "Bahasa Indonesia",
+    "tanggal": "2026-05-07",
+    "waktu": "08:00",
+    "durasi": 60,
+    "status": "scheduled",
+    "topik": "Puisi Modern Indonesia",
+    "deskripsi": "Analisis mendalam puisi-puisi karya Chairil Anwar dengan fokus pada makna dan gaya bahasa.",
+    "peserta": ["s2", "s4", "s6", "s8"],
+    "fitur": {
+      "speechToText": true,
+      "subtitle": true,
+      "audioDeskriptif": true
+    },
+    "transcript": [],
+    "pertanyaan": []
+  },
+  {
+    "id": "sess5",
+    "judul": "Sejarah: Peristiwa Proklamasi 1945",
+    "guru": "Bu Sari Dewi",
+    "guruId": "t1",
+    "mataPelajaran": "Sejarah",
+    "tanggal": "2026-04-28",
+    "waktu": "09:00",
+    "durasi": 75,
+    "status": "done",
+    "topik": "Proklamasi Kemerdekaan Indonesia",
+    "deskripsi": "Sesi sejarah membahas peristiwa-peristiwa menjelang dan sesaat setelah proklamasi kemerdekaan Indonesia.",
+    "peserta": ["s1", "s2", "s4", "s5", "s6", "s7", "s8"],
+    "fitur": {
+      "speechToText": true,
+      "subtitle": true,
+      "audioDeskriptif": true
+    },
+    "transcript": [],
+    "pertanyaan": []
+  }
+]
