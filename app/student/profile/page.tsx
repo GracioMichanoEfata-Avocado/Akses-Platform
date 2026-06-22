@@ -62,7 +62,7 @@ export default function ProfilePage() {
     const supabase = createClient();
     await supabase.auth.signOut();
     setLoggedIn(false);
-    setRole(null);
+    setRole('student');
     router.push('/student/login');
   };
 
