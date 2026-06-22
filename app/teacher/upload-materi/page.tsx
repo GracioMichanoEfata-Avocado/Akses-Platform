@@ -268,6 +268,7 @@ export default function UploadMateriPage() {
   const [result, setResult] = useState<AIResult | null>(null);
   const [activeTab, setActiveTab] = useState<TabType>('ringkasan');
   const [toast, setToast] = useState('');
+  const [savedMaterialId, setSavedMaterialId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const PROCESSING_MSGS = [
@@ -301,29 +302,44 @@ export default function UploadMateriPage() {
       setProcessingMsg(PROCESSING_MSGS[msgIdx]);
     }, 1500);
 
-    let text = pastedText;
-    if (file && file.type === 'text/plain') {
-      text = await file.text();
-    } else if (file) {
-      text = file.name;
+    try {
+      const formData = new FormData();
+      if (file) formData.append('file', file);
+      if (pastedText) formData.append('text', pastedText);
+
+      const res = await fetch('/api/generate-materi', {
+        method: 'POST',
+        body: formData,
+      });
+
+      clearInterval(interval);
+      const data = await res.json();
+
+      if (!res.ok) {
+        setStep(1);
+        alert(data.error || 'Gagal memproses materi. Coba lagi.');
+        return;
+      }
+
+      setResult(data.result);
+      setSavedMaterialId(data.materialId || null);
+      setStep(3);
+    } catch {
+      clearInterval(interval);
+      setStep(1);
+      alert('Gagal terhubung ke server. Pastikan koneksi internet stabil.');
     }
-
-    await new Promise((r) => setTimeout(r, 4000));
-    clearInterval(interval);
-
-    const generated = generateMockAI(text || pastedText);
-    setResult(generated);
-    setStep(3);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [file, pastedText]);
 
   const handleSaveLibrary = () => {
     if (!result) return;
-    const existing = JSON.parse(localStorage.getItem('akses-library') || '[]');
-    existing.push({ ...result, savedAt: new Date().toISOString() });
-    localStorage.setItem('akses-library', JSON.stringify(existing));
-    setToast('Materi berhasil disimpan ke Library!');
-    setTimeout(() => setToast(''), 3000);
+    if (savedMaterialId) {
+      setToast('Materi sudah tersimpan ke database! Siswa bisa langsung mengaksesnya.');
+    } else {
+      setToast('Materi sedang diproses, coba refresh halaman materi.');
+    }
+    setTimeout(() => setToast(''), 4000);
   };
 
   const handleReset = () => {
