@@ -1,9 +1,10 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { Upload, X, FileText, File, Plus, Trash2, Play, Square, Sparkles, Check } from 'lucide-react';
+import { Upload, X, FileText, File, Plus, Trash2, Play, Square, Sparkles, Check, Video } from 'lucide-react';
 import TeacherSidebar from '@/components/shared/TeacherSidebar';
 import AccessibilityBar from '@/components/accessibility/AccessibilityBar';
+import { createClient } from '@/lib/supabase/client';
 import { cn } from '@/lib/utils/cn';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -271,6 +272,15 @@ export default function UploadMateriPage() {
   const [savedMaterialId, setSavedMaterialId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // State untuk upload video
+  const [videoFile, setVideoFile] = useState<File | null>(null);
+  const [videoUploading, setVideoUploading] = useState(false);
+  const [videoProgress, setVideoProgress] = useState(0);
+  const [videoUrl, setVideoUrl] = useState<string | null>(null);
+  const [videoTitle, setVideoTitle] = useState('');
+  const [videoSaved, setVideoSaved] = useState(false);
+  const videoInputRef = useRef<HTMLInputElement>(null);
+
   const PROCESSING_MSGS = [
     'Membaca konten materi...',
     'Menganalisis poin penting...',
@@ -348,6 +358,71 @@ export default function UploadMateriPage() {
     setPastedText('');
     setResult(null);
     setActiveTab('ringkasan');
+  };
+
+  const handleUploadVideo = async () => {
+    if (!videoFile || !videoTitle.trim()) return;
+    setVideoUploading(true);
+    setVideoProgress(10);
+
+    try {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { alert('Belum login'); setVideoUploading(false); return; }
+
+      // Upload ke Supabase Storage
+      const ext = videoFile.name.split('.').pop();
+      const fileName = `${user.id}/${Date.now()}.${ext}`;
+      setVideoProgress(30);
+
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('videos')
+        .upload(fileName, videoFile, { cacheControl: '3600', upsert: false });
+
+      if (uploadError) {
+        alert('Gagal upload video: ' + uploadError.message);
+        setVideoUploading(false);
+        return;
+      }
+      setVideoProgress(70);
+
+      // Ambil public URL
+      const { data: urlData } = supabase.storage.from('videos').getPublicUrl(fileName);
+      const publicUrl = urlData.publicUrl;
+      setVideoProgress(85);
+
+      // Simpan ke tabel materials
+      const { data: savedMaterial, error: matError } = await supabase
+        .from('materials')
+        .insert({
+          judul: videoTitle.trim(),
+          mata_pelajaran: 'Video',
+          deskripsi: `Video materi: ${videoTitle.trim()}`,
+          mode: 'visual',
+          thumbnail_color: '#7C3AED',
+          thumbnail_emoji: '🎬',
+          video_url: publicUrl,
+          created_by: user.id,
+        })
+        .select()
+        .single();
+
+      if (matError) {
+        alert('Video terupload tapi gagal disimpan ke database: ' + matError.message);
+        setVideoUploading(false);
+        return;
+      }
+
+      setVideoProgress(100);
+      setVideoUrl(publicUrl);
+      setVideoSaved(true);
+      setVideoUploading(false);
+      setToast(`Video "${videoTitle}" berhasil diupload dan tersimpan! Siswa bisa langsung menonton.`);
+      setTimeout(() => setToast(''), 5000);
+    } catch (err: any) {
+      alert('Error: ' + err.message);
+      setVideoUploading(false);
+    }
   };
 
   // ── Step 1 ─────────────────────────────────────────────────────────────────
@@ -448,6 +523,111 @@ export default function UploadMateriPage() {
               <Sparkles size={18} />
               ✨ Proses dengan AI
             </button>
+
+            {/* ── Section Upload Video ── */}
+            <div className="border-t border-slate-200 pt-5">
+              <div className="flex items-center gap-2 mb-4">
+                <Video size={18} className="text-purple-600" />
+                <h2 className="font-semibold text-slate-900">Upload Video Materi</h2>
+              </div>
+              <p className="text-xs text-slate-500 mb-4">
+                Upload video langsung tanpa perlu diproses AI. Video akan tersimpan dan bisa ditonton siswa kapan saja.
+              </p>
+
+              {videoSaved ? (
+                <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex items-center gap-3">
+                  <div className="w-10 h-10 bg-emerald-500 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <Check size={20} className="text-white" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-emerald-800 text-sm">Video berhasil diupload!</p>
+                    <p className="text-xs text-emerald-600 truncate max-w-xs">{videoTitle}</p>
+                  </div>
+                  <button onClick={() => { setVideoFile(null); setVideoSaved(false); setVideoUrl(null); setVideoTitle(''); setVideoProgress(0); }}
+                    className="ml-auto text-xs text-emerald-600 hover:underline">
+                    Upload lagi
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1.5">Judul Video</label>
+                    <input
+                      type="text"
+                      value={videoTitle}
+                      onChange={e => setVideoTitle(e.target.value)}
+                      placeholder="Contoh: Penjelasan Ekosistem Laut"
+                      className="w-full h-11 px-4 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    />
+                  </div>
+
+                  <div
+                    onClick={() => videoInputRef.current?.click()}
+                    className={cn(
+                      'border-2 border-dashed rounded-xl p-6 flex flex-col items-center cursor-pointer transition-all',
+                      videoFile ? 'border-purple-400 bg-purple-50' : 'border-slate-300 hover:border-purple-400 hover:bg-purple-50/50'
+                    )}
+                  >
+                    {videoFile ? (
+                      <div className="flex items-center gap-3 w-full">
+                        <Video size={28} className="text-purple-600 flex-shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-slate-800 text-sm truncate">{videoFile.name}</p>
+                          <p className="text-xs text-slate-400">{(videoFile.size / 1024 / 1024).toFixed(1)} MB</p>
+                        </div>
+                        <button onClick={e => { e.stopPropagation(); setVideoFile(null); }}
+                          className="p-1.5 rounded-full bg-slate-100 hover:bg-red-100 text-slate-400 hover:text-red-500">
+                          <X size={14} />
+                        </button>
+                      </div>
+                    ) : (
+                      <>
+                        <Video size={28} className="text-slate-400 mb-2" />
+                        <p className="text-sm font-medium text-slate-700">Klik untuk pilih video</p>
+                        <p className="text-xs text-slate-400 mt-1">MP4, MOV, AVI — Maks 500MB</p>
+                      </>
+                    )}
+                  </div>
+                  <input
+                    ref={videoInputRef}
+                    type="file"
+                    accept="video/*"
+                    onChange={e => { const f = e.target.files?.[0]; if (f) setVideoFile(f); }}
+                    className="sr-only"
+                  />
+
+                  {videoUploading && (
+                    <div>
+                      <div className="flex justify-between text-xs text-slate-500 mb-1">
+                        <span>Mengupload video...</span>
+                        <span>{videoProgress}%</span>
+                      </div>
+                      <div className="w-full bg-slate-100 rounded-full h-2">
+                        <div className="bg-purple-600 h-2 rounded-full transition-all duration-300"
+                          style={{ width: `${videoProgress}%` }} />
+                      </div>
+                    </div>
+                  )}
+
+                  <button
+                    onClick={handleUploadVideo}
+                    disabled={!videoFile || !videoTitle.trim() || videoUploading}
+                    className={cn(
+                      'w-full h-11 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-all',
+                      videoFile && videoTitle.trim() && !videoUploading
+                        ? 'bg-purple-700 text-white hover:bg-purple-600'
+                        : 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                    )}
+                  >
+                    {videoUploading ? (
+                      <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />Mengupload...</>
+                    ) : (
+                      <><Video size={15} />Upload Video</>
+                    )}
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </main>
         <AccessibilityBar />

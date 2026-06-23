@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Play, Pause, Volume2, VolumeX, Eye, Ear, ChevronDown, ChevronUp, CheckCircle, Circle, Users, BookOpen } from 'lucide-react';
+import { ArrowLeft, Play, Pause, Volume2, VolumeX, Eye, Ear, ChevronDown, ChevronUp, CheckCircle, Circle, Users, BookOpen, Maximize } from 'lucide-react';
 import StudentBottomNav from '@/components/shared/StudentBottomNav';
 import StudentSidebar from '@/components/shared/StudentSidebar';
 import AccessibilityBar from '@/components/accessibility/AccessibilityBar';
@@ -31,6 +31,7 @@ interface MaterialDetail {
   thumbnail_color: string;
   thumbnail_emoji: string;
   transkrip: string;
+  video_url: string | null;
   langkah: Langkah[];
 }
 
@@ -47,6 +48,13 @@ export default function MaterialDetailPage({ params }: { params: { id: string } 
   const [highlightedWord, setHighlightedWord] = useState(-1);
   const ttsWordsRef = useRef<string[]>([]);
   const wordTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Video player state
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const videoContainerRef = useRef<HTMLDivElement>(null);
+  const [videoPlaying, setVideoPlaying] = useState(false);
+  const [videoMuted, setVideoMuted] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   useEffect(() => {
     const supabase = createClient();
@@ -100,6 +108,7 @@ export default function MaterialDetailPage({ params }: { params: { id: string } 
         thumbnail_color: materialData.thumbnail_color,
         thumbnail_emoji: materialData.thumbnail_emoji,
         transkrip: materialData.transkrip || '',
+        video_url: materialData.video_url || null,
         langkah: (stepsData || []).map((s) => ({
           id: s.id,
           urutan: s.urutan,
@@ -118,6 +127,34 @@ export default function MaterialDetailPage({ params }: { params: { id: string } 
       if (wordTimerRef.current) clearInterval(wordTimerRef.current);
     };
   }, [id]);
+
+  const toggleVideo = () => {
+    if (!videoRef.current) return;
+    if (videoPlaying) {
+      videoRef.current.pause();
+      setVideoPlaying(false);
+    } else {
+      videoRef.current.play();
+      setVideoPlaying(true);
+    }
+  };
+
+  const toggleMute = () => {
+    if (!videoRef.current) return;
+    videoRef.current.muted = !videoMuted;
+    setVideoMuted(!videoMuted);
+  };
+
+  const toggleFullscreen = () => {
+    if (!videoContainerRef.current) return;
+    if (!document.fullscreenElement) {
+      videoContainerRef.current.requestFullscreen();
+      setIsFullscreen(true);
+    } else {
+      document.exitFullscreen();
+      setIsFullscreen(false);
+    }
+  };
 
   if (loadingMaterial) {
     return (
@@ -247,15 +284,74 @@ export default function MaterialDetailPage({ params }: { params: { id: string } 
           </div>
 
           {/* Player Area */}
-          <div
-            className="relative rounded-2xl overflow-hidden shadow-sm"
-            style={{ backgroundColor: material.thumbnail_color + '20', minHeight: '180px' }}
-            role="region"
-            aria-label="Area player materi"
-          >
-            <div className="flex items-center justify-center h-44 text-6xl">
-              {material.thumbnail_emoji}
+          {(material as any).video_url ? (
+            // ── VIDEO PLAYER ──
+            <div
+              ref={videoContainerRef}
+              className="relative rounded-2xl overflow-hidden shadow-sm bg-black group"
+              style={{ minHeight: '220px' }}
+            >
+              <video
+                ref={videoRef}
+                src={(material as any).video_url}
+                className="w-full max-h-[60vh] object-contain"
+                onPlay={() => setVideoPlaying(true)}
+                onPause={() => setVideoPlaying(false)}
+                onEnded={() => setVideoPlaying(false)}
+                playsInline
+              />
+              {/* Custom Controls */}
+              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent px-4 py-3 flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                <button
+                  onClick={toggleVideo}
+                  className="w-9 h-9 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center text-white hover:bg-white/30 transition-colors"
+                  aria-label={videoPlaying ? 'Pause video' : 'Play video'}
+                >
+                  {videoPlaying
+                    ? <Pause size={16} />
+                    : <Play size={16} className="ml-0.5" />
+                  }
+                </button>
+                <button
+                  onClick={toggleMute}
+                  className="w-9 h-9 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center text-white hover:bg-white/30 transition-colors"
+                  aria-label={videoMuted ? 'Unmute' : 'Mute'}
+                >
+                  {videoMuted ? <VolumeX size={16} /> : <Volume2 size={16} />}
+                </button>
+                <div className="flex-1" />
+                <button
+                  onClick={toggleFullscreen}
+                  className="w-9 h-9 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center text-white hover:bg-white/30 transition-colors"
+                  aria-label="Fullscreen"
+                >
+                  <Maximize size={16} />
+                </button>
+              </div>
+              {/* Play button overlay saat belum play */}
+              {!videoPlaying && (
+                <button
+                  onClick={toggleVideo}
+                  className="absolute inset-0 flex items-center justify-center"
+                  aria-label="Putar video"
+                >
+                  <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-white/30 transition-colors">
+                    <Play size={28} className="text-white ml-1" />
+                  </div>
+                </button>
+              )}
             </div>
+          ) : (
+            // ── PLAYER EMOJI (materi tanpa video) ──
+            <div
+              className="relative rounded-2xl overflow-hidden shadow-sm"
+              style={{ backgroundColor: material.thumbnail_color + '20', minHeight: '180px' }}
+              role="region"
+              aria-label="Area player materi"
+            >
+              <div className="flex items-center justify-center h-44 text-6xl">
+                {material.thumbnail_emoji}
+              </div>
 
             {/* Play overlay */}
             <div className="absolute inset-0 flex items-end justify-between p-4">
@@ -284,6 +380,7 @@ export default function MaterialDetailPage({ params }: { params: { id: string } 
               </button>
             </div>
           </div>
+          )}
 
           {/* Transkrip/Deskripsi dengan TTS Highlight */}
           <Card className="border-0 shadow-sm">

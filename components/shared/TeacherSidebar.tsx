@@ -2,12 +2,13 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Users, UserPlus, PlusCircle, Zap, BarChart2, GraduationCap, Sparkles } from 'lucide-react';
+import { Home, Users, UserPlus, PlusCircle, Zap, BarChart2, GraduationCap, Sparkles, BookOpen } from 'lucide-react';
 import { cn } from '@/lib/utils/cn';
 
 const navItems = [
   { href: '/teacher/dashboard', label: 'Dashboard', icon: Home },
   { href: '/teacher/students', label: 'Siswa Saya', icon: Users },
+  { href: '/teacher/materials', label: 'Kelola Materi', icon: BookOpen },
   { href: '/teacher/upload-materi', label: 'Upload Materi AI', icon: Sparkles },
   { href: '/teacher/create-session', label: 'Buat Sesi', icon: PlusCircle },
   { href: '/teacher/actions', label: 'Aksi Aktual', icon: Zap },
