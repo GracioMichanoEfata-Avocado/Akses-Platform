@@ -2,10 +2,11 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Eye, EyeOff, GraduationCap, Volume2, Subtitles, ZoomIn, ArrowRight, Check } from 'lucide-react';
+import { Eye, EyeOff, GraduationCap, Volume2, Subtitles, ZoomIn, ArrowRight, Check, AlertCircle } from 'lucide-react';
 import { useAccessibilityStore, DisabilitasMode, FontSize } from '@/lib/store/accessibility-store';
 import { useRoleStore } from '@/lib/store/role-store';
 import { cn } from '@/lib/utils/cn';
+import { createClient } from '@/lib/supabase/client';
 
 type Step = 'login' | 'setup';
 
@@ -29,19 +30,58 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const { mode, setMode, fontSize, setFontSize, highContrast, setHighContrast, ttsEnabled, setTtsEnabled, setSetupDone } = useAccessibilityStore();
-  const { setLoggedIn, setRole } = useRoleStore();
+  const { setLoggedIn, setRole, setStudentId } = useRoleStore();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
     setLoading(true);
-    await new Promise((r) => setTimeout(r, 800));
+
+    const supabase = createClient();
+    const { data, error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+
+    if (signInError || !data.user) {
+      setLoading(false);
+      setError('Email atau kata sandi salah. Coba lagi.');
+      return;
+    }
+
+    // Pastikan akun ini memang akun siswa, bukan akun guru
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', data.user.id)
+      .single();
+
+    if (!profile || profile.role !== 'student') {
+      await supabase.auth.signOut();
+      setLoading(false);
+      setError('Akun ini bukan akun siswa. Gunakan halaman login pendamping.');
+      return;
+    }
+
+    setStudentId(data.user.id);
     setLoading(false);
     setStep('setup');
   };
 
-  const handleSaveSetup = () => {
+  const handleSaveSetup = async () => {
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (user) {
+      await supabase.from('accessibility_settings').upsert({
+        id: user.id,
+        font_size: fontSize,
+        high_contrast: highContrast,
+        tts_enabled: ttsEnabled,
+        subtitle_enabled: true,
+      });
+    }
+
     setSetupDone(true);
     setLoggedIn(true);
     setRole('student');
@@ -246,6 +286,16 @@ export default function LoginPage() {
           <p className="text-slate-500 text-sm mb-6">Selamat datang kembali di platform inklusif kami</p>
 
           <form onSubmit={handleLogin} className="space-y-4" aria-label="Form login">
+            {error && (
+              <div
+                role="alert"
+                className="flex items-start gap-2 p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm"
+              >
+                <AlertCircle size={16} className="mt-0.5 shrink-0" />
+                <span>{error}</span>
+              </div>
+            )}
+
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-slate-700 mb-1.5">
                 Email
@@ -313,11 +363,11 @@ export default function LoginPage() {
 
             <button
               type="button"
-              onClick={() => { setEmail('alex@akses.id'); setPassword('demo'); }}
+              onClick={() => { setEmail('alex@akses.id'); setPassword('demo1234'); }}
               className="w-full h-11 border-2 border-blue-200 text-blue-700 rounded-xl font-medium text-sm hover:bg-blue-50 transition-colors"
-              aria-label="Masuk dengan akun demo"
+              aria-label="Isi form dengan akun demo"
             >
-              Masuk dengan Akun Demo
+              Isi dengan Akun Demo
             </button>
           </form>
         </div>

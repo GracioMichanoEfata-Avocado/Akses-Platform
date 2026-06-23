@@ -2,24 +2,51 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Eye, EyeOff, Users, ArrowLeft } from 'lucide-react';
+import { Eye, EyeOff, Users, ArrowLeft, AlertCircle } from 'lucide-react';
 import { useRoleStore } from '@/lib/store/role-store';
+import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
 
 export default function TeacherLoginPage() {
   const router = useRouter();
-  const { setLoggedIn, setRole } = useRoleStore();
+  const { setLoggedIn, setRole, setTeacherId } = useRoleStore();
   const [email, setEmail] = useState('guru@akses.id');
   const [password, setPassword] = useState('');
   const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
     setLoading(true);
-    await new Promise((r) => setTimeout(r, 800));
+
+    const supabase = createClient();
+    const { data, error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+
+    if (signInError || !data.user) {
+      setLoading(false);
+      setError('Email atau kata sandi salah. Coba lagi.');
+      return;
+    }
+
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', data.user.id)
+      .single();
+
+    if (!profile || profile.role !== 'teacher') {
+      await supabase.auth.signOut();
+      setLoading(false);
+      setError('Akun ini bukan akun pendamping/guru. Gunakan halaman login siswa.');
+      return;
+    }
+
+    setTeacherId(data.user.id);
     setRole('teacher');
     setLoggedIn(true);
+    setLoading(false);
     router.push('/teacher/dashboard');
   };
 
@@ -51,6 +78,16 @@ export default function TeacherLoginPage() {
           <p className="text-slate-500 text-sm mb-6">Kelola siswa dan upload materi pembelajaran</p>
 
           <form onSubmit={handleLogin} className="space-y-4" aria-label="Form login pendamping">
+            {error && (
+              <div
+                role="alert"
+                className="flex items-start gap-2 p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm"
+              >
+                <AlertCircle size={16} className="mt-0.5 shrink-0" />
+                <span>{error}</span>
+              </div>
+            )}
+
             <div>
               <label htmlFor="teacher-email" className="block text-sm font-medium text-slate-700 mb-1.5">
                 Email
