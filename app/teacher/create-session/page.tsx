@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { PlusCircle, Calendar, Clock, Check, Upload, Eye, X, AlertCircle } from 'lucide-react';
+import { PlusCircle, Calendar, Clock, Check, AlertCircle } from 'lucide-react';
 import TeacherSidebar from '@/components/shared/TeacherSidebar';
 import AccessibilityBar from '@/components/accessibility/AccessibilityBar';
 import { Card, CardContent } from '@/components/ui/card';
@@ -24,6 +24,17 @@ export default function CreateSessionPage() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [teacherNama, setTeacherNama] = useState('Pendamping');
+
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) {
+        supabase.from('profiles').select('nama').eq('id', user.id).single()
+          .then(({ data }) => { if (data) setTeacherNama(data.nama); });
+      }
+    });
+  }, []);
 
   const handleSave = async () => {
     if (!judul.trim()) return;
@@ -58,6 +69,30 @@ export default function CreateSessionPage() {
       setSaving(false);
       return;
     }
+
+    // Kirim notifikasi ke semua siswa
+    await fetch('/api/send-notification', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        judul: 'Sesi Live Baru Dijadwalkan!',
+        isi: `${teacherNama} menjadwalkan kelas "${judul.trim()}" pada ${tanggal} pukul ${waktu} WIB.`,
+        tipe: 'sesi_baru',
+        link: '/student/live',
+      }),
+    });
+
+    // Kirim notifikasi ke semua siswa
+    await fetch('/api/notify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        judul: 'Kelas Live Baru Dijadwalkan!',
+        isi: `${judul} — ${tanggal} pukul ${waktu} WIB`,
+        tipe: 'sesi_baru',
+        link: '/student/live',
+      }),
+    });
 
     setSaved(true);
     setTimeout(() => router.push('/teacher/dashboard'), 1500);

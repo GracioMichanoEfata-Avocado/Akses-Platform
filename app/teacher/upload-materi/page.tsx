@@ -334,6 +334,20 @@ export default function UploadMateriPage() {
       setResult(data.result);
       setSavedMaterialId(data.materialId || null);
       setStep(3);
+
+      // Kirim notifikasi ke semua siswa kalau materi tersimpan
+      if (data.saved && data.materialId) {
+        await fetch('/api/send-notification', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            judul: 'Materi Baru Tersedia!',
+            isi: `Materi baru "${data.result.judul}" telah ditambahkan. Yuk pelajari sekarang!`,
+            tipe: 'materi_baru',
+            link: `/student/learn/${data.materialId}`,
+          }),
+        });
+      }
     } catch {
       clearInterval(interval);
       setStep(1);

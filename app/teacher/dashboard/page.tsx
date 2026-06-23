@@ -157,6 +157,10 @@ export default function TeacherDashboard() {
             <p className="text-emerald-100 text-sm mb-4">
               {stats?.mata_pelajaran?.length ? stats.mata_pelajaran.join(' & ') : 'Pendamping AKSES'}
             </p>
+            <Link href="/teacher/profile/edit"
+              className="inline-flex items-center gap-1.5 text-xs bg-white/20 text-white px-3 py-1.5 rounded-xl hover:bg-white/30 transition-colors mb-4">
+              ✏️ Edit Profil
+            </Link>
             <div className="grid grid-cols-3 gap-3">
               {[
                 { label: 'Total Siswa', value: stats?.totalSiswa ?? 0, icon: '👥' },
