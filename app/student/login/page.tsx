@@ -85,6 +85,21 @@ export default function LoginPage() {
     setSetupDone(true);
     setLoggedIn(true);
     setRole('student');
+
+    // Welcome talkback untuk tunanetra
+    const isTunanetra = mode === 'tunanetra' || mode === 'both';
+    if (isTunanetra && typeof window !== 'undefined' && window.speechSynthesis) {
+      const welcomeText = `Halo! Selamat datang di AKSES, platform belajar inklusif. Saya akan memandu Anda. Menu yang tersedia adalah: Beranda, Belajar, Kelas Live, Notifikasi, dan Profil. Ucapkan nama menu untuk berpindah halaman, atau ketuk tombol mikrofon di pojok kanan bawah layar untuk mengaktifkan navigasi suara.`;
+      const utterance = new SpeechSynthesisUtterance(welcomeText);
+      utterance.lang = 'id-ID';
+      utterance.rate = 0.9;
+      const voices = window.speechSynthesis.getVoices();
+      const idVoice = voices.find(v => v.lang.startsWith('id'));
+      if (idVoice) utterance.voice = idVoice;
+      window.speechSynthesis.cancel();
+      setTimeout(() => window.speechSynthesis.speak(utterance), 500);
+    }
+
     router.push('/student/dashboard');
   };
 
