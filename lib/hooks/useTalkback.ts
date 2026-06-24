@@ -1,7 +1,17 @@
-import { useEffect, useCallback } from 'react';
+import { useEffect } from 'react';
 import { useAccessibilityStore } from '@/lib/store/accessibility-store';
 
-let currentUtterance: SpeechSynthesisUtterance | null = null;
+// State global untuk track apakah TTS lagi ngomong
+let isSpeakingGlobal = false;
+let onSpeakEnd: (() => void) | null = null;
+
+export function isTTSSpeaking() {
+  return isSpeakingGlobal;
+}
+
+export function onTTSEnd(cb: () => void) {
+  onSpeakEnd = cb;
+}
 
 export function speak(text: string, priority: 'normal' | 'interrupt' = 'normal') {
   if (typeof window === 'undefined') return;
@@ -9,6 +19,8 @@ export function speak(text: string, priority: 'normal' | 'interrupt' = 'normal')
 
   if (priority === 'interrupt') {
     window.speechSynthesis.cancel();
+  } else if (isSpeakingGlobal) {
+    return; // Jangan interrupt kalau priority normal
   }
 
   const utterance = new SpeechSynthesisUtterance(text);
@@ -22,13 +34,25 @@ export function speak(text: string, priority: 'normal' | 'interrupt' = 'normal')
   const idVoice = voices.find(v => v.lang.startsWith('id'));
   if (idVoice) utterance.voice = idVoice;
 
-  currentUtterance = utterance;
+  utterance.onstart = () => { isSpeakingGlobal = true; };
+  utterance.onend = () => {
+    isSpeakingGlobal = false;
+    onSpeakEnd?.();
+    onSpeakEnd = null;
+  };
+  utterance.onerror = () => {
+    isSpeakingGlobal = false;
+    onSpeakEnd?.();
+    onSpeakEnd = null;
+  };
+
   window.speechSynthesis.speak(utterance);
 }
 
 export function stopSpeaking() {
   if (typeof window !== 'undefined') {
     window.speechSynthesis?.cancel();
+    isSpeakingGlobal = false;
   }
 }
 
@@ -41,7 +65,6 @@ export function useTalkback(narasiHalaman: string, deps: any[] = []) {
     if (!isTunanetra && !ttsEnabled) return;
     if (!narasiHalaman) return;
 
-    // Delay sedikit biar halaman selesai render
     const timer = setTimeout(() => {
       speak(narasiHalaman, 'interrupt');
     }, 600);
