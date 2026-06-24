@@ -290,7 +290,7 @@ export default function ProfilePage() {
                       </button>
                     ))}
                   </div>
-                  <p className="text-xs text-slate-400">Klik "Simpan Perubahan" di tab Edit Profil untuk menyimpan pilihan ini.</p>
+                  <p className="text-xs text-slate-400">Klik &quot;Simpan Perubahan&quot; di tab Edit Profil untuk menyimpan pilihan ini.</p>
                 </CardContent>
               </Card>
             </TabsContent>

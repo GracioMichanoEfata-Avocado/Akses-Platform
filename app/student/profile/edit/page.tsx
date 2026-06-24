@@ -50,6 +50,7 @@ export default function EditStudentProfilePage() {
       setLoading(false);
     }
     load();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleSave = async () => {

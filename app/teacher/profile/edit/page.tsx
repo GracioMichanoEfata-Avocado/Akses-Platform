@@ -36,6 +36,7 @@ export default function EditTeacherProfilePage() {
       setLoading(false);
     }
     load();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const toggleMapel = (m: string) => {

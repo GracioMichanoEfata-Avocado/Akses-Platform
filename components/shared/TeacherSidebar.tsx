@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Users, UserPlus, PlusCircle, Zap, BarChart2, GraduationCap, Sparkles, BookOpen } from 'lucide-react';
+import { Home, Users, UserPlus, PlusCircle, Zap, BarChart2, GraduationCap, Sparkles, BookOpen, UserCircle } from 'lucide-react';
 import { cn } from '@/lib/utils/cn';
 
 const navItems = [
@@ -14,6 +14,7 @@ const navItems = [
   { href: '/teacher/actions', label: 'Aksi Aktual', icon: Zap },
   { href: '/teacher/report', label: 'Laporan', icon: BarChart2 },
   { href: '/teacher/onboarding', label: 'Onboarding', icon: UserPlus },
+  { href: '/teacher/profile', label: 'Profil Saya', icon: UserCircle },
 ];
 
 export default function TeacherSidebar() {
