@@ -1,138 +1,127 @@
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback, RefObject } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAccessibilityStore } from '@/lib/store/accessibility-store';
 import { speak, isTTSSpeaking, onTTSEnd } from './useTalkback';
 import { createClient } from '@/lib/supabase/client';
+import type { PageVoiceCommand } from '@/components/accessibility/TalkbackProvider';
 
-interface DynamicCommand {
-  keywords: string[];
-  route: string;
-  konfirmasi: string;
-}
-
-// Perintah navigasi menu utama
-const STATIC_COMMANDS: DynamicCommand[] = [
+const STATIC_COMMANDS = [
   { keywords: ['beranda', 'dashboard', 'home', 'utama', 'awal'], route: '/student/dashboard', konfirmasi: 'Membuka beranda.' },
-  { keywords: ['belajar', 'materi', 'pelajaran', 'katalog', 'daftar materi'], route: '/student/learn', konfirmasi: 'Membuka halaman materi belajar.' },
-  { keywords: ['live', 'kelas live', 'kelas', 'langsung', 'siaran'], route: '/student/live', konfirmasi: 'Membuka kelas live.' },
+  { keywords: ['belajar', 'materi', 'pelajaran', 'katalog', 'daftar materi'], route: '/student/learn', konfirmasi: 'Membuka halaman materi.' },
+  { keywords: ['live', 'kelas live', 'kelas', 'langsung'], route: '/student/live', konfirmasi: 'Membuka kelas live.' },
   { keywords: ['notifikasi', 'pemberitahuan', 'notif'], route: '/student/notifications', konfirmasi: 'Membuka notifikasi.' },
-  { keywords: ['profil', 'akun', 'pengaturan'], route: '/student/profile', konfirmasi: 'Membuka profil saya.' },
+  { keywords: ['profil', 'akun', 'pengaturan'], route: '/student/profile', konfirmasi: 'Membuka profil.' },
 ];
 
-// Cache materi supaya ga fetch ulang tiap render
-let materialCommandsCache: DynamicCommand[] = [];
-let lastFetchTime = 0;
+let materialCache: { keywords: string[]; route: string; konfirmasi: string }[] = [];
+let lastFetch = 0;
 
-async function fetchMaterialCommands(): Promise<DynamicCommand[]> {
-  // Cache selama 5 menit
-  if (Date.now() - lastFetchTime < 5 * 60 * 1000 && materialCommandsCache.length > 0) {
-    return materialCommandsCache;
-  }
-
+async function fetchMaterials() {
+  if (Date.now() - lastFetch < 5 * 60 * 1000 && materialCache.length > 0) return materialCache;
   try {
     const supabase = createClient();
-    const { data } = await supabase
-      .from('materials')
-      .select('id, judul, mata_pelajaran')
-      .order('created_at', { ascending: false });
-
-    materialCommandsCache = (data || []).map(m => ({
+    const { data } = await supabase.from('materials').select('id, judul, mata_pelajaran');
+    materialCache = (data || []).map(m => ({
       keywords: [
         m.judul.toLowerCase(),
-        // Kata pertama dari judul saja (misal "Ekosistem" dari "Ekosistem Laut")
         m.judul.split(':')[0].trim().toLowerCase(),
         m.judul.split(' ')[0].toLowerCase(),
         m.mata_pelajaran.toLowerCase(),
-      ].filter((k, i, arr) => arr.indexOf(k) === i), // deduplicate
+      ].filter((k, i, arr) => k.length > 2 && arr.indexOf(k) === i),
       route: `/student/learn/${m.id}`,
       konfirmasi: `Membuka materi ${m.judul}.`,
     }));
-
-    lastFetchTime = Date.now();
-    return materialCommandsCache;
-  } catch {
-    return [];
-  }
+    lastFetch = Date.now();
+    return materialCache;
+  } catch { return []; }
 }
 
-export function useVoiceNavigation(aktif: boolean) {
+export function useVoiceNavigation(
+  aktif: boolean,
+  pageCommandsRef: RefObject<PageVoiceCommand[]>
+) {
   const router = useRouter();
   const recognitionRef = useRef<any>(null);
   const isListeningRef = useRef(false);
-  const cooldownRef = useRef(false); // Cegah double-trigger
-
-  const pauseWhileSpeaking = useCallback((cb: () => void) => {
-    if (isTTSSpeaking()) {
-      // Tunggu TTS selesai dulu baru jalankan
-      onTTSEnd(cb);
-    } else {
-      cb();
-    }
-  }, []);
+  const cooldownRef = useRef(false);
 
   const processCommand = useCallback(async (transcript: string) => {
-    if (cooldownRef.current) return; // Masih cooldown, skip
+    if (cooldownRef.current) return;
     const lower = transcript.toLowerCase().trim();
 
-    // Perintah stop
+    // Stop
     if (['stop', 'berhenti', 'diam', 'hentikan'].some(k => lower.includes(k))) {
       speak('Navigasi suara dihentikan.', 'interrupt');
-      stopRecognition();
+      cooldownRef.current = true;
+      isListeningRef.current = false;
+      recognitionRef.current?.stop();
       return;
     }
 
-    // Perintah bantuan
-    if (['bantuan', 'help', 'apa saja', 'menu apa', 'perintah'].some(k => lower.includes(k))) {
-      speak('Ucapkan nama menu: Beranda, Belajar, Kelas Live, Notifikasi, Profil. Atau ucapkan nama materi langsung untuk membukanya.', 'interrupt');
+    // Bantuan
+    if (['bantuan', 'help', 'apa saja', 'perintah'].some(k => lower.includes(k))) {
+      const pageCmds = pageCommandsRef.current || [];
+      const pageHelp = pageCmds.length > 0
+        ? ` Di halaman ini tersedia: ${pageCmds.map(c => c.label).join(', ')}.`
+        : '';
+      speak(`Ucapkan nama menu: Beranda, Belajar, Kelas Live, Notifikasi, Profil.${pageHelp} Atau ucapkan nama materi langsung.`, 'interrupt');
       return;
     }
 
-    // Cek perintah menu utama dulu
+    // ── 1. Perintah halaman aktif (tombol, aksi) ──
+    const pageCmds = pageCommandsRef.current || [];
+    for (const cmd of pageCmds) {
+      if (cmd.keywords.some(k => lower.includes(k.toLowerCase()))) {
+        cooldownRef.current = true;
+        speak(`${cmd.label}.`, 'interrupt');
+        setTimeout(() => {
+          cmd.action();
+          setTimeout(() => { cooldownRef.current = false; }, 2000);
+        }, 600);
+        return;
+      }
+    }
+
+    // ── 2. Navigasi menu utama ──
     for (const cmd of STATIC_COMMANDS) {
       if (cmd.keywords.some(k => lower.includes(k))) {
         cooldownRef.current = true;
         speak(cmd.konfirmasi, 'interrupt');
         setTimeout(() => {
           router.push(cmd.route);
-          // Reset cooldown setelah navigasi + delay
           setTimeout(() => { cooldownRef.current = false; }, 3000);
         }, 800);
         return;
       }
     }
 
-    // Cek perintah materi dinamis
-    const materialCmds = await fetchMaterialCommands();
-    for (const cmd of materialCmds) {
-      if (cmd.keywords.some(k => k.length > 2 && lower.includes(k))) {
+    // ── 3. Materi dari database ──
+    const mats = await fetchMaterials();
+    for (const mat of mats) {
+      if (mat.keywords.some(k => lower.includes(k))) {
         cooldownRef.current = true;
-        speak(cmd.konfirmasi, 'interrupt');
+        speak(mat.konfirmasi, 'interrupt');
         setTimeout(() => {
-          router.push(cmd.route);
+          router.push(mat.route);
           setTimeout(() => { cooldownRef.current = false; }, 3000);
         }, 800);
         return;
       }
     }
+  }, [router, pageCommandsRef]);
 
-  }, [router]);
-
-  const startRecognition = useCallback(() => {
+  const start = useCallback(() => {
     if (typeof window === 'undefined') return;
     const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SR || isListeningRef.current) return;
 
-    const recognition = new SR();
-    recognition.lang = 'id-ID';
-    recognition.continuous = true;
-    recognition.interimResults = false;
-    recognition.maxAlternatives = 3;
+    const rec = new SR();
+    rec.lang = 'id-ID';
+    rec.continuous = true;
+    rec.interimResults = false;
+    rec.maxAlternatives = 3;
 
-    recognition.onresult = (event: any) => {
-      // KUNCI: Jangan proses kalau TTS lagi ngomong (cegah feedback loop)
-      if (isTTSSpeaking()) return;
-      if (cooldownRef.current) return;
-
+    rec.onresult = (event: any) => {
+      if (isTTSSpeaking() || cooldownRef.current) return;
       for (let i = event.resultIndex; i < event.results.length; i++) {
         if (event.results[i].isFinal) {
           processCommand(event.results[i][0].transcript);
@@ -140,35 +129,29 @@ export function useVoiceNavigation(aktif: boolean) {
       }
     };
 
-    recognition.onerror = (e: any) => {
+    rec.onerror = (e: any) => {
       if (e.error === 'not-allowed') {
         speak('Izin mikrofon ditolak. Aktifkan mikrofon di pengaturan browser.', 'interrupt');
         isListeningRef.current = false;
       }
     };
 
-    recognition.onend = () => {
-      if (isListeningRef.current) {
-        // Restart setelah TTS selesai ngomong (bukan langsung)
-        pauseWhileSpeaking(() => {
-          setTimeout(() => {
-            if (isListeningRef.current) {
-              try { recognition.start(); } catch {}
-            }
-          }, 500);
-        });
+    rec.onend = () => {
+      if (!isListeningRef.current) return;
+      if (isTTSSpeaking()) {
+        onTTSEnd(() => setTimeout(() => { if (isListeningRef.current) { try { rec.start(); } catch {} } }, 300));
+      } else {
+        setTimeout(() => { if (isListeningRef.current) { try { rec.start(); } catch {} } }, 300);
       }
     };
 
-    recognition.start();
-    recognitionRef.current = recognition;
+    rec.start();
+    recognitionRef.current = rec;
     isListeningRef.current = true;
+    fetchMaterials(); // pre-fetch
+  }, [processCommand]);
 
-    // Pre-fetch materi supaya siap dipakai
-    fetchMaterialCommands();
-  }, [processCommand, pauseWhileSpeaking]);
-
-  const stopRecognition = useCallback(() => {
+  const stop = useCallback(() => {
     isListeningRef.current = false;
     cooldownRef.current = false;
     recognitionRef.current?.stop();
@@ -176,13 +159,10 @@ export function useVoiceNavigation(aktif: boolean) {
   }, []);
 
   useEffect(() => {
-    if (aktif) {
-      startRecognition();
-    } else {
-      stopRecognition();
-    }
-    return () => stopRecognition();
-  }, [aktif, startRecognition, stopRecognition]);
+    if (aktif) start();
+    else stop();
+    return () => stop();
+  }, [aktif, start, stop]);
 
-  return { startRecognition, stopRecognition };
+  return { start, stop };
 }

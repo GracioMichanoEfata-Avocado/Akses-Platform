@@ -1,32 +1,43 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState, useRef } from 'react';
+import { createContext, useContext, useEffect, useState, useRef, useCallback } from 'react';
 import { usePathname } from 'next/navigation';
 import { useAccessibilityStore } from '@/lib/store/accessibility-store';
-import { speak, stopSpeaking } from '@/lib/hooks/useTalkback';
+import { speak, stopSpeaking, isTTSSpeaking, onTTSEnd } from '@/lib/hooks/useTalkback';
 import { useVoiceNavigation } from '@/lib/hooks/useVoiceNavigation';
-import { Mic, MicOff, Volume2, VolumeX } from 'lucide-react';
+import { Mic, MicOff, VolumeX, HelpCircle } from 'lucide-react';
 
-// Narasi per halaman
+// ─── Narasi otomatis per halaman ──────────────────────────────────────────
 const PAGE_NARASI: Record<string, string> = {
-  '/student/dashboard': 'Beranda. Selamat datang di AKSES. Halaman ini menampilkan jadwal kelas, progress belajar, dan materi terbaru. Ucapkan nama menu untuk navigasi.',
-  '/student/learn': 'Halaman Materi Belajar. Di sini tersedia daftar materi pelajaran. Anda dapat menelusuri dan memilih materi yang ingin dipelajari.',
-  '/student/live': 'Halaman Kelas Live. Di sini Anda dapat bergabung ke kelas yang sedang berlangsung secara langsung.',
-  '/student/notifications': 'Halaman Notifikasi. Di sini ditampilkan pemberitahuan terbaru dari guru dan sistem.',
-  '/student/profile': 'Halaman Profil. Di sini Anda dapat melihat dan mengubah pengaturan aksesibilitas dan data diri.',
+  '/student/dashboard': 'Beranda. Halaman ini menampilkan jadwal kelas dan materi terbaru. Ucapkan nama menu atau nama materi untuk membukanya.',
+  '/student/learn': 'Katalog Materi. Tersedia daftar materi belajar. Ucapkan nama materi yang ingin dibuka.',
+  '/student/live': 'Kelas Live. Ucapkan "bergabung" untuk masuk ke kelas, atau "kembali" untuk ke beranda.',
+  '/student/notifications': 'Notifikasi. Ucapkan "tandai semua dibaca" atau "kembali" untuk kembali.',
+  '/student/profile': 'Profil Saya. Ucapkan "edit profil", "aksesibilitas", atau "keluar" untuk navigasi.',
 };
 
+// ─── Interface untuk perintah per halaman ────────────────────────────────
+export interface PageVoiceCommand {
+  keywords: string[];
+  label: string;      // Label yang dibacakan TTS saat bantuan
+  action: () => void; // Fungsi yang dijalankan
+}
+
 interface TalkbackContextType {
-  isTalkbackAktif: boolean;
+  isAktif: boolean;
   isVoiceNavAktif: boolean;
   toggleVoiceNav: () => void;
+  registerPageCommands: (commands: PageVoiceCommand[]) => void;
+  clearPageCommands: () => void;
   speakText: (text: string) => void;
 }
 
 const TalkbackContext = createContext<TalkbackContextType>({
-  isTalkbackAktif: false,
+  isAktif: false,
   isVoiceNavAktif: false,
   toggleVoiceNav: () => {},
+  registerPageCommands: () => {},
+  clearPageCommands: () => {},
   speakText: () => {},
 });
 
@@ -36,118 +47,145 @@ export function useTalkbackContext() {
 
 export default function TalkbackProvider({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { mode, ttsEnabled } = useAccessibilityStore();
-  const isTunanetra = mode === 'tunanetra' || mode === 'both';
-  const isTalkbackAktif = isTunanetra || ttsEnabled;
+  const { mode } = useAccessibilityStore();
 
+  // HANYA aktif kalau mode tunanetra atau keduanya
+  const isAktif = mode === 'tunanetra' || mode === 'both';
+
+  // Toggle voice nav — pakai ref supaya tidak di-reset saat re-render/pindah halaman
+  const voiceNavUserChoiceRef = useRef<boolean | null>(null); // null = belum pernah dipilih user
   const [isVoiceNavAktif, setIsVoiceNavAktif] = useState(false);
-  const prevPathRef = useRef('');
 
-  // Auto voice nav kalau tunanetra
+  // Perintah suara dari halaman aktif
+  const pageCommandsRef = useRef<PageVoiceCommand[]>([]);
+  const [showHelp, setShowHelp] = useState(false);
+
+  // Set voice nav ON otomatis saat mode tunanetra aktif (hanya jika user belum pernah toggle)
   useEffect(() => {
-    if (isTunanetra) {
+    if (isAktif && voiceNavUserChoiceRef.current === null) {
       setIsVoiceNavAktif(true);
+    } else if (!isAktif) {
+      // Kalau mode bukan tunanetra lagi, matikan semua
+      setIsVoiceNavAktif(false);
+      voiceNavUserChoiceRef.current = null;
+      stopSpeaking();
     }
-  }, [isTunanetra]);
+  }, [isAktif]);
 
-  useVoiceNavigation(isVoiceNavAktif && isTunanetra);
-
-  // Auto narasi saat pindah halaman
+  // Narasi otomatis saat pindah halaman — hanya kalau isAktif
+  const prevPathRef = useRef('');
   useEffect(() => {
-    if (!isTalkbackAktif) return;
+    if (!isAktif) return;
     if (pathname === prevPathRef.current) return;
     prevPathRef.current = pathname;
 
-    // Cari narasi yang cocok
     const narasi = Object.entries(PAGE_NARASI).find(([path]) =>
       pathname === path || pathname.startsWith(path + '/')
     );
-
     if (narasi) {
       setTimeout(() => speak(narasi[1], 'interrupt'), 700);
     }
-  }, [pathname, isTalkbackAktif]);
+  }, [pathname, isAktif]);
 
-  const toggleVoiceNav = () => {
+  // Registrasi perintah dari halaman aktif
+  const registerPageCommands = useCallback((commands: PageVoiceCommand[]) => {
+    pageCommandsRef.current = commands;
+  }, []);
+
+  const clearPageCommands = useCallback(() => {
+    pageCommandsRef.current = [];
+  }, []);
+
+  const toggleVoiceNav = useCallback(() => {
     const next = !isVoiceNavAktif;
+    voiceNavUserChoiceRef.current = next; // Simpan pilihan user
     setIsVoiceNavAktif(next);
-    speak(next ? 'Navigasi suara aktif. Ucapkan nama menu untuk berpindah halaman.' : 'Navigasi suara dinonaktifkan.', 'interrupt');
-  };
+    speak(
+      next
+        ? 'Navigasi suara aktif. Ucapkan nama menu, nama materi, atau nama tombol yang ingin diklik.'
+        : 'Navigasi suara dinonaktifkan.',
+      'interrupt'
+    );
+  }, [isVoiceNavAktif]);
 
-  if (!isTalkbackAktif) {
-    return <>{children}</>;
-  }
+  // Teruskan pageCommandsRef ke hook voice navigation
+  useVoiceNavigation(isVoiceNavAktif && isAktif, pageCommandsRef);
+
+  if (!isAktif) return <>{children}</>;
 
   return (
-    <TalkbackContext.Provider value={{ isTalkbackAktif, isVoiceNavAktif, toggleVoiceNav, speakText: speak }}>
+    <TalkbackContext.Provider value={{
+      isAktif,
+      isVoiceNavAktif,
+      toggleVoiceNav,
+      registerPageCommands,
+      clearPageCommands,
+      speakText: speak,
+    }}>
       {children}
 
-      {/* Floating bar kontrol Talkback */}
-      <div
-        className="fixed bottom-20 sm:bottom-6 right-4 z-50 flex flex-col gap-2 items-end"
-        role="region"
-        aria-label="Kontrol aksesibilitas suara"
-      >
-        {/* Indikator voice nav aktif */}
+      {/* ── Floating kontrol ── */}
+      <div className="fixed bottom-20 sm:bottom-6 right-4 z-50 flex flex-col gap-2 items-end">
+        {/* Indikator mendengarkan */}
         {isVoiceNavAktif && (
-          <div className="flex items-center gap-2 bg-blue-800 text-white text-xs px-3 py-1.5 rounded-full shadow-lg animate-pulse">
-            <Mic size={12} />
-            <span>Mendengarkan perintah suara...</span>
+          <div className="flex items-center gap-2 bg-blue-800 text-white text-xs px-3 py-1.5 rounded-full shadow-lg">
+            <span className="w-2 h-2 bg-white rounded-full animate-pulse" />
+            Mendengarkan...
           </div>
         )}
 
-        {/* Tombol toggle voice nav */}
-        <button
-          onClick={toggleVoiceNav}
-          className={`w-12 h-12 rounded-full shadow-xl flex items-center justify-center transition-all ${
-            isVoiceNavAktif
-              ? 'bg-red-600 hover:bg-red-700 text-white'
-              : 'bg-blue-800 hover:bg-blue-700 text-white'
-          }`}
-          aria-label={isVoiceNavAktif ? 'Matikan navigasi suara' : 'Aktifkan navigasi suara'}
-          title={isVoiceNavAktif ? 'Matikan navigasi suara' : 'Aktifkan navigasi suara'}
-        >
-          {isVoiceNavAktif ? <MicOff size={20} /> : <Mic size={20} />}
+        {/* Panel bantuan */}
+        {showHelp && isVoiceNavAktif && (
+          <div className="bg-white/98 backdrop-blur-sm rounded-2xl shadow-2xl p-4 w-60 border border-blue-100 text-xs">
+            <p className="font-bold text-blue-800 mb-2 flex items-center gap-1">
+              <Mic size={11} /> Perintah Suara
+            </p>
+            <p className="text-slate-500 mb-2 font-semibold">Menu:</p>
+            <div className="space-y-1 mb-3">
+              {['"Beranda"', '"Belajar"', '"Kelas Live"', '"Notifikasi"', '"Profil"'].map(cmd => (
+                <div key={cmd} className="text-slate-700">{cmd}</div>
+              ))}
+            </div>
+            {pageCommandsRef.current.length > 0 && (
+              <>
+                <p className="text-slate-500 mb-2 font-semibold">Di halaman ini:</p>
+                <div className="space-y-1">
+                  {pageCommandsRef.current.map((cmd, i) => (
+                    <div key={i} className="text-slate-700">&quot;{cmd.label}&quot;</div>
+                  ))}
+                </div>
+              </>
+            )}
+            <p className="text-slate-400 mt-2 border-t pt-2">&quot;Stop&quot; → matikan suara</p>
+          </div>
+        )}
+
+        {/* Tombol bantuan */}
+        <button onClick={() => {
+          setShowHelp(v => !v);
+          if (!showHelp) speak('Daftar perintah suara ditampilkan.', 'interrupt');
+        }}
+          className="w-10 h-10 rounded-full bg-slate-600 hover:bg-slate-700 text-white shadow-xl flex items-center justify-center"
+          aria-label="Bantuan perintah suara">
+          <HelpCircle size={18} />
         </button>
 
         {/* Tombol stop TTS */}
-        <button
-          onClick={stopSpeaking}
-          className="w-12 h-12 rounded-full bg-slate-700 hover:bg-slate-600 text-white shadow-xl flex items-center justify-center"
-          aria-label="Hentikan narasi"
-          title="Hentikan narasi"
-        >
-          <VolumeX size={20} />
+        <button onClick={stopSpeaking}
+          className="w-10 h-10 rounded-full bg-slate-700 hover:bg-slate-600 text-white shadow-xl flex items-center justify-center"
+          aria-label="Hentikan narasi">
+          <VolumeX size={18} />
+        </button>
+
+        {/* Tombol toggle voice nav */}
+        <button onClick={toggleVoiceNav}
+          className={`w-12 h-12 rounded-full shadow-xl flex items-center justify-center transition-all ${
+            isVoiceNavAktif ? 'bg-red-600 hover:bg-red-700' : 'bg-blue-800 hover:bg-blue-700'
+          } text-white`}
+          aria-label={isVoiceNavAktif ? 'Matikan navigasi suara' : 'Aktifkan navigasi suara'}>
+          {isVoiceNavAktif ? <MicOff size={20} /> : <Mic size={20} />}
         </button>
       </div>
-
-      {/* Panel bantuan perintah suara (muncul saat voice nav aktif) */}
-      {isVoiceNavAktif && (
-        <div
-          className="fixed bottom-48 sm:bottom-36 right-4 z-50 bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl p-4 w-52 border border-blue-100"
-          role="tooltip"
-          aria-label="Daftar perintah suara"
-        >
-          <p className="text-xs font-bold text-blue-800 mb-2 flex items-center gap-1">
-            <Mic size={11} /> Perintah Suara:
-          </p>
-          <ul className="space-y-1">
-            {[
-              { cmd: '"Beranda"', desc: '→ Dashboard' },
-              { cmd: '"Belajar"', desc: '→ Materi' },
-              { cmd: '"Kelas Live"', desc: '→ Live' },
-              { cmd: '"Notifikasi"', desc: '→ Notif' },
-              { cmd: '"Profil"', desc: '→ Profil' },
-              { cmd: '"Stop"', desc: '→ Matikan' },
-            ].map(item => (
-              <li key={item.cmd} className="flex justify-between text-[10px]">
-                <span className="font-semibold text-slate-700">{item.cmd}</span>
-                <span className="text-slate-400">{item.desc}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
     </TalkbackContext.Provider>
   );
 }
