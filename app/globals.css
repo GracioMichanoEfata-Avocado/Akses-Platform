@@ -184,3 +184,51 @@ body.high-contrast [tabindex]:focus {
   color: #1E40AF;
   margin-left: 2px;
 }
+
+/* ─────────────────────────────────────────────────────────────
+   Override tampilan LiveKit agar lebih profesional (ala Zoom/Meet)
+───────────────────────────────────────────────────────────── */
+.lk-video-conference {
+  height: 100% !important;
+  background: #0a0e1a !important;
+}
+
+.lk-grid-layout {
+  padding: 16px !important;
+  gap: 10px !important;
+}
+
+.lk-participant-tile {
+  border-radius: 16px !important;
+  overflow: hidden !important;
+  border: 1px solid rgba(255,255,255,0.06) !important;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.3) !important;
+}
+
+.lk-participant-metadata {
+  border-radius: 8px !important;
+  background: rgba(0,0,0,0.55) !important;
+  backdrop-filter: blur(8px) !important;
+  padding: 4px 10px !important;
+}
+
+.lk-control-bar {
+  background: rgba(15, 23, 42, 0.85) !important;
+  backdrop-filter: blur(12px) !important;
+  border-top: 1px solid rgba(255,255,255,0.06) !important;
+  padding: 12px 16px !important;
+  border-radius: 0 !important;
+}
+
+.lk-button {
+  border-radius: 12px !important;
+  transition: all 0.15s ease !important;
+}
+
+.lk-button:hover {
+  transform: translateY(-1px);
+}
+
+.lk-disconnect-button {
+  border-radius: 12px !important;
+}
