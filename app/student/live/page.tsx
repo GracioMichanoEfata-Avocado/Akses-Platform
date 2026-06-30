@@ -283,6 +283,30 @@ export default function StudentLivePage() {
     init();
   }, []);
 
+  // ── Real-time listener: deteksi kalau guru mengakhiri sesi ──
+  useEffect(() => {
+    if (!session?.id) return;
+
+    const supabase = createClient();
+    const channel = supabase
+      .channel('live_session_status_' + session.id)
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'live_sessions',
+        filter: `id=eq.${session.id}`,
+      }, (payload) => {
+        if (payload.new.status === 'ended') {
+          setToken(null);
+          setLivekitUrl(null);
+          setError('Sesi live telah diakhiri oleh pendamping.');
+        }
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [session?.id]);
+
   const handleNewCaption = useCallback((text: string) => {
     // Simpan ke log transkripsi lokal (hanya kalimat final yang cukup panjang)
     if (text.length > 8) {
