@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
     }
 
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: 'gemini-3.5-flash-Lite' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
 
     const prompt = `${materiText ? `Berikut adalah materi pelajaran:\n\n${materiText}\n\n` : ''}Berdasarkan materi di atas, buat konten pembelajaran yang inklusif untuk platform AKSES (platform belajar untuk siswa dengan disabilitas sensorik tunanetra dan tunarungu).
 
