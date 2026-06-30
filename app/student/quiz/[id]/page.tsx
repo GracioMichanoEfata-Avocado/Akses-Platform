@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, CheckCircle, XCircle, Trophy, RotateCcw, BookOpen } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { ArrowLeft, CheckCircle, XCircle, Trophy, RotateCcw, BookOpen, Clock, AlertTriangle, Sparkles } from 'lucide-react';
 import StudentBottomNav from '@/components/shared/StudentBottomNav';
 import StudentSidebar from '@/components/shared/StudentSidebar';
 import AccessibilityBar from '@/components/accessibility/AccessibilityBar';
@@ -12,6 +13,7 @@ import { createClient } from '@/lib/supabase/client';
 import { cn } from '@/lib/utils/cn';
 
 type AnswerState = { answered: boolean; selected: number; correct: boolean };
+const DURASI_KUIS = 5 * 60; // 5 menit dalam detik
 
 interface Soal {
   id: string;
@@ -23,6 +25,7 @@ interface Soal {
 
 export default function QuizPage({ params }: { params: { id: string } }) {
   const { id } = params;
+  const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [materialJudul, setMaterialJudul] = useState('');
   const [quizId, setQuizId] = useState<string | null>(null);
@@ -31,6 +34,12 @@ export default function QuizPage({ params }: { params: { id: string } }) {
   const [answers, setAnswers] = useState<Record<number, AnswerState>>({});
   const [showResult, setShowResult] = useState(false);
   const [showReview, setShowReview] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(DURASI_KUIS);
+  const [timeUp, setTimeUp] = useState(false);
+  const [generatingRemedial, setGeneratingRemedial] = useState(false);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const answersRef = useRef(answers);
+  answersRef.current = answers;
 
   useEffect(() => {
     const supabase = createClient();
@@ -54,39 +63,98 @@ export default function QuizPage({ params }: { params: { id: string } }) {
     loadQuiz();
   }, [id]);
 
+  // ── Timer 5 menit ──
+  useEffect(() => {
+    if (loading || soal.length === 0 || showResult) return;
+
+    timerRef.current = setInterval(() => {
+      setTimeLeft(prev => {
+        if (prev <= 1) {
+          clearInterval(timerRef.current!);
+          setTimeUp(true);
+          handleTimeUp();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => { if (timerRef.current) clearInterval(timerRef.current); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, soal.length, showResult]);
+
+  const handleTimeUp = useCallback(async () => {
+    setShowResult(true);
+    await saveQuizResult();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const formatTime = (seconds: number) => {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m}:${s.toString().padStart(2, '0')}`;
+  };
+
   const handleSelect = (optionIdx: number) => {
-    if (answers[currentIdx]?.answered) return;
+    if (answers[currentIdx]?.answered || timeUp) return;
     const correct = optionIdx === soal[currentIdx].jawaban_benar;
     setAnswers(prev => ({ ...prev, [currentIdx]: { answered: true, selected: optionIdx, correct } }));
+  };
+
+  const saveQuizResult = async () => {
+    const finalAnswers = answersRef.current;
+    const score = Object.values(finalAnswers).filter(a => a.correct).length;
+    const pct = Math.round((score / soal.length) * 100);
+
+    if (quizId) {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase.from('quiz_attempts').insert({
+          student_id: user.id,
+          quiz_id: quizId,
+          skor: pct,
+          lulus: pct >= 70,
+        });
+        await supabase.from('student_material_progress').upsert({
+          student_id: user.id,
+          material_id: id,
+          progress: 100,
+          skor_terakhir: pct,
+        }, { onConflict: 'student_id,material_id' });
+      }
+    }
+    return pct;
   };
 
   const handleNext = async () => {
     if (currentIdx < soal.length - 1) {
       setCurrentIdx(prev => prev + 1);
     } else {
+      if (timerRef.current) clearInterval(timerRef.current);
       setShowResult(true);
-      // Simpan hasil kuis ke database
-      const score = Object.values({ ...answers, [currentIdx]: answers[currentIdx] }).filter(a => a.correct).length;
-      const pct = Math.round((score / soal.length) * 100);
-      if (quizId) {
-        const supabase = createClient();
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-          await supabase.from('quiz_attempts').insert({
-            student_id: user.id,
-            quiz_id: quizId,
-            skor: pct,
-            lulus: pct >= 70,
-          });
-          // Update progress materi
-          await supabase.from('student_material_progress').upsert({
-            student_id: user.id,
-            material_id: id,
-            progress: 100,
-            skor_terakhir: pct,
-          }, { onConflict: 'student_id,material_id' });
-        }
-      }
+      await saveQuizResult();
+    }
+  };
+
+  const handleStartRemedial = async () => {
+    setGeneratingRemedial(true);
+    const score = Object.values(answers).filter(a => a.correct).length;
+    const pct = Math.round((score / soal.length) * 100);
+
+    try {
+      const res = await fetch('/api/generate-remedial', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ materialId: id, quizId, skorAwal: pct }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+
+      router.push(`/student/remedial/${data.attemptId}`);
+    } catch (err: any) {
+      alert('Gagal membuat soal remedial: ' + err.message);
+      setGeneratingRemedial(false);
     }
   };
 
@@ -95,6 +163,8 @@ export default function QuizPage({ params }: { params: { id: string } }) {
     setCurrentIdx(0);
     setShowResult(false);
     setShowReview(false);
+    setTimeLeft(DURASI_KUIS);
+    setTimeUp(false);
   };
 
   if (loading) {
@@ -120,6 +190,8 @@ export default function QuizPage({ params }: { params: { id: string } }) {
   const currentAnswer = answers[currentIdx];
   const score = Object.values(answers).filter(a => a.correct).length;
   const percentage = Math.round((score / soal.length) * 100);
+  const lulus = percentage >= 70;
+  const isWarningTime = timeLeft <= 60 && timeLeft > 0;
 
   if (showResult) {
     return (
@@ -127,17 +199,23 @@ export default function QuizPage({ params }: { params: { id: string } }) {
         <StudentSidebar />
         <main className="flex-1 sm:ml-60 pb-20 sm:pb-4 flex items-center justify-center p-4">
           <div className="w-full max-w-sm space-y-5">
+            {timeUp && (
+              <div className="flex items-center gap-2 p-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-700 text-sm">
+                <AlertTriangle size={15} /> Waktu habis! Kuis otomatis diselesaikan.
+              </div>
+            )}
+
             <Card className="border-0 shadow-lg overflow-hidden">
               <div className={cn("p-8 text-center",
                 percentage >= 80 ? "bg-gradient-to-br from-emerald-500 to-emerald-600" :
-                percentage >= 60 ? "bg-gradient-to-br from-blue-600 to-blue-700" :
+                percentage >= 70 ? "bg-gradient-to-br from-blue-600 to-blue-700" :
                 "bg-gradient-to-br from-amber-500 to-amber-600"
               )}>
                 <Trophy size={36} className="text-white mx-auto mb-3" />
                 <div className="text-7xl font-bold text-white mb-2">{percentage}</div>
                 <p className="text-white/80 text-sm">dari 100 nilai</p>
                 <p className="text-white font-semibold mt-2">
-                  {percentage >= 80 ? "Luar biasa! 🎉" : percentage >= 60 ? "Bagus! 👍" : "Terus semangat! 💪"}
+                  {lulus ? (percentage >= 80 ? "Luar biasa! 🎉" : "Lulus! 👍") : "Belum Lulus 😔"}
                 </p>
               </div>
               <CardContent className="p-5">
@@ -151,22 +229,43 @@ export default function QuizPage({ params }: { params: { id: string } }) {
                     <p className="text-xs text-red-500">Salah</p>
                   </div>
                 </div>
+
+                {!lulus && (
+                  <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-4">
+                    <p className="text-xs text-amber-800">
+                      Nilai kamu di bawah 70. Yuk coba kuis remedial dengan soal yang disesuaikan untuk membantu kamu memahami materi ini lebih baik!
+                    </p>
+                  </div>
+                )}
+
                 <div className="space-y-2">
-                  <Link href={`/student/learn/${id}`}
-                    className="w-full flex items-center justify-center gap-2 h-11 bg-blue-800 text-white rounded-xl font-semibold text-sm hover:bg-blue-700 transition-colors">
-                    <BookOpen size={15} /> Lanjut ke Materi
-                  </Link>
+                  {!lulus ? (
+                    <button onClick={handleStartRemedial} disabled={generatingRemedial}
+                      className="w-full flex items-center justify-center gap-2 h-11 bg-amber-600 text-white rounded-xl font-semibold text-sm hover:bg-amber-700 transition-colors disabled:opacity-60">
+                      {generatingRemedial ? (
+                        <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />Menyiapkan soal remedial...</>
+                      ) : (
+                        <><Sparkles size={15} />Mulai Kuis Remedial</>
+                      )}
+                    </button>
+                  ) : (
+                    <Link href={`/student/learn/${id}`}
+                      className="w-full flex items-center justify-center gap-2 h-11 bg-blue-800 text-white rounded-xl font-semibold text-sm hover:bg-blue-700 transition-colors">
+                      <BookOpen size={15} /> Lanjut ke Materi
+                    </Link>
+                  )}
                   <button onClick={() => setShowReview(true)}
                     className="w-full h-11 border border-slate-200 text-slate-700 rounded-xl font-medium text-sm hover:bg-slate-50">
                     Lihat Jawaban
                   </button>
                   <button onClick={handleRetry}
                     className="w-full flex items-center justify-center gap-2 h-11 text-slate-500 text-sm">
-                    <RotateCcw size={14} /> Coba Lagi
+                    <RotateCcw size={14} /> Ulangi Kuis Ini
                   </button>
                 </div>
               </CardContent>
             </Card>
+
             {showReview && (
               <div className="space-y-3">
                 <h2 className="font-semibold text-slate-900 text-sm">Review Jawaban</h2>
@@ -181,7 +280,7 @@ export default function QuizPage({ params }: { params: { id: string } }) {
                           <p className="text-sm font-medium text-slate-800">Soal {idx + 1}: {s.pertanyaan}</p>
                         </div>
                         <div className="ml-6 space-y-1">
-                          <p className="text-xs text-slate-500">Jawaban kamu: <span className={isCorrect ? "text-emerald-600 font-medium" : "text-red-600 font-medium"}>{s.pilihan[ans?.selected ?? 0]}</span></p>
+                          <p className="text-xs text-slate-500">Jawaban kamu: <span className={isCorrect ? "text-emerald-600 font-medium" : "text-red-600 font-medium"}>{ans ? s.pilihan[ans.selected] : 'Tidak dijawab'}</span></p>
                           {!isCorrect && <p className="text-xs text-emerald-600">Jawaban benar: <span className="font-medium">{s.pilihan[s.jawaban_benar]}</span></p>}
                           <p className="text-xs text-slate-400 italic">{s.penjelasan}</p>
                         </div>
@@ -213,6 +312,14 @@ export default function QuizPage({ params }: { params: { id: string } }) {
               <Progress value={((currentIdx + (currentAnswer?.answered ? 1 : 0)) / soal.length) * 100} className="h-1.5 flex-1" />
               <span className="text-xs text-slate-500 flex-shrink-0">{currentIdx + 1}/{soal.length}</span>
             </div>
+          </div>
+          {/* Timer */}
+          <div className={cn(
+            "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold flex-shrink-0",
+            isWarningTime ? "bg-red-100 text-red-700 animate-pulse" : "bg-blue-50 text-blue-700"
+          )}>
+            <Clock size={13} />
+            {formatTime(timeLeft)}
           </div>
         </div>
         <div className="p-4 space-y-5 max-w-lg mx-auto">
