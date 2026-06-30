@@ -87,9 +87,8 @@ export function useVoiceNavigation(
         cooldownRef.current = true;
         speak(cmd.konfirmasi, 'interrupt');
         setTimeout(() => {
-          router.push(cmd.route);
-          setTimeout(() => { cooldownRef.current = false; }, 3000);
-        }, 800);
+          window.location.href = cmd.route;
+        }, 1200);
         return;
       }
     }
@@ -101,9 +100,8 @@ export function useVoiceNavigation(
         cooldownRef.current = true;
         speak(mat.konfirmasi, 'interrupt');
         setTimeout(() => {
-          router.push(mat.route);
-          setTimeout(() => { cooldownRef.current = false; }, 3000);
-        }, 800);
+          window.location.href = mat.route;
+        }, 1200);
         return;
       }
     }
