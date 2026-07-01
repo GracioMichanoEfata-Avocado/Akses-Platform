@@ -341,7 +341,7 @@ export default function TeacherLivePage() {
         </div>
       </div>
 
-      {/* ── Video stage ── */}
+      {/* ── Video stage + CaptionTab (harus di dalam LiveKitRoom) ── */}
       <div className={cn("flex-1 relative pt-14 transition-all duration-200", showSidebar ? "sm:mr-80" : "")}>
         <div className="absolute inset-0 top-14">
           <LiveKitRoom
@@ -350,16 +350,21 @@ export default function TeacherLivePage() {
             connect={true}
             audio={true}
             video={true}
-            data-lk-theme="default"
             className="h-full"
           >
             <VideoConference />
             <RoomAudioRenderer />
+            {/* CaptionTab HARUS di dalam LiveKitRoom karena pakai useDataChannel */}
+            {showSidebar && activeTab === 'caption' && (
+              <div className="fixed top-[calc(3.5rem+48px)] bottom-0 right-0 w-full sm:w-80 flex flex-col z-20">
+                <CaptionTab sessionId={session.id} />
+              </div>
+            )}
           </LiveKitRoom>
         </div>
       </div>
 
-      {/* ── Sidebar panel (tab Caption / Tanya Jawab) ── */}
+      {/* ── Sidebar panel ── */}
       {showSidebar && (
         <div className="fixed top-14 bottom-0 right-0 w-full sm:w-80 bg-white border-l border-slate-200 z-30 flex flex-col shadow-2xl">
           <div className="flex border-b border-slate-100 flex-shrink-0">
@@ -383,10 +388,14 @@ export default function TeacherLivePage() {
             </button>
           </div>
 
-          {activeTab === 'caption'
-            ? <CaptionTab sessionId={session.id} />
-            : <QATab sessionId={session.id} />
-          }
+          {/* Caption dirender di dalam LiveKitRoom (di atas), sidebar ini hanya untuk QA */}
+          {activeTab === 'caption' ? (
+            <div className="flex-1 flex items-center justify-center">
+              <p className="text-xs text-slate-400 text-center px-4">Panel caption aktif di area video</p>
+            </div>
+          ) : (
+            <QATab sessionId={session.id} />
+          )}
         </div>
       )}
     </div>
