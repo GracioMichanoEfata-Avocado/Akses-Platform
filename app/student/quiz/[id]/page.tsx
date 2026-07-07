@@ -11,6 +11,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { createClient } from '@/lib/supabase/client';
 import { cn } from '@/lib/utils/cn';
+import { useAccessibilityStore } from '@/lib/store/accessibility-store';
+import { useQuizVoice } from '@/lib/hooks/useQuizVoice';
 
 type AnswerState = { answered: boolean; selected: number; correct: boolean };
 const DURASI_KUIS = 5 * 60; // 5 menit dalam detik
@@ -40,6 +42,9 @@ export default function QuizPage({ params }: { params: { id: string } }) {
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const answersRef = useRef(answers);
   answersRef.current = answers;
+  const { mode } = useAccessibilityStore();
+  const isVoiceMode = mode === 'tunanetra' || mode === 'both';
+  const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
 
   useEffect(() => {
     const supabase = createClient();
@@ -95,11 +100,51 @@ export default function QuizPage({ params }: { params: { id: string } }) {
     return `${m}:${s.toString().padStart(2, '0')}`;
   };
 
-  const handleSelect = (optionIdx: number) => {
-    if (answers[currentIdx]?.answered || timeUp) return;
+  const handleSelect = useCallback((optionIdx: number) => {
+    if (answersRef.current[currentIdx]?.answered || timeUp) return;
+    if (isVoiceMode) {
+      // Mode voice: hanya sorot, kunci baru terjadi saat "lanjut"
+      setSelectedIdx(optionIdx);
+      return;
+    }
     const correct = optionIdx === soal[currentIdx].jawaban_benar;
     setAnswers(prev => ({ ...prev, [currentIdx]: { answered: true, selected: optionIdx, correct } }));
-  };
+  }, [currentIdx, timeUp, isVoiceMode, soal]);
+
+  const handleVoiceLanjut = useCallback((selIdx: number) => {
+    const s = soal[currentIdx];
+    if (!s) return;
+    const correct = selIdx === s.jawaban_benar;
+    // Tulis ke ref DULU: saveQuizResult() di handleNext membaca answersRef.current
+    // pada tick yang sama, sebelum re-render sempat menyinkronkan ref.
+    const newAnswers = {
+      ...answersRef.current,
+      [currentIdx]: { answered: true, selected: selIdx, correct },
+    };
+    answersRef.current = newAnswers;
+    setAnswers(newAnswers);
+    setSelectedIdx(null);
+    handleNext();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [soal, currentIdx]); // handleNext stabil per render; currentIdx sudah di deps
+
+  const score = Object.values(answers).filter(a => a.correct).length;
+  const percentage = soal.length > 0 ? Math.round((score / soal.length) * 100) : 0;
+  const lulus = percentage >= 70;
+
+  const { triggerLanjut } = useQuizVoice({
+    enabled: isVoiceMode,
+    soal,
+    currentIdx,
+    selectedIdx,
+    showResult,
+    timeLeft,
+    totalDurasi: DURASI_KUIS,
+    percentage,
+    materialJudul,
+    onSelect: handleSelect,
+    onLanjut: handleVoiceLanjut,
+  });
 
   const saveQuizResult = async () => {
     const finalAnswers = answersRef.current;
@@ -188,9 +233,6 @@ export default function QuizPage({ params }: { params: { id: string } }) {
 
   const currentSoal = soal[currentIdx];
   const currentAnswer = answers[currentIdx];
-  const score = Object.values(answers).filter(a => a.correct).length;
-  const percentage = Math.round((score / soal.length) * 100);
-  const lulus = percentage >= 70;
   const isWarningTime = timeLeft <= 60 && timeLeft > 0;
 
   if (showResult) {
@@ -338,7 +380,8 @@ export default function QuizPage({ params }: { params: { id: string } }) {
           </Card>
           <div className="space-y-2.5">
             {currentSoal.pilihan.map((pilihan, optIdx) => {
-              const isSelected = currentAnswer?.selected === optIdx;
+              const isSelected = currentAnswer?.selected === optIdx ||
+                (isVoiceMode && !currentAnswer?.answered && selectedIdx === optIdx);
               const isCorrect = optIdx === currentSoal.jawaban_benar;
               const showFeedback = currentAnswer?.answered;
               return (
@@ -381,6 +424,13 @@ export default function QuizPage({ params }: { params: { id: string } }) {
             <button onClick={handleNext}
               className="w-full h-12 bg-blue-800 text-white rounded-xl font-semibold text-sm hover:bg-blue-700 transition-colors">
               {currentIdx < soal.length - 1 ? 'Soal Berikutnya →' : 'Lihat Hasil Kuis'}
+            </button>
+          )}
+          {isVoiceMode && selectedIdx !== null && !currentAnswer?.answered && (
+            <button onClick={triggerLanjut}
+              className="w-full h-12 bg-blue-800 text-white rounded-xl font-semibold text-sm hover:bg-blue-700 transition-colors"
+              aria-label="Kunci jawaban dan lanjut ke soal berikutnya">
+              {currentIdx < soal.length - 1 ? 'Kunci Jawaban & Lanjut →' : 'Kunci Jawaban & Lihat Hasil'}
             </button>
           )}
         </div>
