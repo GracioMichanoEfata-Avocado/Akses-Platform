@@ -46,19 +46,36 @@ export function useQuizVoice(opts: UseQuizVoiceOptions): { triggerLanjut: () => 
   const selectedIdxRef = useRef(selectedIdx);
   selectedIdxRef.current = selectedIdx;
   const advancingRef = useRef(false); // cegah "lanjut" dobel saat feedback masih dibacakan
+  const timersRef = useRef<{ timeout?: ReturnType<typeof setTimeout>; interval?: ReturnType<typeof setInterval> }>({});
+  const enabledRef = useRef(enabled);
+  enabledRef.current = enabled;
 
   // Tunggu TTS selesai lalu jalankan cb. Sengaja polling isTTSSpeaking(),
   // BUKAN onTTSEnd() — slot callback onTTSEnd tunggal dan dipakai ulang oleh
   // logika restart recognition di useVoiceNavigation (bisa saling timpa).
   const waitTTSEnd = useCallback((cb: () => void) => {
-    setTimeout(() => {
-      const iv = setInterval(() => {
+    timersRef.current.timeout = setTimeout(() => {
+      timersRef.current.interval = setInterval(() => {
+        if (!enabledRef.current) {
+          clearInterval(timersRef.current.interval);
+          timersRef.current.interval = undefined;
+          return; // hook went inert mid-advance: abort, do not call cb
+        }
         if (!isTTSSpeaking()) {
-          clearInterval(iv);
+          clearInterval(timersRef.current.interval);
+          timersRef.current.interval = undefined;
           cb();
         }
       }, 300);
     }, 1200); // beri waktu utterance mulai dulu (onstart async)
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      advancingRef.current = false;
+      if (timersRef.current.timeout) clearTimeout(timersRef.current.timeout);
+      if (timersRef.current.interval) clearInterval(timersRef.current.interval);
+    };
   }, []);
 
   const speakCurrentQuestion = useCallback((withIntro: boolean) => {
@@ -90,8 +107,10 @@ export function useQuizVoice(opts: UseQuizVoiceOptions): { triggerLanjut: () => 
     if (!enabled || showResult || soal.length === 0) return;
     if (spokenIdxRef.current === currentIdx) return;
     const withIntro = spokenIdxRef.current === null;
-    spokenIdxRef.current = currentIdx;
-    const t = setTimeout(() => speakCurrentQuestion(withIntro), 800);
+    const t = setTimeout(() => {
+      spokenIdxRef.current = currentIdx;
+      speakCurrentQuestion(withIntro);
+    }, 800);
     return () => clearTimeout(t);
   }, [enabled, showResult, soal.length, currentIdx, speakCurrentQuestion]);
 
@@ -147,8 +166,10 @@ export function useQuizVoice(opts: UseQuizVoiceOptions): { triggerLanjut: () => 
   const scoreSpokenRef = useRef(false);
   useEffect(() => {
     if (!enabled || !showResult || scoreSpokenRef.current) return;
-    scoreSpokenRef.current = true;
-    const t = setTimeout(() => speak(buildScoreSpeech(percentage, materialJudul), 'interrupt'), 800);
+    const t = setTimeout(() => {
+      scoreSpokenRef.current = true;
+      speak(buildScoreSpeech(percentage, materialJudul), 'interrupt');
+    }, 800);
     return () => clearTimeout(t);
   }, [enabled, showResult, percentage, materialJudul]);
 
