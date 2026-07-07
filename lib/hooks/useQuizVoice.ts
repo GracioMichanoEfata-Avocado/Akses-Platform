@@ -102,8 +102,20 @@ export function useQuizVoice(opts: UseQuizVoiceOptions): { triggerLanjut: () => 
     });
   }, [soal, currentIdx, onLanjut, waitTTSEnd]);
 
-  // ── Baca soal saat masuk kuis / pindah soal ──
   const spokenIdxRef = useRef<number | null>(null);
+  const scoreSpokenRef = useRef(false);
+
+  // ── Reset saat "Ulangi Kuis" (showResult true → false) ──
+  const prevShowResultRef = useRef(false);
+  useEffect(() => {
+    if (prevShowResultRef.current && !showResult) {
+      spokenIdxRef.current = null;   // baca ulang soal 1 (dengan intro)
+      scoreSpokenRef.current = false;
+    }
+    prevShowResultRef.current = showResult;
+  }, [showResult]);
+
+  // ── Baca soal saat masuk kuis / pindah soal ──
   useEffect(() => {
     if (!enabled || showResult || soal.length === 0) return;
     if (spokenIdxRef.current === currentIdx) return;
@@ -164,7 +176,6 @@ export function useQuizVoice(opts: UseQuizVoiceOptions): { triggerLanjut: () => 
   }, [enabled, showResult, timeLeft, totalDurasi]);
 
   // ── Bacakan nilai saat hasil keluar ──
-  const scoreSpokenRef = useRef(false);
   useEffect(() => {
     if (!enabled || !showResult || scoreSpokenRef.current) return;
     const t = setTimeout(() => {
@@ -173,16 +184,6 @@ export function useQuizVoice(opts: UseQuizVoiceOptions): { triggerLanjut: () => 
     }, 800);
     return () => clearTimeout(t);
   }, [enabled, showResult, percentage, materialJudul]);
-
-  // ── Reset saat "Ulangi Kuis" (showResult true → false) ──
-  const prevShowResultRef = useRef(false);
-  useEffect(() => {
-    if (prevShowResultRef.current && !showResult) {
-      spokenIdxRef.current = null;   // baca ulang soal 1 (dengan intro)
-      scoreSpokenRef.current = false;
-    }
-    prevShowResultRef.current = showResult;
-  }, [showResult]);
 
   return { triggerLanjut };
 }
