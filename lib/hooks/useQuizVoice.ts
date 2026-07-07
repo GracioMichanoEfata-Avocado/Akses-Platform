@@ -59,6 +59,7 @@ export function useQuizVoice(opts: UseQuizVoiceOptions): { triggerLanjut: () => 
         if (!enabledRef.current) {
           clearInterval(timersRef.current.interval);
           timersRef.current.interval = undefined;
+          advancingRef.current = false;
           return; // hook went inert mid-advance: abort, do not call cb
         }
         if (!isTTSSpeaking()) {
