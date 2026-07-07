@@ -40,32 +40,36 @@ export default function LoginPage() {
     setError(null);
     setLoading(true);
 
-    const supabase = createClient();
-    const { data, error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+    try {
+      const supabase = createClient();
+      const { data, error: signInError } = await supabase.auth.signInWithPassword({ email, password });
 
-    if (signInError || !data.user) {
+      if (signInError || !data.user) {
+        setError('Email atau kata sandi salah. Coba lagi.');
+        return;
+      }
+
+      // Pastikan akun ini memang akun siswa, bukan akun guru
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', data.user.id)
+        .single();
+
+      if (!profile || profile.role !== 'student') {
+        await supabase.auth.signOut();
+        setError('Akun ini bukan akun siswa. Gunakan halaman login pendamping.');
+        return;
+      }
+
+      setStudentId(data.user.id);
+      setStep('setup');
+    } catch (err) {
+      console.error('Login error:', err);
+      setError('Tidak dapat terhubung ke server. Periksa koneksi internet atau konfigurasi aplikasi, lalu coba lagi.');
+    } finally {
       setLoading(false);
-      setError('Email atau kata sandi salah. Coba lagi.');
-      return;
     }
-
-    // Pastikan akun ini memang akun siswa, bukan akun guru
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', data.user.id)
-      .single();
-
-    if (!profile || profile.role !== 'student') {
-      await supabase.auth.signOut();
-      setLoading(false);
-      setError('Akun ini bukan akun siswa. Gunakan halaman login pendamping.');
-      return;
-    }
-
-    setStudentId(data.user.id);
-    setLoading(false);
-    setStep('setup');
   };
 
   const handleSaveSetup = async () => {
