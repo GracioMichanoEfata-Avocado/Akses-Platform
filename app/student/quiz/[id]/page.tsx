@@ -205,6 +205,7 @@ export default function QuizPage({ params }: { params: { id: string } }) {
 
   const handleRetry = () => {
     setAnswers({});
+    setSelectedIdx(null);
     setCurrentIdx(0);
     setShowResult(false);
     setShowReview(false);
