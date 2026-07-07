@@ -3,6 +3,7 @@ import { useRouter } from 'next/navigation';
 import { speak, isTTSSpeaking, onTTSEnd } from './useTalkback';
 import { createClient } from '@/lib/supabase/client';
 import type { PageVoiceCommand } from '@/components/accessibility/TalkbackProvider';
+import { matchesKeyword } from '@/lib/voice/keyword-match';
 
 const STATIC_COMMANDS = [
   { keywords: ['beranda', 'dashboard', 'home', 'utama', 'awal'], route: '/student/dashboard', konfirmasi: 'Membuka beranda.' },
@@ -70,7 +71,7 @@ export function useVoiceNavigation(
     // ── 1. Perintah halaman aktif (tombol, aksi) ──
     const pageCmds = pageCommandsRef.current || [];
     for (const cmd of pageCmds) {
-      if (cmd.keywords.some(k => lower.includes(k.toLowerCase()))) {
+      if (cmd.keywords.some(k => matchesKeyword(lower, k, cmd.matchType ?? 'includes'))) {
         cooldownRef.current = true;
         speak(`${cmd.label}.`, 'interrupt');
         setTimeout(() => {

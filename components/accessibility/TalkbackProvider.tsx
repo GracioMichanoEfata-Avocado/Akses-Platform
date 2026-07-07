@@ -17,10 +17,13 @@ const PAGE_NARASI: Record<string, string> = {
 };
 
 // ─── Interface untuk perintah per halaman ────────────────────────────────
+import type { MatchType } from '@/lib/voice/keyword-match';
+
 export interface PageVoiceCommand {
   keywords: string[];
-  label: string;      // Label yang dibacakan TTS saat bantuan
-  action: () => void; // Fungsi yang dijalankan
+  label: string;               // Label yang dibacakan TTS saat bantuan
+  action: () => void;          // Fungsi yang dijalankan
+  matchType?: MatchType;       // default 'includes' (perilaku lama)
 }
 
 interface TalkbackContextType {
@@ -47,6 +50,9 @@ export function useTalkbackContext() {
 
 export default function TalkbackProvider({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  // Voice nav tidak boleh aktif di halaman login/setup — memicu izin mic prematur
+  // dan TTS welcome yang menyebut nama menu tertangkap mic → navigasi liar.
+  const isLoginPage = pathname.startsWith('/student/login');
   const { mode } = useAccessibilityStore();
 
   // HANYA aktif kalau mode tunanetra atau keduanya
@@ -109,9 +115,9 @@ export default function TalkbackProvider({ children }: { children: React.ReactNo
   }, [isVoiceNavAktif]);
 
   // Teruskan pageCommandsRef ke hook voice navigation
-  useVoiceNavigation(isVoiceNavAktif && isAktif, pageCommandsRef);
+  useVoiceNavigation(isVoiceNavAktif && isAktif && !isLoginPage, pageCommandsRef);
 
-  if (!isAktif) return <>{children}</>;
+  if (!isAktif || isLoginPage) return <>{children}</>;
 
   return (
     <TalkbackContext.Provider value={{
