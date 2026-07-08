@@ -14,8 +14,8 @@ const SELECTOR =
 function cleanName(raw: string): string {
   const collapsed = raw.replace(/\s+/g, ' ').trim();
   const trimmed = collapsed
-    .replace(/^[^\p{L}\p{N}]+/u, '')
-    .replace(/[^\p{L}\p{N}]+$/u, '');
+    .replace(new RegExp('^[^\\p{L}\\p{N}]+', 'u'), '')
+    .replace(new RegExp('[^\\p{L}\\p{N}]+$', 'u'), '');
   return trimmed.slice(0, 60).trim();
 }
 
