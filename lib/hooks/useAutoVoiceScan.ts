@@ -28,7 +28,12 @@ export function useAutoVoiceScan(
       return;
     }
     const rescan = () => {
+      // Halaman ber-perintah-khusus (mis. kuis) tidak memakai hasil scan;
+      // lewati agar mutasi rutin (timer kuis tiap detik) tak memicu scan sia-sia.
+      if ((pageCommandsRef.current?.length ?? 0) > 0) return;
       // Filter visibilitas layout di runtime (offsetParent tak andal di jsdom).
+      // offsetParent===null menyaring elemen tak terlihat DAN position:fixed
+      // (sidebar/bottom-nav) — sengaja: navigasi itu sudah ditangani menu statis.
       scannedRef.current = scanClickables(document.body).filter(
         c => c.el.offsetParent !== null
       );
