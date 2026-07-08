@@ -50,4 +50,23 @@ describe('extractMainContent', () => {
     document.body.innerHTML = `<main><button>Klik</button></main>`;
     expect(extractMainContent(document.body)).toBe('');
   });
+
+  it('menggabung teks inline dalam satu blok tanpa titik sisipan', () => {
+    document.body.innerHTML = `<main><p>Jawaban yang <b>benar</b> adalah B.</p></main>`;
+    expect(extractMainContent(document.body)).toBe('Jawaban yang benar adalah B.');
+  });
+
+  it('melewati elemen dengan atribut hidden', () => {
+    document.body.innerHTML = `<main><p>Isi.</p><div hidden>Rahasia</div></main>`;
+    const teks = extractMainContent(document.body);
+    expect(teks).toContain('Isi.');
+    expect(teks).not.toContain('Rahasia');
+  });
+
+  it('melewati elemen di dalam data-voice-ignore', () => {
+    document.body.innerHTML = `<main><p>Ada.</p><div data-voice-ignore>Kontrol suara</div></main>`;
+    const teks = extractMainContent(document.body);
+    expect(teks).toContain('Ada.');
+    expect(teks).not.toContain('Kontrol suara');
+  });
 });
