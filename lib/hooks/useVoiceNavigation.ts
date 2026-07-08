@@ -4,6 +4,8 @@ import { speak, isTTSSpeaking, onTTSEnd } from './useTalkback';
 import { createClient } from '@/lib/supabase/client';
 import type { PageVoiceCommand } from '@/components/accessibility/TalkbackProvider';
 import { matchesKeyword } from '@/lib/voice/keyword-match';
+import { extractMainContent } from '@/lib/voice/content-read';
+import type { ScannedCommand } from '@/lib/voice/dom-scan';
 
 const STATIC_COMMANDS = [
   { keywords: ['beranda', 'dashboard', 'home', 'utama', 'awal'], route: '/student/dashboard', konfirmasi: 'Membuka beranda.' },
@@ -38,7 +40,8 @@ async function fetchMaterials() {
 
 export function useVoiceNavigation(
   aktif: boolean,
-  pageCommandsRef: RefObject<PageVoiceCommand[]>
+  pageCommandsRef: RefObject<PageVoiceCommand[]>,
+  scannedRef: RefObject<ScannedCommand[]>
 ) {
   const router = useRouter();
   const recognitionRef = useRef<any>(null);
@@ -58,13 +61,24 @@ export function useVoiceNavigation(
       return;
     }
 
-    // Bantuan
-    if (['bantuan', 'help', 'apa saja', 'perintah'].some(k => lower.includes(k))) {
+    // Bantuan / daftar tombol
+    if (['bantuan', 'help', 'apa saja', 'apa aja', 'tombol apa', 'perintah'].some(k => lower.includes(k))) {
       const pageCmds = pageCommandsRef.current || [];
-      const pageHelp = pageCmds.length > 0
-        ? ` Di halaman ini tersedia: ${pageCmds.map(c => c.label).join(', ')}.`
-        : '';
-      speak(`Ucapkan nama menu: Beranda, Belajar, Kelas Live, Notifikasi, Profil.${pageHelp} Atau ucapkan nama materi langsung.`, 'interrupt');
+      const scanned = scannedRef.current || [];
+      const labels = [...pageCmds.map(c => c.label), ...scanned.map(c => c.label)]
+        .filter((l, i, arr) => arr.findIndex(x => x.toLowerCase() === l.toLowerCase()) === i);
+      if (labels.length > 0) {
+        speak(`Tombol tersedia: ${labels.join(', ')}. Atau ucapkan nama menu: Beranda, Belajar, Kelas Live, Notifikasi, Profil.`, 'interrupt');
+      } else {
+        speak('Ucapkan nama menu: Beranda, Belajar, Kelas Live, Notifikasi, Profil. Atau ucapkan nama materi langsung.', 'interrupt');
+      }
+      return;
+    }
+
+    // Bacakan konten utama halaman
+    if (['bacakan', 'baca halaman', 'baca konten', 'bacakan konten', 'bacakan halaman'].some(k => lower.includes(k))) {
+      const teks = extractMainContent(document.body);
+      speak(teks || 'Tidak ada konten untuk dibacakan di halaman ini.', 'interrupt');
       return;
     }
 
@@ -94,6 +108,21 @@ export function useVoiceNavigation(
       }
     }
 
+    // ── Tombol hasil auto-scan (skip bila halaman punya perintah khusus) ──
+    if ((pageCommandsRef.current?.length ?? 0) === 0) {
+      for (const cmd of (scannedRef.current || [])) {
+        if (cmd.keywords.some(k => matchesKeyword(lower, k, cmd.matchType))) {
+          cooldownRef.current = true;
+          speak(`Membuka ${cmd.label}.`, 'interrupt');
+          setTimeout(() => {
+            try { cmd.el.click(); } catch {}
+            setTimeout(() => { cooldownRef.current = false; }, 2000);
+          }, 600);
+          return;
+        }
+      }
+    }
+
     // ── 3. Materi dari database ──
     const mats = await fetchMaterials();
     for (const mat of mats) {
@@ -106,7 +135,7 @@ export function useVoiceNavigation(
         return;
       }
     }
-  }, [router, pageCommandsRef]);
+  }, [router, pageCommandsRef, scannedRef]);
 
   const start = useCallback(() => {
     if (typeof window === 'undefined') return;
