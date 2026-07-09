@@ -27,14 +27,18 @@ Konsekuensinya:
 Salurkan narasi selamat datang lewat `speak()` dari `lib/hooks/useTalkback` (fungsi yang sama dipakai voice-nav), sehingga `isTTSSpeaking()` bernilai `true` selama narasi dan guard menekan input mic. Voice-nav baru memproses perintah setelah narasi selesai.
 
 - **File:** `app/student/login/page.tsx`
-- **Perubahan:** Ganti blok `new SpeechSynthesisUtterance(...)` + `window.speechSynthesis.speak(...)` di `handleSaveSetup` dengan pemanggilan `speak(welcomeText, 'interrupt')`. Impor `speak` dari `@/lib/hooks/useTalkback`. Pertahankan teks narasi dan kondisi `isTunanetra`.
+- **Perubahan:** Ganti blok `new SpeechSynthesisUtterance(...)` + `window.speechSynthesis.speak(...)` di `handleSaveSetup` dengan pemanggilan `speak(welcomeText, 'interrupt')`. Impor `speak` dari `@/lib/hooks/useTalkback`. Pertahankan kondisi `isTunanetra`.
+- **Selaraskan teks narasi:** Karena voice-nav kini auto-nyala (tunanetra tidak perlu memencet tombol), ganti kalimat "...ketuk tombol mikrofon di pojok kanan bawah layar untuk mengaktifkan navigasi suara." menjadi arahan yang benar, mis.: "Navigasi suara aktif otomatis. Bila diminta, izinkan akses mikrofon, lalu ucapkan nama menu untuk berpindah halaman." Ini juga memandu tunanetra menyetujui prompt izin mic yang sekali itu.
 - **Catatan:** `speak()` sudah menangani pemilihan voice `id-ID` dan rate; tidak perlu logika `getVoices()` manual lagi. Verifikasi perilaku ini saat baca `useTalkback.ts` sebelum menghapus.
 
 ### Kriteria sukses
-- Login siswa → pilih **Keduanya** → "Simpan & Lanjutkan" → mendarat di `/student/dashboard` dan tetap di sana.
-- Hanya izin **mikrofon** yang diminta (untuk voice-nav). **Tidak** ada permintaan izin kamera.
-- Narasi selamat datang terdengar penuh tanpa memicu navigasi liar ke Kelas Live.
+- Login siswa → pilih **Tunanetra/Keduanya** → "Simpan & Lanjutkan" → mendarat di `/student/dashboard` dan **tetap di sana** (tidak terpental ke login).
+- **Tidak** ada permintaan izin **kamera** sama sekali.
+- Voice-nav **menyala otomatis** tanpa perlu memencet tombol apa pun (tunanetra tidak bisa mencari/menekan tombol). Satu-satunya prompt yang muncul adalah dialog izin mikrofon **bawaan browser** yang wajib dan hanya **sekali** per browser; setelah diizinkan, kunjungan berikutnya langsung mendengar tanpa prompt lagi.
+- Narasi selamat datang terdengar penuh tanpa memicu navigasi liar ke Kelas Live (frasa "Kelas Live" di narasi tidak lagi tertangkap mic karena `isTTSSpeaking()` kini true selama narasi).
 - Mode **Tidak Ada** tetap seperti sebelumnya (tanpa suara, tanpa mic).
+
+**Catatan batasan (bukan bug):** Fitur mendengar perintah suara memakai Web Speech API yang mewajibkan izin mikrofon dari browser — ini tidak dapat dilewati oleh kode aplikasi. Target kita adalah izin **sekali** yang mulus + auto-aktif, bukan menghilangkan izin mic sepenuhnya (mustahil secara teknis).
 
 ---
 
