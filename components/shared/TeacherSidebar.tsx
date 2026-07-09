@@ -1,7 +1,9 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { createClient } from '@/lib/supabase/client';
 import { Home, Users, PlusCircle, Zap, BarChart2, GraduationCap, Sparkles, BookOpen, UserCircle } from 'lucide-react';
 import { cn } from '@/lib/utils/cn';
 
@@ -18,6 +20,22 @@ const navItems = [
 
 export default function TeacherSidebar() {
   const pathname = usePathname();
+  const [nama, setNama] = useState('');
+
+  useEffect(() => {
+    const supabase = createClient();
+    async function loadNama() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data } = await supabase
+        .from('profiles')
+        .select('nama')
+        .eq('id', user.id)
+        .single();
+      if (data?.nama) setNama(data.nama);
+    }
+    loadNama();
+  }, []);
 
   return (
     <aside
@@ -69,7 +87,7 @@ export default function TeacherSidebar() {
       <div className="px-4 py-4 border-t border-slate-100">
         <div className="bg-emerald-50 rounded-xl p-3">
           <p className="text-xs text-emerald-700 font-medium">Mode Guru</p>
-          <p className="text-xs text-slate-500 mt-0.5">Bu Sari Dewi</p>
+          <p className="text-xs text-slate-500 mt-0.5">{nama || 'Guru'}</p>
         </div>
       </div>
     </aside>
