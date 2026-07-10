@@ -354,7 +354,7 @@ export default function MaterialDetailPage({ params }: { params: { id: string } 
               </div>
 
             {/* Play overlay */}
-            <div className="absolute inset-0 flex items-end justify-between p-4">
+            <div className="absolute inset-0 flex items-end p-4">
               <button
                 onClick={() => setIsPlaying(!isPlaying)}
                 className="w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center hover:bg-slate-50 transition-colors focus-visible:ring-2 focus-visible:ring-blue-500"
@@ -363,24 +363,27 @@ export default function MaterialDetailPage({ params }: { params: { id: string } 
               >
                 {isPlaying ? <Pause size={20} className="text-blue-800" /> : <Play size={20} className="text-blue-800" />}
               </button>
-
-              <button
-                onClick={handleTTS}
-                className={cn(
-                  "flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium text-sm shadow-lg transition-all focus-visible:ring-2 focus-visible:ring-blue-500",
-                  isTTSPlaying
-                    ? "bg-amber-500 text-white"
-                    : "bg-white text-blue-800 hover:bg-blue-50"
-                )}
-                aria-label={isTTSPlaying ? "Hentikan pembacaan teks" : "Putar audio deskriptif"}
-                aria-pressed={isTTSPlaying}
-              >
-                {isTTSPlaying ? <VolumeX size={16} /> : <Volume2 size={16} />}
-                {isTTSPlaying ? 'Hentikan' : 'Putar Audio'}
-              </button>
             </div>
           </div>
           )}
+
+          {/* Audio deskriptif — di luar cabang player agar tersedia juga untuk
+              materi bervideo, bukan hanya materi beremoji. */}
+          <button
+            onClick={handleTTS}
+            disabled={!material.transkrip.trim()}
+            className={cn(
+              "w-full flex items-center justify-center gap-2 h-12 rounded-xl font-semibold text-sm shadow-sm transition-all focus-visible:ring-2 focus-visible:ring-blue-500 disabled:opacity-50",
+              isTTSPlaying
+                ? "bg-amber-500 text-white"
+                : "bg-white text-blue-800 border-2 border-blue-100 hover:bg-blue-50"
+            )}
+            aria-label={isTTSPlaying ? "Hentikan pembacaan teks" : "Putar audio deskriptif"}
+            aria-pressed={isTTSPlaying}
+          >
+            {isTTSPlaying ? <VolumeX size={16} /> : <Volume2 size={16} />}
+            {isTTSPlaying ? 'Hentikan' : 'Putar Audio'}
+          </button>
 
           {/* Transkrip/Deskripsi dengan TTS Highlight */}
           <Card className="border-0 shadow-sm">
