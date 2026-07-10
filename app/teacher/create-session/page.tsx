@@ -82,18 +82,6 @@ export default function CreateSessionPage() {
       }),
     });
 
-    // Kirim notifikasi ke semua siswa
-    await fetch('/api/notify', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        judul: 'Kelas Live Baru Dijadwalkan!',
-        isi: `${judul} — ${tanggal} pukul ${waktu} WIB`,
-        tipe: 'sesi_baru',
-        link: '/student/live',
-      }),
-    });
-
     setSaved(true);
     setTimeout(() => router.push('/teacher/dashboard'), 1500);
   };
