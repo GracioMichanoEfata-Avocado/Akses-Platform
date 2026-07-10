@@ -1,5 +1,6 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
+import { resolveRedirect } from '@/lib/auth/route-guard';
 
 export async function middleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
@@ -38,9 +39,26 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
+  // Login saja tidak cukup: tanpa cek peran, guru bisa membuka /student/*
+  // dan siswa bisa membuka /teacher/* beserta seluruh data siswa di sana.
+  // Query dibatasi ke rute terlindungi agar tidak membebani tiap request.
+  if (user && isProtectedRoute && !isLoginPage) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .maybeSingle();
+
+    const tujuan = resolveRedirect(path, profile?.role);
+    if (tujuan) {
+      const url = request.nextUrl.clone();
+      url.pathname = tujuan;
+      return NextResponse.redirect(url);
+    }
+  }
+
   return supabaseResponse;
 }
 
-export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)'],
-};
+// Catatan: `config.matcher` didefinisikan di middleware.ts pada root proyek,
+// bukan di sini. Next menganalisisnya secara statis saat build.
