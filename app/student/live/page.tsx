@@ -216,9 +216,6 @@ export default function StudentLivePage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { setError('Belum login'); setLoading(false); return; }
 
-      const { data: profile } = await supabase
-        .from('profiles').select('nama').eq('id', user.id).single();
-
       const { data: liveSession } = await supabase
         .from('live_sessions')
         .select('*')
@@ -238,11 +235,7 @@ export default function StudentLivePage() {
       const res = await fetch('/api/livekit-token', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          roomName: liveSession.room_name,
-          participantName: profile?.nama || 'Siswa',
-          isTeacher: false,
-        }),
+        body: JSON.stringify({ roomName: liveSession.room_name }),
       });
 
       const data = await res.json();
