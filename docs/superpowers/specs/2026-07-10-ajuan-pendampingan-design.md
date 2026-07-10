@@ -89,7 +89,11 @@ Indeks unik parsial itu penting bagi mode suara: kalaupun pengenalan suara salah
 
 `notifications` dipakai apa adanya (`user_id`, `judul`, `isi`, `tipe`, `link`, `dibaca`, `created_at`). Tidak ada kolom baru.
 
-**Asumsi yang belum bisa saya verifikasi:** RLS `notifications` mengizinkan seorang guru menyisipkan baris dengan `user_id` milik siswa. Ini sudah diandalkan oleh `/api/send-notification` yang dipakai `create-session` dan `upload-materi`, jadi presedennya ada. Bila ternyata tidak, aksi setujui/tolak akan gagal terang-terangan dengan pesan error, bukan diam-diam.
+**ASUMSI INI TERBUKTI SALAH — diverifikasi 2026-07-10.** RLS `notifications` **menolak** guru menyisipkan baris dengan `user_id` milik siswa (kode `42501`). Konsekuensinya lebih luas dari fitur ini: `/api/send-notification` **tidak pernah berhasil sekali pun** sejak awal proyek, sehingga notifikasi dari `create-session` dan `upload-materi` juga selalu gagal. Akun siswa demo tercatat memiliki nol notifikasi.
+
+Kegagalannya sunyi karena semua pemanggil menulis `await fetch('/api/send-notification', …)` tanpa memeriksa `res.ok`, sehingga respons 500 dibuang.
+
+**Status: sengaja ditunda.** Bagian "Sisi guru" di bawah tetap memanggil `/api/send-notification`; panggilan itu gagal tanpa efek. Jadwal tetap sampai ke siswa karena halaman materi membaca `tutor_requests` langsung, bukan lewat notifikasi. Perbaikan yang disepakati bila nanti dikerjakan: tambah policy RLS yang mengizinkan akun berperan `teacher` menyisipkan notifikasi untuk siapa pun — bukan service role key, karena `/api/send-notification` hanya memeriksa "sudah login", sehingga tanpa RLS akun siswa mana pun bisa mengirim notifikasi massal.
 
 ## Arah aliran notifikasi
 
