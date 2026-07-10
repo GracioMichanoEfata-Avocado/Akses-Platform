@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Play, Pause, Volume2, VolumeX, Eye, Ear, ChevronDown, ChevronUp, CheckCircle, Circle, Users, BookOpen, Maximize } from 'lucide-react';
+import { ArrowLeft, Play, Pause, Volume2, VolumeX, Contrast, ChevronDown, ChevronUp, CheckCircle, Circle, Users, BookOpen, Maximize } from 'lucide-react';
 import StudentBottomNav from '@/components/shared/StudentBottomNav';
 import StudentSidebar from '@/components/shared/StudentSidebar';
 import AccessibilityBar from '@/components/accessibility/AccessibilityBar';
@@ -10,13 +10,12 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { useAccessibilityStore } from '@/lib/store/accessibility-store';
+import { fiturUntukMode } from '@/lib/accessibility/material-features';
 import { createClient } from '@/lib/supabase/client';
 import { speak } from '@/lib/hooks/useTalkback';
 import { describeRequestState, TutorRequestRow } from '@/lib/tutor/request-state';
 import { formatDateShort } from '@/lib/utils/formatters';
 import { cn } from '@/lib/utils/cn';
-
-type ViewMode = 'visual' | 'audio';
 
 interface Langkah {
   id: string;
@@ -25,6 +24,10 @@ interface Langkah {
   deskripsi: string;
   selesai: boolean;
 }
+
+// Kontras tinggi untuk sisa penglihatan (low vision): abu-abu penuh agar
+// warna tidak mengganggu, kontras dinaikkan tajam, sedikit dicerahkan.
+const FILTER_KONTRAS = 'grayscale(1) contrast(2.2) brightness(1.15)';
 
 interface MaterialDetail {
   id: string;
@@ -40,14 +43,15 @@ interface MaterialDetail {
 
 export default function MaterialDetailPage({ params }: { params: { id: string } }) {
   const { id } = params;
-  const { ttsEnabled, ttsRate } = useAccessibilityStore();
+  const { ttsEnabled, ttsRate, mode } = useAccessibilityStore();
+  const fitur = fiturUntukMode(mode);
+  const [kontrasAktif, setKontrasAktif] = useState(false);
 
   const [material, setMaterial] = useState<MaterialDetail | null>(null);
   const [loadingMaterial, setLoadingMaterial] = useState(true);
   const [ajuan, setAjuan] = useState<TutorRequestRow | null>(null);
   const [mengirimAjuan, setMengirimAjuan] = useState(false);
   const [errorAjuan, setErrorAjuan] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<ViewMode>('visual');
   const [isPlaying, setIsPlaying] = useState(false);
   const [isTTSPlaying, setIsTTSPlaying] = useState(false);
   const [expandedStep, setExpandedStep] = useState<string | null>(null);
@@ -299,37 +303,24 @@ export default function MaterialDetailPage({ params }: { params: { id: string } 
         </div>
 
         <div className="p-4 space-y-4 max-w-2xl mx-auto">
-          {/* Mode Toggle */}
-          <div className="bg-white rounded-2xl p-1 flex border border-slate-200 shadow-sm" role="group" aria-label="Pilih mode belajar">
+          {/* Filter super kontras — hanya untuk mode tunanetra/keduanya.
+              Diterapkan pada kontainer player, jadi ikut mengenai <video>
+              begitu materi bervideo ada, tanpa kode tambahan. */}
+          {fitur.filterKontras && (
             <button
-              onClick={() => setViewMode('visual')}
+              onClick={() => setKontrasAktif(v => !v)}
               className={cn(
-                "flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-medium transition-all",
-                viewMode === 'visual'
-                  ? "bg-blue-800 text-white shadow-sm"
-                  : "text-slate-500 hover:text-slate-700"
+                'w-full flex items-center justify-center gap-2 h-11 rounded-xl font-medium text-sm border-2 transition-all focus-visible:ring-2 focus-visible:ring-blue-500',
+                kontrasAktif
+                  ? 'bg-slate-900 text-white border-slate-900'
+                  : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
               )}
-              aria-pressed={viewMode === 'visual'}
-              aria-label="Mode visual deskriptif"
+              aria-pressed={kontrasAktif}
             >
-              <Eye size={15} aria-hidden="true" />
-              Visual Deskriptif
+              <Contrast size={15} aria-hidden="true" />
+              {kontrasAktif ? 'Matikan Kontras' : 'Filter Kontras'}
             </button>
-            <button
-              onClick={() => setViewMode('audio')}
-              className={cn(
-                "flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-medium transition-all",
-                viewMode === 'audio'
-                  ? "bg-blue-800 text-white shadow-sm"
-                  : "text-slate-500 hover:text-slate-700"
-              )}
-              aria-pressed={viewMode === 'audio'}
-              aria-label="Mode audio deskriptif"
-            >
-              <Ear size={15} aria-hidden="true" />
-              Audio Deskriptif
-            </button>
-          </div>
+          )}
 
           {/* Player Area */}
           {(material as any).video_url ? (
@@ -337,7 +328,7 @@ export default function MaterialDetailPage({ params }: { params: { id: string } 
             <div
               ref={videoContainerRef}
               className="relative rounded-2xl overflow-hidden shadow-sm bg-black group"
-              style={{ minHeight: '220px' }}
+              style={{ minHeight: '220px', filter: kontrasAktif ? FILTER_KONTRAS : undefined }}
             >
               <video
                 ref={videoRef}
@@ -393,7 +384,11 @@ export default function MaterialDetailPage({ params }: { params: { id: string } 
             // ── PLAYER EMOJI (materi tanpa video) ──
             <div
               className="relative rounded-2xl overflow-hidden shadow-sm"
-              style={{ backgroundColor: material.thumbnail_color + '20', minHeight: '180px' }}
+              style={{
+                backgroundColor: material.thumbnail_color + '20',
+                minHeight: '180px',
+                filter: kontrasAktif ? FILTER_KONTRAS : undefined,
+              }}
               role="region"
               aria-label="Area player materi"
             >
@@ -417,6 +412,7 @@ export default function MaterialDetailPage({ params }: { params: { id: string } 
 
           {/* Audio deskriptif — di luar cabang player agar tersedia juga untuk
               materi bervideo, bukan hanya materi beremoji. */}
+          {fitur.audioDeskriptif && (
           <button
             onClick={handleTTS}
             disabled={!material.transkrip.trim()}
@@ -432,19 +428,27 @@ export default function MaterialDetailPage({ params }: { params: { id: string } 
             {isTTSPlaying ? <VolumeX size={16} /> : <Volume2 size={16} />}
             {isTTSPlaying ? 'Hentikan' : 'Putar Audio'}
           </button>
+          )}
 
-          {/* Transkrip/Deskripsi dengan TTS Highlight */}
+          {/* Teks materi. Bagi tunarungu ia berperan sebagai panel transkrip —
+              di sinilah subtitle bertimestamp akan dipasang setelah ada video. */}
           <Card className="border-0 shadow-sm">
             <CardContent className="p-4">
               <div className="flex items-center justify-between mb-3">
                 <h2 className="font-semibold text-slate-900 text-sm">
-                  {viewMode === 'audio' ? '🔊 Transkrip Audio' : '📝 Deskripsi Materi'}
+                  {fitur.panelTranskrip ? '📝 Transkrip Materi' : '📝 Deskripsi Materi'}
                 </h2>
                 {isTTSPlaying && (
                   <Badge variant="warning" className="text-[10px] animate-pulse">Sedang Dibacakan</Badge>
                 )}
               </div>
-              <p className="text-sm text-slate-700 leading-relaxed" aria-live="polite">
+              <p
+                className={cn(
+                  'text-sm text-slate-700 leading-relaxed',
+                  fitur.panelTranskrip && 'max-h-72 overflow-y-auto pr-1'
+                )}
+                aria-live="polite"
+              >
                 {words.map((word, idx) => (
                   <span
                     key={idx}
