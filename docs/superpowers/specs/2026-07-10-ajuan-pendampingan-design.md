@@ -24,7 +24,9 @@ Guru tidak punya halaman notifikasi sama sekali. Notifikasi hanya mengalir satu 
 
 Satu baris = satu ajuan. Statusnya hanya tiga: `menunggu`, `dijadwalkan`, `ditolak`. Persetujuan dan penjadwalan adalah satu kejadian, bukan dua, jadi tidak ada status `disetujui` tersendiri.
 
-`teacher_id` diisi dari `materials.created_by`. Bila materi tidak punya pembuat — misalnya materi bawaan hasil seeding — kolomnya `null`, yang berarti "terbuka untuk guru mana pun", dan guru pertama yang merespons mengklaimnya.
+`teacher_id` diisi dari `materials.created_by`, **tetapi hanya bila pembuatnya benar-benar berperan `teacher`**. Bila materi tidak punya pembuat, atau pembuatnya ternyata akun siswa, kolomnya `null` — yang berarti "terbuka untuk guru mana pun", dan guru pertama yang merespons mengklaimnya.
+
+Syarat peran itu bukan kehati-hatian teoretis. Pemeriksaan data nyata pada proyek ini menemukan **1 dari 15 materi yang `created_by`-nya menunjuk ke akun siswa**. Menyalinnya mentah-mentah ke `teacher_id` menghasilkan ajuan yang tidak terlihat oleh guru mana pun — policy RLS guru mensyaratkan `teacher_id = auth.uid() OR teacher_id IS NULL` — sehingga siswa melihat "Menunggu Persetujuan" selamanya tanpa pesan error apa pun. Logikanya diisolasi di fungsi murni `resolveTeacherId(createdBy, createdByRole)`.
 
 **SQL yang harus dijalankan manual di Supabase SQL Editor.** Repo ini tidak menyimpan file migrasi; skema dikelola lewat dashboard.
 
@@ -123,6 +125,12 @@ export interface TombolAjuan {
 }
 
 export function describeRequestState(req: TutorRequestRow | null): TombolAjuan;
+
+// Mengembalikan createdBy hanya bila perannya 'teacher'; selain itu null.
+export function resolveTeacherId(
+  createdBy: string | null | undefined,
+  createdByRole: string | null | undefined
+): string | null;
 ```
 
 | `req` | `label` | `disabled` | `keterangan` |

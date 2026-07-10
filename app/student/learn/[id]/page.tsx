@@ -11,6 +11,9 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { useAccessibilityStore } from '@/lib/store/accessibility-store';
 import { createClient } from '@/lib/supabase/client';
+import { speak } from '@/lib/hooks/useTalkback';
+import { describeRequestState, TutorRequestRow } from '@/lib/tutor/request-state';
+import { formatDateShort } from '@/lib/utils/formatters';
 import { cn } from '@/lib/utils/cn';
 
 type ViewMode = 'visual' | 'audio';
@@ -41,6 +44,9 @@ export default function MaterialDetailPage({ params }: { params: { id: string } 
 
   const [material, setMaterial] = useState<MaterialDetail | null>(null);
   const [loadingMaterial, setLoadingMaterial] = useState(true);
+  const [ajuan, setAjuan] = useState<TutorRequestRow | null>(null);
+  const [mengirimAjuan, setMengirimAjuan] = useState(false);
+  const [errorAjuan, setErrorAjuan] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>('visual');
   const [isPlaying, setIsPlaying] = useState(false);
   const [isTTSPlaying, setIsTTSPlaying] = useState(false);
@@ -80,6 +86,19 @@ export default function MaterialDetailPage({ params }: { params: { id: string } 
         .select('*')
         .eq('material_id', id)
         .order('urutan', { ascending: true });
+
+      if (user) {
+        // Ajuan pendampingan terakhir untuk materi ini; menentukan wajah tombol.
+        const { data: ajuanTerakhir } = await supabase
+          .from('tutor_requests')
+          .select('status, jadwal')
+          .eq('student_id', user.id)
+          .eq('material_id', id)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        setAjuan((ajuanTerakhir as TutorRequestRow) ?? null);
+      }
 
       let completedStepIds: Set<number> = new Set();
       if (user) {
@@ -222,6 +241,35 @@ export default function MaterialDetailPage({ params }: { params: { id: string } 
     };
 
     window.speechSynthesis.speak(utterance);
+  };
+
+  const tombolAjuan = describeRequestState(ajuan);
+
+  const handleMintaPendamping = async () => {
+    if (mengirimAjuan) return;
+    setMengirimAjuan(true);
+    setErrorAjuan(null);
+    try {
+      const res = await fetch('/api/tutor-request', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ materialId: material.id }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setErrorAjuan(data.error);
+        speak(data.error, 'interrupt');
+        return;
+      }
+      setAjuan(data as TutorRequestRow);
+      speak('Ajuan pendampingan terkirim ke guru.', 'interrupt');
+    } catch {
+      const pesan = 'Gagal mengirim ajuan. Periksa koneksi internet.';
+      setErrorAjuan(pesan);
+      speak(pesan, 'interrupt');
+    } finally {
+      setMengirimAjuan(false);
+    }
   };
 
   const completedSteps = material.langkah.filter(l => l.selesai).length;
@@ -474,13 +522,29 @@ export default function MaterialDetailPage({ params }: { params: { id: string } 
               Lanjut ke Kuis
             </Link>
             <button
-              className="flex items-center justify-center gap-2 h-12 border-2 border-slate-200 text-slate-700 rounded-xl font-medium text-sm hover:bg-slate-50 transition-colors focus-visible:ring-2 focus-visible:ring-blue-500"
-              aria-label="Minta bantuan pendamping"
+              onClick={handleMintaPendamping}
+              disabled={tombolAjuan.disabled || mengirimAjuan}
+              className="flex items-center justify-center gap-2 h-12 border-2 border-slate-200 text-slate-700 rounded-xl font-medium text-sm hover:bg-slate-50 transition-colors focus-visible:ring-2 focus-visible:ring-blue-500 disabled:opacity-60 disabled:hover:bg-transparent"
             >
               <Users size={15} />
-              Minta Pendamping
+              {mengirimAjuan ? 'Mengirim...' : tombolAjuan.label}
             </button>
           </div>
+
+          {/* Keterangan status ajuan — dibaca juga oleh screen reader */}
+          {(tombolAjuan.keterangan || errorAjuan) && (
+            <p
+              className={cn('text-xs text-center', errorAjuan ? 'text-red-600' : 'text-slate-500')}
+              aria-live="polite"
+            >
+              {errorAjuan || tombolAjuan.keterangan}
+              {!errorAjuan && ajuan?.status === 'dijadwalkan' && ajuan.jadwal && (
+                <> Jadwal: {formatDateShort(ajuan.jadwal)}, pukul{' '}
+                  {new Date(ajuan.jadwal).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })} WIB.
+                </>
+              )}
+            </p>
+          )}
         </div>
       </main>
 
