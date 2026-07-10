@@ -97,6 +97,37 @@ export default function TutorRequestCard() {
     }
 
     const materi = row.materials?.judul || 'materi';
+
+    // Sesi dibuat SETELAH ajuan diperbarui: klausa .eq('status','menunggu')
+    // di atas yang mencegah dua guru merespons bersamaan. tutor_request_id
+    // unik, jadi persetujuan yang terkirim dua kali tidak membuat dua ruang.
+    if (setuju) {
+      const { error: eSesi } = await supabase.from('live_sessions').insert({
+        judul: `Pendampingan: ${materi}`,
+        guru_id: user.id,
+        mata_pelajaran: 'Pendampingan',
+        tanggal,
+        waktu: `${waktu}:00`,
+        durasi: 60,
+        status: 'scheduled',
+        topik: `Sesi pendampingan privat untuk ${row.profiles?.nama || 'siswa'}`,
+        mode: 'both',
+        room_name: `privat-${crypto.randomUUID().slice(0, 12)}`,
+        tipe: 'privat',
+        student_id: row.student_id,
+        tutor_request_id: row.id,
+      });
+
+      // Jadwal sudah tersimpan; kegagalan ini harus terlihat, bukan disembunyikan.
+      if (eSesi) {
+        setError(
+          'Jadwal tersimpan, tetapi ruang video gagal dibuat: ' + eSesi.message
+        );
+        setMemproses(false);
+        await muat();
+        return;
+      }
+    }
     await kirimNotifikasi(
       row,
       setuju ? 'Ajuan Pendampingan Disetujui' : 'Ajuan Pendampingan Ditolak',

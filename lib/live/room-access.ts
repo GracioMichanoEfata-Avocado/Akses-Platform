@@ -5,6 +5,8 @@ export interface LiveSessionRow {
   guru_id: string;
   status: string; // 'scheduled' | 'live' | 'ended'
   room_name: string;
+  tipe: 'kelas' | 'privat';
+  student_id: string | null; // hanya terisi pada sesi privat
 }
 
 export type Peran = 'teacher' | 'student';
@@ -33,5 +35,15 @@ export function authorizeRoomAccess(
     return session.guru_id === userId ? IZINKAN : tolak('Anda bukan pengajar sesi ini');
   }
 
-  return session.status === 'live' ? IZINKAN : tolak('Sesi belum dimulai');
+  // Status diperiksa sebelum kepemilikan: siswa yang tidak diundang tidak boleh
+  // bisa membedakan "sesi privat orang lain belum mulai" dari "aku tidak diundang".
+  if (session.status !== 'live') return tolak('Sesi belum dimulai');
+
+  if (session.tipe === 'kelas') return IZINKAN;
+
+  // Sesi privat. student_id null seharusnya mustahil (dicegah constraint
+  // database), tapi jangan bergantung pada itu saja: null tidak meloloskan.
+  return session.student_id && session.student_id === userId
+    ? IZINKAN
+    : tolak('Sesi ini khusus siswa lain');
 }

@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
 
     const { data: session } = await supabase
       .from('live_sessions')
-      .select('guru_id, status, room_name')
+      .select('guru_id, status, room_name, tipe, student_id')
       .eq('room_name', roomName)
       .maybeSingle();
 
