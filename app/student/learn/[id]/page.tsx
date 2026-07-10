@@ -410,9 +410,8 @@ export default function MaterialDetailPage({ params }: { params: { id: string } 
           </div>
           )}
 
-          {/* Audio deskriptif — di luar cabang player agar tersedia juga untuk
-              materi bervideo, bukan hanya materi beremoji. */}
-          {fitur.audioDeskriptif && (
+          {/* Audio deskriptif — tersedia untuk semua mode, dan di luar cabang
+              player agar materi bervideo juga mendapatkannya. */}
           <button
             onClick={handleTTS}
             disabled={!material.transkrip.trim()}
@@ -428,7 +427,6 @@ export default function MaterialDetailPage({ params }: { params: { id: string } 
             {isTTSPlaying ? <VolumeX size={16} /> : <Volume2 size={16} />}
             {isTTSPlaying ? 'Hentikan' : 'Putar Audio'}
           </button>
-          )}
 
           {/* Teks materi. Bagi tunarungu ia berperan sebagai panel transkrip —
               di sinilah subtitle bertimestamp akan dipasang setelah ada video. */}

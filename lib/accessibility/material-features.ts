@@ -3,9 +3,10 @@
 
 import type { DisabilitasMode } from '@/lib/store/accessibility-store';
 
+// Catatan: tombol "Putar Audio" sengaja TIDAK ada di sini. Ia tersedia untuk
+// semua mode, termasuk 'none' — membacakan deskripsi materi berguna bagi siapa
+// pun, bukan hanya tunanetra.
 export interface FiturMateri {
-  /** Tombol "Putar Audio" yang membacakan deskripsi materi. */
-  audioDeskriptif: boolean;
   /** Toggle filter super kontras pada area player. */
   filterKontras: boolean;
   /** Teks materi ditampilkan sebagai panel transkrip, bukan deskripsi biasa. */
@@ -13,7 +14,6 @@ export interface FiturMateri {
 }
 
 const STANDAR: FiturMateri = {
-  audioDeskriptif: false,
   filterKontras: false,
   panelTranskrip: false,
 };
@@ -27,7 +27,6 @@ export function fiturUntukMode(mode: DisabilitasMode): FiturMateri {
   if (!netra && !rungu) return STANDAR;
 
   return {
-    audioDeskriptif: netra,
     filterKontras: netra,
     panelTranskrip: rungu,
   };
