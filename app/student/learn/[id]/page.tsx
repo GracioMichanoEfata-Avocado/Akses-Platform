@@ -14,7 +14,7 @@ import { fiturUntukMode } from '@/lib/accessibility/material-features';
 import SlideshowPlayer from '@/components/student/SlideshowPlayer';
 import { parseSlides, Slide } from '@/lib/slides/slide-data';
 import { createClient } from '@/lib/supabase/client';
-import { speak } from '@/lib/hooks/useTalkback';
+import { speak, stopSpeaking, isTTSSpeaking } from '@/lib/hooks/useTalkback';
 import { describeRequestState, TutorRequestRow } from '@/lib/tutor/request-state';
 import { formatDateShort } from '@/lib/utils/formatters';
 import { cn } from '@/lib/utils/cn';
@@ -46,7 +46,7 @@ interface MaterialDetail {
 
 export default function MaterialDetailPage({ params }: { params: { id: string } }) {
   const { id } = params;
-  const { ttsEnabled, ttsRate, mode } = useAccessibilityStore();
+  const { mode } = useAccessibilityStore();
   const fitur = fiturUntukMode(mode);
   const [kontrasAktif, setKontrasAktif] = useState(false);
 
@@ -61,6 +61,7 @@ export default function MaterialDetailPage({ params }: { params: { id: string } 
   const [highlightedWord, setHighlightedWord] = useState(-1);
   const ttsWordsRef = useRef<string[]>([]);
   const wordTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const ttsPollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Video player state
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -152,6 +153,7 @@ export default function MaterialDetailPage({ params }: { params: { id: string } 
     return () => {
       if (typeof window !== 'undefined') window.speechSynthesis?.cancel();
       if (wordTimerRef.current) clearInterval(wordTimerRef.current);
+      if (ttsPollRef.current) clearInterval(ttsPollRef.current);
     };
   }, [id]);
 
@@ -209,24 +211,30 @@ export default function MaterialDetailPage({ params }: { params: { id: string } 
 
   const words = material.transkrip.split(/\s+/);
 
+  const stopTTS = () => {
+    stopSpeaking();
+    setIsTTSPlaying(false);
+    setHighlightedWord(-1);
+    if (wordTimerRef.current) clearInterval(wordTimerRef.current);
+    if (ttsPollRef.current) clearInterval(ttsPollRef.current);
+  };
+
   const handleTTS = () => {
     if (typeof window === 'undefined' || !window.speechSynthesis) return;
 
     if (isTTSPlaying) {
-      window.speechSynthesis.cancel();
-      setIsTTSPlaying(false);
-      setHighlightedWord(-1);
-      if (wordTimerRef.current) clearInterval(wordTimerRef.current);
+      stopTTS();
       return;
     }
 
-    const utterance = new SpeechSynthesisUtterance(material.transkrip);
-    utterance.lang = 'id-ID';
-    utterance.rate = ttsRate;
-
+    // Audio disalurkan lewat speak() dari useTalkback, bukan window.speech-
+    // Synthesis mentah: speak() memilih suara Indonesia dari getVoices() (lang
+    // 'id-ID' mentah bisa sunyi bila suara id tak terpasang) dan menandai
+    // isSpeakingGlobal agar mik voice-nav tak menangkap narasinya sendiri.
     ttsWordsRef.current = words;
     let wordIdx = 0;
-    const msPerWord = (60 / (ttsRate * 150)) * 1000;
+    // Selaras dengan rate tetap speak() (0.95); highlight hanya perkiraan.
+    const msPerWord = (60 / (0.95 * 150)) * 1000;
 
     setIsTTSPlaying(true);
     setHighlightedWord(0);
@@ -236,19 +244,27 @@ export default function MaterialDetailPage({ params }: { params: { id: string } 
       if (wordIdx >= ttsWordsRef.current.length) {
         clearInterval(wordTimerRef.current!);
         setHighlightedWord(-1);
-        setIsTTSPlaying(false);
       } else {
         setHighlightedWord(wordIdx);
       }
     }, msPerWord);
 
-    utterance.onend = () => {
-      setIsTTSPlaying(false);
-      setHighlightedWord(-1);
-      if (wordTimerRef.current) clearInterval(wordTimerRef.current);
-    };
+    speak(material.transkrip, 'interrupt');
 
-    window.speechSynthesis.speak(utterance);
+    // Deteksi akhir dgn polling isTTSSpeaking() — pola sama seperti
+    // SlideshowPlayer; slot onTTSEnd tunggal diperebutkan voice-nav.
+    // Jeda awal memberi waktu utterance mulai (onstart async) agar poll tak
+    // langsung membaca "belum bicara" dan berhenti seketika.
+    setTimeout(() => {
+      ttsPollRef.current = setInterval(() => {
+        if (!isTTSSpeaking()) {
+          setIsTTSPlaying(false);
+          setHighlightedWord(-1);
+          if (wordTimerRef.current) clearInterval(wordTimerRef.current);
+          if (ttsPollRef.current) clearInterval(ttsPollRef.current);
+        }
+      }, 400);
+    }, 900);
   };
 
   const tombolAjuan = describeRequestState(ajuan);
