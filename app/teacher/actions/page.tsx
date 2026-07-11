@@ -236,7 +236,7 @@ export default function TeacherLivePage() {
       if (liveSession) {
         setSession(liveSession);
         setSessionStarted(true);
-        await getToken(liveSession, profile?.nama || 'Pendamping');
+        await getToken(liveSession);
       }
       setLoading(false);
     }
@@ -256,11 +256,11 @@ export default function TeacherLivePage() {
       : `${m}:${sec.toString().padStart(2, '0')}`;
   };
 
-  const getToken = async (sess: any, name: string) => {
+  const getToken = async (sess: any) => {
     const res = await fetch('/api/livekit-token', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ roomName: sess.room_name, participantName: name, isTeacher: true }),
+      body: JSON.stringify({ roomName: sess.room_name }),
     });
     const data = await res.json();
     if (!res.ok) { setError(data.error); return; }
@@ -274,7 +274,7 @@ export default function TeacherLivePage() {
     setSession({ ...sess, status: 'live' });
     setSessionStarted(true);
     setElapsed(0);
-    await getToken(sess, teacherName);
+    await getToken(sess);
   };
 
   const endSession = async () => {

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Play, Pause, Volume2, VolumeX, Eye, Ear, ChevronDown, ChevronUp, CheckCircle, Circle, Users, BookOpen, Maximize } from 'lucide-react';
+import { ArrowLeft, Play, Pause, Volume2, VolumeX, Contrast, ChevronDown, ChevronUp, CheckCircle, Circle, Users, BookOpen, Maximize } from 'lucide-react';
 import StudentBottomNav from '@/components/shared/StudentBottomNav';
 import StudentSidebar from '@/components/shared/StudentSidebar';
 import AccessibilityBar from '@/components/accessibility/AccessibilityBar';
@@ -10,10 +10,14 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { useAccessibilityStore } from '@/lib/store/accessibility-store';
+import { fiturUntukMode } from '@/lib/accessibility/material-features';
+import SlideshowPlayer from '@/components/student/SlideshowPlayer';
+import { parseSlides, Slide } from '@/lib/slides/slide-data';
 import { createClient } from '@/lib/supabase/client';
+import { speak, speakLong, stopSpeaking, isTTSSpeaking } from '@/lib/hooks/useTalkback';
+import { describeRequestState, TutorRequestRow } from '@/lib/tutor/request-state';
+import { formatDateShort } from '@/lib/utils/formatters';
 import { cn } from '@/lib/utils/cn';
-
-type ViewMode = 'visual' | 'audio';
 
 interface Langkah {
   id: string;
@@ -22,6 +26,10 @@ interface Langkah {
   deskripsi: string;
   selesai: boolean;
 }
+
+// Kontras tinggi untuk sisa penglihatan (low vision): abu-abu penuh agar
+// warna tidak mengganggu, kontras dinaikkan tajam, sedikit dicerahkan.
+const FILTER_KONTRAS = 'grayscale(1) contrast(2.2) brightness(1.15)';
 
 interface MaterialDetail {
   id: string;
@@ -32,22 +40,28 @@ interface MaterialDetail {
   thumbnail_emoji: string;
   transkrip: string;
   video_url: string | null;
+  slides: Slide[];
   langkah: Langkah[];
 }
 
 export default function MaterialDetailPage({ params }: { params: { id: string } }) {
   const { id } = params;
-  const { ttsEnabled, ttsRate } = useAccessibilityStore();
+  const { mode } = useAccessibilityStore();
+  const fitur = fiturUntukMode(mode);
+  const [kontrasAktif, setKontrasAktif] = useState(false);
 
   const [material, setMaterial] = useState<MaterialDetail | null>(null);
   const [loadingMaterial, setLoadingMaterial] = useState(true);
-  const [viewMode, setViewMode] = useState<ViewMode>('visual');
+  const [ajuan, setAjuan] = useState<TutorRequestRow | null>(null);
+  const [mengirimAjuan, setMengirimAjuan] = useState(false);
+  const [errorAjuan, setErrorAjuan] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isTTSPlaying, setIsTTSPlaying] = useState(false);
   const [expandedStep, setExpandedStep] = useState<string | null>(null);
   const [highlightedWord, setHighlightedWord] = useState(-1);
   const ttsWordsRef = useRef<string[]>([]);
   const wordTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const ttsPollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Video player state
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -81,6 +95,19 @@ export default function MaterialDetailPage({ params }: { params: { id: string } 
         .eq('material_id', id)
         .order('urutan', { ascending: true });
 
+      if (user) {
+        // Ajuan pendampingan terakhir untuk materi ini; menentukan wajah tombol.
+        const { data: ajuanTerakhir } = await supabase
+          .from('tutor_requests')
+          .select('status, jadwal')
+          .eq('student_id', user.id)
+          .eq('material_id', id)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        setAjuan((ajuanTerakhir as TutorRequestRow) ?? null);
+      }
+
       let completedStepIds: Set<number> = new Set();
       if (user) {
         // progress disimpan sebagai persentase per materi; untuk langkah
@@ -109,6 +136,7 @@ export default function MaterialDetailPage({ params }: { params: { id: string } 
         thumbnail_emoji: materialData.thumbnail_emoji,
         transkrip: materialData.transkrip || '',
         video_url: materialData.video_url || null,
+        slides: parseSlides(materialData.slides),
         langkah: (stepsData || []).map((s) => ({
           id: s.id,
           urutan: s.urutan,
@@ -125,6 +153,7 @@ export default function MaterialDetailPage({ params }: { params: { id: string } 
     return () => {
       if (typeof window !== 'undefined') window.speechSynthesis?.cancel();
       if (wordTimerRef.current) clearInterval(wordTimerRef.current);
+      if (ttsPollRef.current) clearInterval(ttsPollRef.current);
     };
   }, [id]);
 
@@ -182,24 +211,30 @@ export default function MaterialDetailPage({ params }: { params: { id: string } 
 
   const words = material.transkrip.split(/\s+/);
 
+  const stopTTS = () => {
+    stopSpeaking();
+    setIsTTSPlaying(false);
+    setHighlightedWord(-1);
+    if (wordTimerRef.current) clearInterval(wordTimerRef.current);
+    if (ttsPollRef.current) clearInterval(ttsPollRef.current);
+  };
+
   const handleTTS = () => {
     if (typeof window === 'undefined' || !window.speechSynthesis) return;
 
     if (isTTSPlaying) {
-      window.speechSynthesis.cancel();
-      setIsTTSPlaying(false);
-      setHighlightedWord(-1);
-      if (wordTimerRef.current) clearInterval(wordTimerRef.current);
+      stopTTS();
       return;
     }
 
-    const utterance = new SpeechSynthesisUtterance(material.transkrip);
-    utterance.lang = 'id-ID';
-    utterance.rate = ttsRate;
-
+    // Audio disalurkan lewat speak() dari useTalkback, bukan window.speech-
+    // Synthesis mentah: speak() memilih suara Indonesia dari getVoices() (lang
+    // 'id-ID' mentah bisa sunyi bila suara id tak terpasang) dan menandai
+    // isSpeakingGlobal agar mik voice-nav tak menangkap narasinya sendiri.
     ttsWordsRef.current = words;
     let wordIdx = 0;
-    const msPerWord = (60 / (ttsRate * 150)) * 1000;
+    // Selaras dengan rate tetap speak() (0.95); highlight hanya perkiraan.
+    const msPerWord = (60 / (0.95 * 150)) * 1000;
 
     setIsTTSPlaying(true);
     setHighlightedWord(0);
@@ -209,19 +244,58 @@ export default function MaterialDetailPage({ params }: { params: { id: string } 
       if (wordIdx >= ttsWordsRef.current.length) {
         clearInterval(wordTimerRef.current!);
         setHighlightedWord(-1);
-        setIsTTSPlaying(false);
       } else {
         setHighlightedWord(wordIdx);
       }
     }, msPerWord);
 
-    utterance.onend = () => {
-      setIsTTSPlaying(false);
-      setHighlightedWord(-1);
-      if (wordTimerRef.current) clearInterval(wordTimerRef.current);
-    };
+    // speakLong memecah transkrip per kalimat: satu utterance panjang sering
+    // gagal berbunyi di Chrome, sementara narasi menu yang pendek aman.
+    speakLong(material.transkrip);
 
-    window.speechSynthesis.speak(utterance);
+    // Deteksi akhir dgn polling isTTSSpeaking() — pola sama seperti
+    // SlideshowPlayer; slot onTTSEnd tunggal diperebutkan voice-nav.
+    // Jeda awal memberi waktu utterance mulai (onstart async) agar poll tak
+    // langsung membaca "belum bicara" dan berhenti seketika.
+    setTimeout(() => {
+      ttsPollRef.current = setInterval(() => {
+        if (!isTTSSpeaking()) {
+          setIsTTSPlaying(false);
+          setHighlightedWord(-1);
+          if (wordTimerRef.current) clearInterval(wordTimerRef.current);
+          if (ttsPollRef.current) clearInterval(ttsPollRef.current);
+        }
+      }, 400);
+    }, 900);
+  };
+
+  const tombolAjuan = describeRequestState(ajuan);
+
+  const handleMintaPendamping = async () => {
+    if (mengirimAjuan) return;
+    setMengirimAjuan(true);
+    setErrorAjuan(null);
+    try {
+      const res = await fetch('/api/tutor-request', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ materialId: material.id }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setErrorAjuan(data.error);
+        speak(data.error, 'interrupt');
+        return;
+      }
+      setAjuan(data as TutorRequestRow);
+      speak('Ajuan pendampingan terkirim ke guru.', 'interrupt');
+    } catch {
+      const pesan = 'Gagal mengirim ajuan. Periksa koneksi internet.';
+      setErrorAjuan(pesan);
+      speak(pesan, 'interrupt');
+    } finally {
+      setMengirimAjuan(false);
+    }
   };
 
   const completedSteps = material.langkah.filter(l => l.selesai).length;
@@ -251,37 +325,24 @@ export default function MaterialDetailPage({ params }: { params: { id: string } 
         </div>
 
         <div className="p-4 space-y-4 max-w-2xl mx-auto">
-          {/* Mode Toggle */}
-          <div className="bg-white rounded-2xl p-1 flex border border-slate-200 shadow-sm" role="group" aria-label="Pilih mode belajar">
+          {/* Filter super kontras — hanya untuk mode tunanetra/keduanya.
+              Diterapkan pada kontainer player, jadi ikut mengenai <video>
+              begitu materi bervideo ada, tanpa kode tambahan. */}
+          {fitur.filterKontras && (
             <button
-              onClick={() => setViewMode('visual')}
+              onClick={() => setKontrasAktif(v => !v)}
               className={cn(
-                "flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-medium transition-all",
-                viewMode === 'visual'
-                  ? "bg-blue-800 text-white shadow-sm"
-                  : "text-slate-500 hover:text-slate-700"
+                'w-full flex items-center justify-center gap-2 h-11 rounded-xl font-medium text-sm border-2 transition-all focus-visible:ring-2 focus-visible:ring-blue-500',
+                kontrasAktif
+                  ? 'bg-slate-900 text-white border-slate-900'
+                  : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
               )}
-              aria-pressed={viewMode === 'visual'}
-              aria-label="Mode visual deskriptif"
+              aria-pressed={kontrasAktif}
             >
-              <Eye size={15} aria-hidden="true" />
-              Visual Deskriptif
+              <Contrast size={15} aria-hidden="true" />
+              {kontrasAktif ? 'Matikan Kontras' : 'Filter Kontras'}
             </button>
-            <button
-              onClick={() => setViewMode('audio')}
-              className={cn(
-                "flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-medium transition-all",
-                viewMode === 'audio'
-                  ? "bg-blue-800 text-white shadow-sm"
-                  : "text-slate-500 hover:text-slate-700"
-              )}
-              aria-pressed={viewMode === 'audio'}
-              aria-label="Mode audio deskriptif"
-            >
-              <Ear size={15} aria-hidden="true" />
-              Audio Deskriptif
-            </button>
-          </div>
+          )}
 
           {/* Player Area */}
           {(material as any).video_url ? (
@@ -289,7 +350,7 @@ export default function MaterialDetailPage({ params }: { params: { id: string } 
             <div
               ref={videoContainerRef}
               className="relative rounded-2xl overflow-hidden shadow-sm bg-black group"
-              style={{ minHeight: '220px' }}
+              style={{ minHeight: '220px', filter: kontrasAktif ? FILTER_KONTRAS : undefined }}
             >
               <video
                 ref={videoRef}
@@ -341,11 +402,18 @@ export default function MaterialDetailPage({ params }: { params: { id: string } 
                 </button>
               )}
             </div>
+          ) : material.slides.length > 0 ? (
+            // ── PRESENTASI SLIDE (materi hasil AI, tanpa video) ──
+            <SlideshowPlayer slides={material.slides} kontrasAktif={kontrasAktif} />
           ) : (
-            // ── PLAYER EMOJI (materi tanpa video) ──
+            // ── PLAYER EMOJI (materi tanpa video maupun slide) ──
             <div
               className="relative rounded-2xl overflow-hidden shadow-sm"
-              style={{ backgroundColor: material.thumbnail_color + '20', minHeight: '180px' }}
+              style={{
+                backgroundColor: material.thumbnail_color + '20',
+                minHeight: '180px',
+                filter: kontrasAktif ? FILTER_KONTRAS : undefined,
+              }}
               role="region"
               aria-label="Area player materi"
             >
@@ -354,7 +422,7 @@ export default function MaterialDetailPage({ params }: { params: { id: string } 
               </div>
 
             {/* Play overlay */}
-            <div className="absolute inset-0 flex items-end justify-between p-4">
+            <div className="absolute inset-0 flex items-end p-4">
               <button
                 onClick={() => setIsPlaying(!isPlaying)}
                 className="w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center hover:bg-slate-50 transition-colors focus-visible:ring-2 focus-visible:ring-blue-500"
@@ -363,37 +431,47 @@ export default function MaterialDetailPage({ params }: { params: { id: string } 
               >
                 {isPlaying ? <Pause size={20} className="text-blue-800" /> : <Play size={20} className="text-blue-800" />}
               </button>
-
-              <button
-                onClick={handleTTS}
-                className={cn(
-                  "flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium text-sm shadow-lg transition-all focus-visible:ring-2 focus-visible:ring-blue-500",
-                  isTTSPlaying
-                    ? "bg-amber-500 text-white"
-                    : "bg-white text-blue-800 hover:bg-blue-50"
-                )}
-                aria-label={isTTSPlaying ? "Hentikan pembacaan teks" : "Putar audio deskriptif"}
-                aria-pressed={isTTSPlaying}
-              >
-                {isTTSPlaying ? <VolumeX size={16} /> : <Volume2 size={16} />}
-                {isTTSPlaying ? 'Hentikan' : 'Putar Audio'}
-              </button>
             </div>
           </div>
           )}
 
-          {/* Transkrip/Deskripsi dengan TTS Highlight */}
+          {/* Audio deskriptif — tersedia untuk semua mode, dan di luar cabang
+              player agar materi bervideo juga mendapatkannya. */}
+          <button
+            onClick={handleTTS}
+            disabled={!material.transkrip.trim()}
+            className={cn(
+              "w-full flex items-center justify-center gap-2 h-12 rounded-xl font-semibold text-sm shadow-sm transition-all focus-visible:ring-2 focus-visible:ring-blue-500 disabled:opacity-50",
+              isTTSPlaying
+                ? "bg-amber-500 text-white"
+                : "bg-white text-blue-800 border-2 border-blue-100 hover:bg-blue-50"
+            )}
+            aria-label={isTTSPlaying ? "Hentikan pembacaan teks" : "Putar audio deskriptif"}
+            aria-pressed={isTTSPlaying}
+          >
+            {isTTSPlaying ? <VolumeX size={16} /> : <Volume2 size={16} />}
+            {isTTSPlaying ? 'Hentikan' : 'Putar Audio'}
+          </button>
+
+          {/* Teks materi. Bagi tunarungu ia berperan sebagai panel transkrip —
+              di sinilah subtitle bertimestamp akan dipasang setelah ada video. */}
           <Card className="border-0 shadow-sm">
             <CardContent className="p-4">
               <div className="flex items-center justify-between mb-3">
                 <h2 className="font-semibold text-slate-900 text-sm">
-                  {viewMode === 'audio' ? '🔊 Transkrip Audio' : '📝 Deskripsi Materi'}
+                  {fitur.panelTranskrip ? '📝 Transkrip Materi' : '📝 Deskripsi Materi'}
                 </h2>
                 {isTTSPlaying && (
                   <Badge variant="warning" className="text-[10px] animate-pulse">Sedang Dibacakan</Badge>
                 )}
               </div>
-              <p className="text-sm text-slate-700 leading-relaxed" aria-live="polite">
+              <p
+                className={cn(
+                  'text-sm text-slate-700 leading-relaxed',
+                  fitur.panelTranskrip && 'max-h-72 overflow-y-auto pr-1'
+                )}
+                aria-live="polite"
+              >
                 {words.map((word, idx) => (
                   <span
                     key={idx}
@@ -471,13 +549,29 @@ export default function MaterialDetailPage({ params }: { params: { id: string } 
               Lanjut ke Kuis
             </Link>
             <button
-              className="flex items-center justify-center gap-2 h-12 border-2 border-slate-200 text-slate-700 rounded-xl font-medium text-sm hover:bg-slate-50 transition-colors focus-visible:ring-2 focus-visible:ring-blue-500"
-              aria-label="Minta bantuan pendamping"
+              onClick={handleMintaPendamping}
+              disabled={tombolAjuan.disabled || mengirimAjuan}
+              className="flex items-center justify-center gap-2 h-12 border-2 border-slate-200 text-slate-700 rounded-xl font-medium text-sm hover:bg-slate-50 transition-colors focus-visible:ring-2 focus-visible:ring-blue-500 disabled:opacity-60 disabled:hover:bg-transparent"
             >
               <Users size={15} />
-              Minta Pendamping
+              {mengirimAjuan ? 'Mengirim...' : tombolAjuan.label}
             </button>
           </div>
+
+          {/* Keterangan status ajuan — dibaca juga oleh screen reader */}
+          {(tombolAjuan.keterangan || errorAjuan) && (
+            <p
+              className={cn('text-xs text-center', errorAjuan ? 'text-red-600' : 'text-slate-500')}
+              aria-live="polite"
+            >
+              {errorAjuan || tombolAjuan.keterangan}
+              {!errorAjuan && ajuan?.status === 'dijadwalkan' && ajuan.jadwal && (
+                <> Jadwal: {formatDateShort(ajuan.jadwal)}, pukul{' '}
+                  {new Date(ajuan.jadwal).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })} WIB.
+                </>
+              )}
+            </p>
+          )}
         </div>
       </main>
 

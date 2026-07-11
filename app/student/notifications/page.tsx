@@ -51,8 +51,10 @@ export default function NotificationsPage() {
 
   useEffect(() => {
     const supabase = createClient();
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+    let cancelled = false;
 
-    async function load() {
+    (async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { setLoading(false); return; }
 
@@ -61,16 +63,15 @@ export default function NotificationsPage() {
         .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
+      if (cancelled) return;
       setNotifs(data || []);
       setLoading(false);
-    }
-    load();
 
-    // Real-time: notifikasi baru langsung muncul
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (!user) return;
-      const channel = supabase
-        .channel('notif_' + user.id)
+      // Nama channel unik per-mount: mencegah tabrakan "cannot add callbacks
+      // after subscribe()" saat StrictMode menjalankan effect dua kali dan
+      // channel bernama sama dipakai ulang dalam keadaan sudah subscribe.
+      channel = supabase
+        .channel('notif_' + user.id + '_' + Date.now())
         .on('postgres_changes', {
           event: 'INSERT',
           schema: 'public',
@@ -88,8 +89,16 @@ export default function NotificationsPage() {
           setNotifs(prev => prev.map(n => n.id === payload.new.id ? payload.new as Notif : n));
         })
         .subscribe();
-      return () => { supabase.removeChannel(channel); };
-    });
+
+      // Bila effect sudah dibersihkan sebelum subscribe selesai (race async),
+      // langsung lepas channel yang terlanjur dibuat.
+      if (cancelled) { supabase.removeChannel(channel); channel = null; }
+    })();
+
+    return () => {
+      cancelled = true;
+      if (channel) supabase.removeChannel(channel);
+    };
   }, []);
 
   const markRead = async (id: string) => {
@@ -108,7 +117,11 @@ export default function NotificationsPage() {
 
   const deleteNotif = async (id: string) => {
     const supabase = createClient();
-    await supabase.from('notifications').delete().eq('id', id);
+    // .select() mengembalikan baris yang benar-benar terhapus. Tanpa policy
+    // DELETE, RLS menolak diam-diam (200, 0 baris, tanpa error), jadi memeriksa
+    // error saja tidak cukup: hanya perbarui state bila ada baris yang hilang.
+    const { data } = await supabase.from('notifications').delete().eq('id', id).select();
+    if (!data || data.length === 0) return;
     setNotifs(prev => prev.filter(n => n.id !== id));
   };
 

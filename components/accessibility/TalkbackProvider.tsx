@@ -5,16 +5,9 @@ import { usePathname } from 'next/navigation';
 import { useAccessibilityStore } from '@/lib/store/accessibility-store';
 import { speak, stopSpeaking, isTTSSpeaking, onTTSEnd } from '@/lib/hooks/useTalkback';
 import { useVoiceNavigation } from '@/lib/hooks/useVoiceNavigation';
+import { useAutoVoiceScan } from '@/lib/hooks/useAutoVoiceScan';
+import type { ScannedCommand } from '@/lib/voice/dom-scan';
 import { Mic, MicOff, VolumeX, HelpCircle } from 'lucide-react';
-
-// ─── Narasi otomatis per halaman ──────────────────────────────────────────
-const PAGE_NARASI: Record<string, string> = {
-  '/student/dashboard': 'Beranda. Halaman ini menampilkan jadwal kelas dan materi terbaru. Ucapkan nama menu atau nama materi untuk membukanya.',
-  '/student/learn': 'Katalog Materi. Tersedia daftar materi belajar. Ucapkan nama materi yang ingin dibuka.',
-  '/student/live': 'Kelas Live. Ucapkan "bergabung" untuk masuk ke kelas, atau "kembali" untuk ke beranda.',
-  '/student/notifications': 'Notifikasi. Ucapkan "tandai semua dibaca" atau "kembali" untuk kembali.',
-  '/student/profile': 'Profil Saya. Ucapkan "edit profil", "aksesibilitas", atau "keluar" untuk navigasi.',
-};
 
 // ─── Interface untuk perintah per halaman ────────────────────────────────
 import type { MatchType } from '@/lib/voice/keyword-match';
@@ -64,6 +57,7 @@ export default function TalkbackProvider({ children }: { children: React.ReactNo
 
   // Perintah suara dari halaman aktif
   const pageCommandsRef = useRef<PageVoiceCommand[]>([]);
+  const scannedRef = useRef<ScannedCommand[]>([]);
   const [showHelp, setShowHelp] = useState(false);
 
   // Set voice nav ON otomatis saat mode tunanetra aktif (hanya jika user belum pernah toggle)
@@ -77,21 +71,6 @@ export default function TalkbackProvider({ children }: { children: React.ReactNo
       stopSpeaking();
     }
   }, [isAktif]);
-
-  // Narasi otomatis saat pindah halaman — hanya kalau isAktif
-  const prevPathRef = useRef('');
-  useEffect(() => {
-    if (!isAktif) return;
-    if (pathname === prevPathRef.current) return;
-    prevPathRef.current = pathname;
-
-    const narasi = Object.entries(PAGE_NARASI).find(([path]) =>
-      pathname === path || pathname.startsWith(path + '/')
-    );
-    if (narasi) {
-      setTimeout(() => speak(narasi[1], 'interrupt'), 700);
-    }
-  }, [pathname, isAktif]);
 
   // Registrasi perintah dari halaman aktif
   const registerPageCommands = useCallback((commands: PageVoiceCommand[]) => {
@@ -115,7 +94,8 @@ export default function TalkbackProvider({ children }: { children: React.ReactNo
   }, [isVoiceNavAktif]);
 
   // Teruskan pageCommandsRef ke hook voice navigation
-  useVoiceNavigation(isVoiceNavAktif && isAktif && !isLoginPage, pageCommandsRef);
+  useAutoVoiceScan(isVoiceNavAktif && isAktif && !isLoginPage, scannedRef, pageCommandsRef);
+  useVoiceNavigation(isVoiceNavAktif && isAktif && !isLoginPage, pageCommandsRef, scannedRef);
 
   if (!isAktif || isLoginPage) return <>{children}</>;
 
@@ -131,7 +111,7 @@ export default function TalkbackProvider({ children }: { children: React.ReactNo
       {children}
 
       {/* ── Floating kontrol ── */}
-      <div className="fixed bottom-20 sm:bottom-6 right-4 z-50 flex flex-col gap-2 items-end">
+      <div data-voice-ignore className="fixed bottom-20 sm:bottom-6 right-4 z-50 flex flex-col gap-2 items-end">
         {/* Indikator mendengarkan */}
         {isVoiceNavAktif && (
           <div className="flex items-center gap-2 bg-blue-800 text-white text-xs px-3 py-1.5 rounded-full shadow-lg">

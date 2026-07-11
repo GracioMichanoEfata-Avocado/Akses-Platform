@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Users, TrendingUp, Calendar, PlusCircle, ChevronRight } from 'lucide-react';
 import TeacherSidebar from '@/components/shared/TeacherSidebar';
+import TutorRequestCard from '@/components/teacher/TutorRequestCard';
 import AccessibilityBar from '@/components/accessibility/AccessibilityBar';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -175,6 +176,9 @@ export default function TeacherDashboard() {
               ))}
             </div>
           </div>
+
+          {/* Ajuan pendampingan — tidak dirender bila tidak ada ajuan menunggu */}
+          <TutorRequestCard />
 
           {/* Quick Action */}
           <Link href="/teacher/create-session">

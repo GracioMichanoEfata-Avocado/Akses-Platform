@@ -216,16 +216,32 @@ export default function StudentLivePage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { setError('Belum login'); setLoading(false); return; }
 
-      const { data: profile } = await supabase
-        .from('profiles').select('nama').eq('id', user.id).single();
-
-      const { data: liveSession } = await supabase
+      // Sesi privat milik siswa ini menang atas kelas umum. Tanpa penyaringan
+      // ini, siswa lain yang membuka Kelas Live akan masuk ke sesi privat yang
+      // sedang berlangsung — token akan menolaknya, tapi ia melihat error alih-alih
+      // kelas umum yang sebenarnya boleh ia ikuti.
+      const { data: sesiPrivat } = await supabase
         .from('live_sessions')
         .select('*')
         .eq('status', 'live')
+        .eq('tipe', 'privat')
+        .eq('student_id', user.id)
         .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle();
+
+      let liveSession = sesiPrivat;
+      if (!liveSession) {
+        const { data: sesiKelas } = await supabase
+          .from('live_sessions')
+          .select('*')
+          .eq('status', 'live')
+          .eq('tipe', 'kelas')
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        liveSession = sesiKelas;
+      }
 
       if (!liveSession) {
         setError('Tidak ada kelas live yang sedang berlangsung saat ini.');
@@ -238,11 +254,7 @@ export default function StudentLivePage() {
       const res = await fetch('/api/livekit-token', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          roomName: liveSession.room_name,
-          participantName: profile?.nama || 'Siswa',
-          isTeacher: false,
-        }),
+        body: JSON.stringify({ roomName: liveSession.room_name }),
       });
 
       const data = await res.json();

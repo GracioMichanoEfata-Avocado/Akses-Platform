@@ -188,7 +188,7 @@ export default function QuizPage({ params }: { params: { id: string } }) {
     const pct = Math.round((score / soal.length) * 100);
 
     try {
-      const res = await fetch('/api/generate-remedial', {
+      const res = await fetch('/api/generate-materi/generate-remedial', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ materialId: id, quizId, skorAwal: pct }),

@@ -348,10 +348,14 @@ export default function UploadMateriPage() {
           }),
         });
       }
-    } catch {
+    } catch (err: any) {
       clearInterval(interval);
       setStep(1);
-      alert('Gagal terhubung ke server. Pastikan koneksi internet stabil.');
+      // Jangan asal salahkan koneksi: kegagalan parse JSON (server mengirim
+      // HTML error, mis. cache .next rusak) juga jatuh ke sini. Tampilkan sebab
+      // aslinya agar bisa didiagnosa.
+      alert('Gagal memproses materi: ' + (err?.message || 'kesalahan tak dikenal') +
+        '. Jika muncul "Unexpected token", hentikan server lalu jalankan ulang npm run dev.');
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [file, pastedText]);

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { extractJson } from '@/lib/materi/extract-json';
 
 export async function POST(req: NextRequest) {
   try {
@@ -41,7 +42,16 @@ export async function POST(req: NextRequest) {
     }
 
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+    const model = genAI.getGenerativeModel({
+      model: 'gemini-2.5-flash',
+      generationConfig: {
+        // Mode JSON: Gemini mengembalikan JSON murni tanpa pagar markdown.
+        responseMimeType: 'application/json',
+        // Materi dari PDF menghasilkan keluaran panjang (5-6 slide + narasi +
+        // 5 soal). Batas default bisa memotong JSON di tengah → parse gagal.
+        maxOutputTokens: 8192,
+      },
+    });
 
     const prompt = `${materiText ? `Berikut adalah materi pelajaran:\n\n${materiText}\n\n` : ''}Berdasarkan materi di atas, buat konten pembelajaran yang inklusif untuk platform AKSES (platform belajar untuk siswa dengan disabilitas sensorik tunanetra dan tunarungu).
 
@@ -71,7 +81,8 @@ Buat dalam format JSON yang HANYA berisi JSON, tanpa penjelasan tambahan, tanpa 
 
 Ketentuan:
 - Buat tepat 5 soal kuis dengan tingkat kesulitan bervariasi
-- Buat 3 visualisasi konsep utama
+- Buat 5 sampai 6 visualisasi konsep utama; masing-masing menjadi satu slide presentasi
+- Setiap "deskripsi" visualisasi 3-4 kalimat, ditulis untuk dibacakan sebagai narasi slide
 - audioDeskripsi harus sangat detail karena ini untuk siswa tunanetra
 - Semua teks dalam Bahasa Indonesia
 - jawabanBenar adalah index (0-3) dari array opsi
@@ -79,15 +90,44 @@ Ketentuan:
 - HANYA balas dengan JSON, tidak ada teks lain sama sekali`;
 
     const parts: any[] = [...pdfParts, { text: prompt }];
-    const result = await model.generateContent(parts);
-    const rawText = result.response.text();
+
+    // Gemini sesekali mengembalikan 503 saat kelebihan beban — bersifat
+    // sementara. Coba ulang beberapa kali dengan jeda menaik sebelum menyerah.
+    let rawText = '';
+    let lastErr: any = null;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        const result = await model.generateContent(parts);
+        rawText = result.response.text();
+        lastErr = null;
+        break;
+      } catch (e: any) {
+        lastErr = e;
+        const overload = /503|overloaded|high demand|unavailable/i.test(e?.message || '');
+        if (!overload || attempt === 2) break;
+        await new Promise(r => setTimeout(r, 1500 * (attempt + 1)));
+      }
+    }
+
+    if (lastErr) {
+      const overload = /503|overloaded|high demand|unavailable/i.test(lastErr?.message || '');
+      return NextResponse.json(
+        {
+          error: overload
+            ? 'Server AI sedang sibuk. Tunggu sebentar lalu coba lagi.'
+            : 'Gagal memanggil AI: ' + (lastErr?.message || 'kesalahan tak dikenal'),
+        },
+        { status: overload ? 503 : 500 }
+      );
+    }
 
     // Parse JSON
     let generated;
     try {
-      const cleaned = rawText.replace(/```json|```/g, '').trim();
-      generated = JSON.parse(cleaned);
-    } catch {
+      generated = extractJson(rawText);
+    } catch (e: any) {
+      // Log teks mentah agar kegagalan format bisa didiagnosa, bukan buta.
+      console.error('Parse materi gagal:', e?.message, '| mentah:', rawText.slice(0, 500));
       return NextResponse.json({ error: 'AI gagal menghasilkan format yang benar. Coba lagi.' }, { status: 500 });
     }
 
@@ -102,6 +142,9 @@ Ketentuan:
         transkrip: generated.audioDeskripsi,
         thumbnail_color: generated.visualisasi?.[0]?.warna || '#1E40AF',
         thumbnail_emoji: generated.visualisasi?.[0]?.emojiIkon || '📘',
+        // Visualisasi sudah berbentuk slide; sebelumnya dibuang setelah
+        // diambil warna & emojinya. Divalidasi ulang saat dibaca (parseSlides).
+        slides: generated.visualisasi ?? null,
         is_ai_generated: true,
         created_by: user.id,
       })
