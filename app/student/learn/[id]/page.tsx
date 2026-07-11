@@ -14,7 +14,7 @@ import { fiturUntukMode } from '@/lib/accessibility/material-features';
 import SlideshowPlayer from '@/components/student/SlideshowPlayer';
 import { parseSlides, Slide } from '@/lib/slides/slide-data';
 import { createClient } from '@/lib/supabase/client';
-import { speak, stopSpeaking, isTTSSpeaking } from '@/lib/hooks/useTalkback';
+import { speak, speakLong, stopSpeaking, isTTSSpeaking } from '@/lib/hooks/useTalkback';
 import { describeRequestState, TutorRequestRow } from '@/lib/tutor/request-state';
 import { formatDateShort } from '@/lib/utils/formatters';
 import { cn } from '@/lib/utils/cn';
@@ -249,7 +249,9 @@ export default function MaterialDetailPage({ params }: { params: { id: string } 
       }
     }, msPerWord);
 
-    speak(material.transkrip, 'interrupt');
+    // speakLong memecah transkrip per kalimat: satu utterance panjang sering
+    // gagal berbunyi di Chrome, sementara narasi menu yang pendek aman.
+    speakLong(material.transkrip);
 
     // Deteksi akhir dgn polling isTTSSpeaking() — pola sama seperti
     // SlideshowPlayer; slot onTTSEnd tunggal diperebutkan voice-nav.

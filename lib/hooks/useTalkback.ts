@@ -4,6 +4,7 @@ import { useAccessibilityStore } from '@/lib/store/accessibility-store';
 // State global untuk track apakah TTS lagi ngomong
 let isSpeakingGlobal = false;
 let onSpeakEnd: (() => void) | null = null;
+let longStop = false; // penanda untuk menghentikan speakLong di tengah jalan
 
 export function isTTSSpeaking() {
   return isSpeakingGlobal;
@@ -49,8 +50,46 @@ export function speak(text: string, priority: 'normal' | 'interrupt' = 'normal')
   window.speechSynthesis.speak(utterance);
 }
 
+// Membacakan teks panjang dengan memecahnya per kalimat lalu mengantrikannya
+// satu per satu. speechSynthesis Chrome sering gagal berbunyi pada satu
+// utterance yang sangat panjang; potongan pendek aman. Memilih suara Indonesia
+// dan menjaga isSpeakingGlobal seperti speak(), agar voice-nav tetap selaras.
+export function speakLong(text: string, onDone?: () => void) {
+  if (typeof window === 'undefined' || !window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+  longStop = false;
+
+  const potongan = (text.match(/[^.!?]+[.!?]+|\S[^.!?]*$/g) || [text])
+    .map(s => s.trim())
+    .filter(Boolean);
+  if (potongan.length === 0) { onDone?.(); return; }
+
+  let i = 0;
+  isSpeakingGlobal = true;
+
+  const berikut = () => {
+    if (longStop || i >= potongan.length) {
+      isSpeakingGlobal = false;
+      onDone?.();
+      return;
+    }
+    const u = new SpeechSynthesisUtterance(potongan[i]);
+    u.lang = 'id-ID';
+    u.rate = 0.95;
+    const voices = window.speechSynthesis.getVoices();
+    const idVoice = voices.find(v => v.lang.startsWith('id'));
+    if (idVoice) u.voice = idVoice;
+    u.onend = () => { i++; berikut(); };
+    u.onerror = () => { i++; berikut(); };
+    window.speechSynthesis.speak(u);
+  };
+
+  berikut();
+}
+
 export function stopSpeaking() {
   if (typeof window !== 'undefined') {
+    longStop = true; // hentikan antrean speakLong agar tak lanjut ke potongan berikutnya
     window.speechSynthesis?.cancel();
     isSpeakingGlobal = false;
   }
