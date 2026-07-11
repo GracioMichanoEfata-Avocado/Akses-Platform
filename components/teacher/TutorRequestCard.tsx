@@ -120,8 +120,10 @@ export default function TutorRequestCard() {
         tutor_request_id: row.id,
       });
 
-      // Jadwal sudah tersimpan; kegagalan ini harus terlihat, bukan disembunyikan.
-      if (eSesi) {
+      // 23505 = sudah ada sesi untuk ajuan ini (tutor_request_id unik). Itu
+      // bukan kegagalan: ruangnya memang sudah dibuat. Hanya galat lain yang
+      // ditampilkan, dan jadwal terlanjur tersimpan jadi tak disembunyikan.
+      if (eSesi && eSesi.code !== '23505') {
         setError(
           'Jadwal tersimpan, tetapi ruang video gagal dibuat: ' + eSesi.message
         );
