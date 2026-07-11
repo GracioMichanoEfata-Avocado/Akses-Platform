@@ -28,6 +28,13 @@ set status = 'menunggu', jadwal = null, teacher_id = null
 where status = 'dijadwalkan';
 
 
+-- ── BLOK 2b — HAPUS NOTIFIKASI UJI ───────────────────────────────────
+-- '__cek_guru' tersisa dari verifikasi policy notifikasi (tabel tak punya
+-- policy DELETE, jadi tak bisa dihapus lewat aplikasi).
+delete from public.notifications
+where judul in ('__cek_guru', '__cek_siswa');
+
+
 -- ── BLOK 3 — VERIFIKASI ──────────────────────────────────────────────
 -- 3a. Tidak ada lagi sesi privat uji.
 select count(*) as sesi_privat_tersisa
