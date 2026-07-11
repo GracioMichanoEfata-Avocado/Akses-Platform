@@ -71,7 +71,8 @@ Buat dalam format JSON yang HANYA berisi JSON, tanpa penjelasan tambahan, tanpa 
 
 Ketentuan:
 - Buat tepat 5 soal kuis dengan tingkat kesulitan bervariasi
-- Buat 3 visualisasi konsep utama
+- Buat 5 sampai 6 visualisasi konsep utama; masing-masing menjadi satu slide presentasi
+- Setiap "deskripsi" visualisasi 3-4 kalimat, ditulis untuk dibacakan sebagai narasi slide
 - audioDeskripsi harus sangat detail karena ini untuk siswa tunanetra
 - Semua teks dalam Bahasa Indonesia
 - jawabanBenar adalah index (0-3) dari array opsi
@@ -102,6 +103,9 @@ Ketentuan:
         transkrip: generated.audioDeskripsi,
         thumbnail_color: generated.visualisasi?.[0]?.warna || '#1E40AF',
         thumbnail_emoji: generated.visualisasi?.[0]?.emojiIkon || '📘',
+        // Visualisasi sudah berbentuk slide; sebelumnya dibuang setelah
+        // diambil warna & emojinya. Divalidasi ulang saat dibaca (parseSlides).
+        slides: generated.visualisasi ?? null,
         is_ai_generated: true,
         created_by: user.id,
       })

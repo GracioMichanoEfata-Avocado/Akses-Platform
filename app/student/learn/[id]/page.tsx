@@ -11,6 +11,8 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { useAccessibilityStore } from '@/lib/store/accessibility-store';
 import { fiturUntukMode } from '@/lib/accessibility/material-features';
+import SlideshowPlayer from '@/components/student/SlideshowPlayer';
+import { parseSlides, Slide } from '@/lib/slides/slide-data';
 import { createClient } from '@/lib/supabase/client';
 import { speak } from '@/lib/hooks/useTalkback';
 import { describeRequestState, TutorRequestRow } from '@/lib/tutor/request-state';
@@ -38,6 +40,7 @@ interface MaterialDetail {
   thumbnail_emoji: string;
   transkrip: string;
   video_url: string | null;
+  slides: Slide[];
   langkah: Langkah[];
 }
 
@@ -132,6 +135,7 @@ export default function MaterialDetailPage({ params }: { params: { id: string } 
         thumbnail_emoji: materialData.thumbnail_emoji,
         transkrip: materialData.transkrip || '',
         video_url: materialData.video_url || null,
+        slides: parseSlides(materialData.slides),
         langkah: (stepsData || []).map((s) => ({
           id: s.id,
           urutan: s.urutan,
@@ -380,8 +384,11 @@ export default function MaterialDetailPage({ params }: { params: { id: string } 
                 </button>
               )}
             </div>
+          ) : material.slides.length > 0 ? (
+            // ── PRESENTASI SLIDE (materi hasil AI, tanpa video) ──
+            <SlideshowPlayer slides={material.slides} kontrasAktif={kontrasAktif} />
           ) : (
-            // ── PLAYER EMOJI (materi tanpa video) ──
+            // ── PLAYER EMOJI (materi tanpa video maupun slide) ──
             <div
               className="relative rounded-2xl overflow-hidden shadow-sm"
               style={{
