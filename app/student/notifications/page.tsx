@@ -108,7 +108,11 @@ export default function NotificationsPage() {
 
   const deleteNotif = async (id: string) => {
     const supabase = createClient();
-    await supabase.from('notifications').delete().eq('id', id);
+    // .select() mengembalikan baris yang benar-benar terhapus. Tanpa policy
+    // DELETE, RLS menolak diam-diam (200, 0 baris, tanpa error), jadi memeriksa
+    // error saja tidak cukup: hanya perbarui state bila ada baris yang hilang.
+    const { data } = await supabase.from('notifications').delete().eq('id', id).select();
+    if (!data || data.length === 0) return;
     setNotifs(prev => prev.filter(n => n.id !== id));
   };
 
