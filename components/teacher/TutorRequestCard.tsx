@@ -49,7 +49,9 @@ export default function TutorRequestCard() {
       body: JSON.stringify({
         judul,
         isi,
-        tipe: 'sistem',
+        // CHECK constraint notifications.tipe hanya menerima
+        // 'materi_baru' | 'sesi_baru'. Persetujuan menjadwalkan sesi privat.
+        tipe: 'sesi_baru',
         link: `/student/learn/${row.material_id}`,
         targetUserIds: [row.student_id],
       }),
