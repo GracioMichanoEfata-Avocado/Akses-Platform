@@ -14,6 +14,14 @@ import {
 } from '@livekit/components-react';
 import '@livekit/components-styles';
 import { cn } from '@/lib/utils/cn';
+import NoiseFilterSetup from '@/components/live/NoiseFilterSetup';
+import { useAccessibilityStore } from '@/lib/store/accessibility-store';
+import { FILTER_KONTRAS_VIDEO } from '@/lib/accessibility/material-features';
+
+// Audio lebih jernih untuk yang mendengarkan (mis. siswa tunanetra): kurangi
+// gema & suara latar, dan seimbangkan volume otomatis. Noise-cancellation
+// Krisp yang lebih kuat dipasang lewat <NoiseFilterSetup /> di bawah.
+const AUDIO_CAPTURE_OPTIONS = { echoCancellation: true, noiseSuppression: true, autoGainControl: true };
 
 // ─── Panel Transkrip/Subtitle real-time (harus di dalam LiveKitRoom karena
 // pakai useDataChannel). Guru dikte lewat mic; teks dikirim ke siswa via
@@ -111,6 +119,7 @@ function CaptionPanel({ sessionId }: { sessionId: string }) {
 // Video full tampilan LiveKit + panel transkrip/subtitle tersendiri (bukan
 // Tanya Jawab — itu sudah ditangani chat bawaan LiveKit).
 export default function TeacherLivePage() {
+  const { highContrast } = useAccessibilityStore();
   const [token, setToken] = useState<string | null>(null);
   const [livekitUrl, setLivekitUrl] = useState<string | null>(null);
   const [session, setSession] = useState<any>(null);
@@ -243,12 +252,14 @@ export default function TeacherLivePage() {
             token={token}
             serverUrl={livekitUrl!}
             connect={true}
-            audio={true}
+            audio={AUDIO_CAPTURE_OPTIONS}
             video={true}
             className="h-full"
+            style={{ filter: highContrast ? FILTER_KONTRAS_VIDEO : undefined }}
           >
             <VideoConference />
             <RoomAudioRenderer />
+            <NoiseFilterSetup />
             {/* CaptionPanel HARUS di dalam LiveKitRoom karena pakai useDataChannel */}
             <CaptionPanel sessionId={session.id} />
           </LiveKitRoom>

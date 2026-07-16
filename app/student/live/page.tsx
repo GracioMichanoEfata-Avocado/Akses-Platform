@@ -14,6 +14,14 @@ import {
 } from '@livekit/components-react';
 import '@livekit/components-styles';
 import { cn } from '@/lib/utils/cn';
+import NoiseFilterSetup from '@/components/live/NoiseFilterSetup';
+import { useAccessibilityStore } from '@/lib/store/accessibility-store';
+import { FILTER_KONTRAS_VIDEO } from '@/lib/accessibility/material-features';
+
+// Audio lebih jernih untuk yang mendengarkan (mis. siswa tunanetra): kurangi
+// gema & suara latar, dan seimbangkan volume otomatis. Noise-cancellation
+// Krisp yang lebih kuat dipasang lewat <NoiseFilterSetup /> di bawah.
+const AUDIO_CAPTURE_OPTIONS = { echoCancellation: true, noiseSuppression: true, autoGainControl: true };
 
 // ─── Panel Transkrip/Subtitle real-time (harus di dalam LiveKitRoom karena
 // pakai useDataChannel). Ruang tersendiri, selalu tampil — supaya siswa
@@ -62,6 +70,7 @@ function TranscriptPanel() {
 // ─── Halaman Utama Live Class Murid ──────────────────────────────────────
 export default function StudentLivePage() {
   const router = useRouter();
+  const { highContrast } = useAccessibilityStore();
   const [token, setToken] = useState<string | null>(null);
   const [livekitUrl, setLivekitUrl] = useState<string | null>(null);
   const [session, setSession] = useState<any>(null);
@@ -277,14 +286,16 @@ export default function StudentLivePage() {
             token={token}
             serverUrl={livekitUrl}
             connect={true}
-            audio={true}
+            audio={AUDIO_CAPTURE_OPTIONS}
             video={false}
             data-lk-theme="default"
             onDisconnected={() => setError('Koneksi terputus dari kelas.')}
             className="h-full"
+            style={{ filter: highContrast ? FILTER_KONTRAS_VIDEO : undefined }}
           >
             <VideoConference />
             <RoomAudioRenderer />
+            <NoiseFilterSetup />
             {/* TranscriptPanel HARUS di dalam LiveKitRoom karena pakai useDataChannel */}
             <TranscriptPanel />
           </LiveKitRoom>
