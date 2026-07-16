@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Radio, Clock, Users } from 'lucide-react';
+import { ArrowLeft, Radio, Clock, Users, FileText } from 'lucide-react';
 import StudentSidebar from '@/components/shared/StudentSidebar';
 import { Card, CardContent } from '@/components/ui/card';
 import { createClient } from '@/lib/supabase/client';
@@ -10,13 +10,56 @@ import {
   LiveKitRoom,
   VideoConference,
   RoomAudioRenderer,
+  useDataChannel,
 } from '@livekit/components-react';
 import '@livekit/components-styles';
 import { cn } from '@/lib/utils/cn';
 
+// ─── Panel Transkrip/Subtitle real-time (harus di dalam LiveKitRoom karena
+// pakai useDataChannel). Ruang tersendiri, selalu tampil — supaya siswa
+// tunarungu bisa membaca ucapan guru berjalan secara real-time. ──────────
+function TranscriptPanel() {
+  const [captions, setCaptions] = useState<string[]>([]);
+  const bottomRef = useRef<HTMLDivElement>(null);
+
+  useDataChannel('caption', (msg) => {
+    const text = new TextDecoder().decode(msg.payload);
+    if (text.trim().length === 0) return;
+    setCaptions((prev) => (prev[prev.length - 1] === text ? prev : [...prev, text]));
+  });
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [captions]);
+
+  return (
+    <div className="fixed top-14 bottom-0 right-0 w-full sm:w-80 bg-white border-l border-slate-200 z-30 flex flex-col shadow-2xl">
+      <div className="flex items-center gap-1.5 px-4 py-3 border-b border-slate-100 flex-shrink-0 text-xs font-semibold text-blue-700">
+        <FileText size={13} /> Transkrip Live
+      </div>
+      <div className="flex-1 overflow-y-auto px-4 py-3 space-y-2.5">
+        {captions.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-full text-center px-4">
+            <FileText size={28} className="text-slate-300 mb-2" />
+            <p className="text-xs text-slate-400">Transkripsi akan muncul di sini saat pendamping berbicara...</p>
+          </div>
+        ) : (
+          <>
+            {captions.map((c, i) => (
+              <div key={i} className="flex gap-2.5 text-xs text-slate-700 leading-relaxed pb-2.5 border-b border-slate-100 last:border-0">
+                <span className="text-slate-300 flex-shrink-0 font-mono mt-0.5">{String(i + 1).padStart(2, '0')}</span>
+                <span>{c}</span>
+              </div>
+            ))}
+            <div ref={bottomRef} />
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ─── Halaman Utama Live Class Murid ──────────────────────────────────────
-// Sementara disederhanakan jadi full tampilan LiveKit saja (tanpa panel
-// Tanya Jawab/Transkrip custom) — LiveKit sudah punya fitur chat sendiri.
 export default function StudentLivePage() {
   const router = useRouter();
   const [token, setToken] = useState<string | null>(null);
@@ -226,8 +269,9 @@ export default function StudentLivePage() {
         </div>
       </div>
 
-      {/* ── Video stage — full tampilan LiveKit (sementara tanpa panel custom) ── */}
-      <div className="flex-1 relative pt-14">
+      {/* ── Video stage — full tampilan LiveKit, ruang kanan disisakan untuk
+          panel transkrip/subtitle ── */}
+      <div className="flex-1 relative pt-14 sm:mr-80">
         <div className="absolute inset-0 top-14">
           <LiveKitRoom
             token={token}
@@ -241,6 +285,8 @@ export default function StudentLivePage() {
           >
             <VideoConference />
             <RoomAudioRenderer />
+            {/* TranscriptPanel HARUS di dalam LiveKitRoom karena pakai useDataChannel */}
+            <TranscriptPanel />
           </LiveKitRoom>
         </div>
       </div>
