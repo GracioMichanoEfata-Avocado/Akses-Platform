@@ -1,8 +1,7 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
-import { useRouter } from 'next/navigation';
-import { MessageSquare, Send, Check, Mic, MicOff, Radio, ArrowLeft, Clock, Users, FileText, PhoneOff } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Radio, Clock, PhoneOff } from 'lucide-react';
 import TeacherSidebar from '@/components/shared/TeacherSidebar';
 import AccessibilityBar from '@/components/accessibility/AccessibilityBar';
 import { Card, CardContent } from '@/components/ui/card';
@@ -11,199 +10,13 @@ import {
   LiveKitRoom,
   VideoConference,
   RoomAudioRenderer,
-  useDataChannel,
 } from '@livekit/components-react';
 import '@livekit/components-styles';
-import { cn } from '@/lib/utils/cn';
-
-// ─── Tab Caption Otomatis (kontrol speech-to-text guru) ──────────────────
-function CaptionTab({ sessionId }: { sessionId: string }) {
-  const { send } = useDataChannel('caption');
-  const [caption, setCaption] = useState('');
-  const [recognition, setRecognition] = useState<any>(null);
-  const [isListening, setIsListening] = useState(false);
-  const [history, setHistory] = useState<string[]>([]);
-  const supabase = createClient();
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (!SR) return;
-
-    const rec = new SR();
-    rec.lang = 'id-ID';
-    rec.continuous = true;
-    rec.interimResults = true;
-
-    rec.onresult = async (event: any) => {
-      const result = event.results[event.results.length - 1];
-      const text = result[0].transcript;
-
-      send(new TextEncoder().encode(text), { reliable: true });
-      setCaption(text);
-
-      if (result.isFinal) {
-        await supabase.from('session_transcripts').insert({ session_id: sessionId, isi: text });
-        setHistory(prev => [...prev, text]);
-      }
-    };
-
-    rec.onend = () => { if (isListening) rec.start(); };
-    setRecognition(rec);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessionId]);
-
-  const toggleListening = () => {
-    if (!recognition) {
-      alert('Browser Anda tidak mendukung Speech Recognition. Gunakan Chrome.');
-      return;
-    }
-    if (isListening) { recognition.stop(); setIsListening(false); }
-    else { recognition.start(); setIsListening(true); }
-  };
-
-  return (
-    <div className="flex flex-col h-full">
-      <div className="p-4 border-b border-slate-100">
-        <button
-          onClick={toggleListening}
-          className={cn(
-            'w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold transition-colors',
-            isListening ? 'bg-red-600 text-white hover:bg-red-700' : 'bg-blue-700 text-white hover:bg-blue-800'
-          )}
-        >
-          {isListening ? <MicOff size={15} /> : <Mic size={15} />}
-          {isListening ? 'Hentikan Caption' : 'Mulai Caption Otomatis'}
-        </button>
-        {isListening && (
-          <div className="flex items-center gap-1.5 justify-center mt-2 text-red-600 text-xs">
-            <span className="w-1.5 h-1.5 bg-red-600 rounded-full animate-pulse" />
-            Merekam suara...
-          </div>
-        )}
-      </div>
-
-      {caption && (
-        <div className="px-4 py-3 bg-blue-50 border-b border-blue-100">
-          <p className="text-[10px] text-blue-500 font-semibold uppercase mb-1">Caption terkirim sekarang</p>
-          <p className="text-sm text-blue-900">{caption}</p>
-        </div>
-      )}
-
-      <div className="flex-1 overflow-y-auto px-4 py-3 space-y-2">
-        {history.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-center px-4">
-            <FileText size={28} className="text-slate-300 mb-2" />
-            <p className="text-xs text-slate-400">Riwayat caption akan muncul di sini.</p>
-          </div>
-        ) : (
-          history.map((h, i) => (
-            <div key={i} className="flex gap-2.5 text-xs text-slate-700 leading-relaxed pb-2.5 border-b border-slate-100 last:border-0">
-              <span className="text-slate-300 flex-shrink-0 font-mono mt-0.5">{String(i + 1).padStart(2, '0')}</span>
-              <span>{h}</span>
-            </div>
-          ))
-        )}
-      </div>
-    </div>
-  );
-}
-
-// ─── Tab Q&A Guru ─────────────────────────────────────────────────────────
-function QATab({ sessionId }: { sessionId: string }) {
-  const [questions, setQuestions] = useState<any[]>([]);
-  const [answers, setAnswers] = useState<Record<string, string>>({});
-  const [sending, setSending] = useState<Record<string, boolean>>({});
-  const supabase = createClient();
-
-  useEffect(() => {
-    supabase
-      .from('session_questions')
-      .select('*, profiles(nama, avatar, avatar_color)')
-      .eq('session_id', sessionId)
-      .order('waktu', { ascending: true })
-      .then(({ data }) => setQuestions(data || []));
-
-    const channel = supabase
-      .channel('teacher_qa_' + sessionId)
-      .on('postgres_changes', {
-        event: '*', schema: 'public', table: 'session_questions', filter: `session_id=eq.${sessionId}`,
-      }, (payload) => {
-        if (payload.eventType === 'INSERT') {
-          supabase.from('session_questions').select('*, profiles(nama, avatar, avatar_color)')
-            .eq('id', payload.new.id).single()
-            .then(({ data }) => { if (data) setQuestions(prev => [...prev, data]); });
-        } else if (payload.eventType === 'UPDATE') {
-          setQuestions(prev => prev.map(q => q.id === payload.new.id ? { ...q, ...payload.new } : q));
-        }
-      })
-      .subscribe();
-
-    return () => { supabase.removeChannel(channel); };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessionId]);
-
-  const handleAnswer = async (questionId: string) => {
-    const answer = answers[questionId];
-    if (!answer?.trim()) return;
-    setSending(prev => ({ ...prev, [questionId]: true }));
-    await supabase.from('session_questions').update({ terjawab: true, jawaban: answer.trim() }).eq('id', questionId);
-    setSending(prev => ({ ...prev, [questionId]: false }));
-    setAnswers(prev => ({ ...prev, [questionId]: '' }));
-  };
-
-  const unanswered = questions.filter(q => !q.terjawab);
-  const answered = questions.filter(q => q.terjawab);
-
-  return (
-    <div className="flex-1 overflow-y-auto px-4 py-3 space-y-2.5">
-      {unanswered.length === 0 && answered.length === 0 && (
-        <div className="flex flex-col items-center justify-center h-full text-center px-4">
-          <MessageSquare size={28} className="text-slate-300 mb-2" />
-          <p className="text-xs text-slate-400">Belum ada pertanyaan dari siswa</p>
-        </div>
-      )}
-      {unanswered.map((q) => (
-        <div key={q.id} className="bg-amber-50 border border-amber-200 rounded-xl p-3">
-          <div className="flex items-center gap-2 mb-1.5">
-            <div className="w-6 h-6 rounded-lg flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0"
-              style={{ backgroundColor: q.profiles?.avatar_color || '#1E40AF' }}>
-              {q.profiles?.avatar || '?'}
-            </div>
-            <span className="text-xs font-medium text-slate-700">{q.profiles?.nama || 'Siswa'}</span>
-          </div>
-          <p className="text-sm text-slate-800 mb-2">{q.pertanyaan}</p>
-          <div className="flex gap-2">
-            <input
-              value={answers[q.id] || ''}
-              onChange={e => setAnswers(prev => ({ ...prev, [q.id]: e.target.value }))}
-              placeholder="Tulis jawaban..."
-              className="flex-1 text-xs border border-slate-200 rounded-lg px-2.5 py-2 focus:outline-none focus:ring-2 focus:ring-blue-300"
-              onKeyDown={e => e.key === 'Enter' && handleAnswer(q.id)}
-            />
-            <button
-              onClick={() => handleAnswer(q.id)}
-              disabled={!answers[q.id]?.trim() || sending[q.id]}
-              className="px-3 py-2 bg-blue-700 text-white text-xs rounded-lg disabled:opacity-40 flex items-center gap-1 hover:bg-blue-800 transition-colors flex-shrink-0"
-            >
-              <Check size={12} /> Jawab
-            </button>
-          </div>
-        </div>
-      ))}
-      {answered.map((q) => (
-        <div key={q.id} className="bg-emerald-50 border border-emerald-200 rounded-xl p-3 opacity-75">
-          <p className="text-xs text-slate-600 mb-1.5">{q.pertanyaan}</p>
-          <p className="text-xs text-emerald-700 pt-1.5 border-t border-emerald-200">✓ {q.jawaban}</p>
-        </div>
-      ))}
-    </div>
-  );
-}
 
 // ─── Halaman Utama Live Class Guru ────────────────────────────────────────
+// Sementara disederhanakan jadi full tampilan LiveKit saja (tanpa panel
+// Caption/Tanya Jawab custom) — LiveKit sudah punya fitur chat sendiri.
 export default function TeacherLivePage() {
-  const router = useRouter();
   const [token, setToken] = useState<string | null>(null);
   const [livekitUrl, setLivekitUrl] = useState<string | null>(null);
   const [session, setSession] = useState<any>(null);
@@ -211,8 +24,6 @@ export default function TeacherLivePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [sessionStarted, setSessionStarted] = useState(false);
-  const [activeTab, setActiveTab] = useState<'caption' | 'qa'>('caption');
-  const [showSidebar, setShowSidebar] = useState(true);
   const [elapsed, setElapsed] = useState(0);
 
   useEffect(() => {
@@ -322,16 +133,6 @@ export default function TeacherLivePage() {
             {formatElapsed(elapsed)}
           </div>
           <button
-            onClick={() => setShowSidebar(v => !v)}
-            className={cn(
-              'flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-lg transition-colors',
-              showSidebar ? 'bg-white/10 text-white' : 'bg-white/5 text-slate-300 hover:bg-white/10'
-            )}
-          >
-            <Users size={13} />
-            <span className="hidden sm:inline">Panel</span>
-          </button>
-          <button
             onClick={endSession}
             className="flex items-center gap-1.5 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold px-3.5 py-1.5 rounded-lg transition-colors"
           >
@@ -341,8 +142,8 @@ export default function TeacherLivePage() {
         </div>
       </div>
 
-      {/* ── Video stage + CaptionTab (harus di dalam LiveKitRoom) ── */}
-      <div className={cn("flex-1 relative pt-14 transition-all duration-200", showSidebar ? "sm:mr-80" : "")}>
+      {/* ── Video stage — full tampilan LiveKit (sementara tanpa panel custom) ── */}
+      <div className="flex-1 relative pt-14">
         <div className="absolute inset-0 top-14">
           <LiveKitRoom
             token={token}
@@ -354,50 +155,9 @@ export default function TeacherLivePage() {
           >
             <VideoConference />
             <RoomAudioRenderer />
-            {/* CaptionTab HARUS di dalam LiveKitRoom karena pakai useDataChannel */}
-            {showSidebar && activeTab === 'caption' && (
-              <div className="fixed top-[calc(3.5rem+48px)] bottom-0 right-0 w-full sm:w-80 flex flex-col z-20">
-                <CaptionTab sessionId={session.id} />
-              </div>
-            )}
           </LiveKitRoom>
         </div>
       </div>
-
-      {/* ── Sidebar panel ── */}
-      {showSidebar && (
-        <div className="fixed top-14 bottom-0 right-0 w-full sm:w-80 bg-white border-l border-slate-200 z-30 flex flex-col shadow-2xl">
-          <div className="flex border-b border-slate-100 flex-shrink-0">
-            <button
-              onClick={() => setActiveTab('caption')}
-              className={cn(
-                "flex-1 flex items-center justify-center gap-1.5 py-3 text-xs font-semibold transition-colors border-b-2",
-                activeTab === 'caption' ? "text-blue-700 border-blue-700" : "text-slate-400 border-transparent hover:text-slate-600"
-              )}
-            >
-              <Mic size={13} /> Caption
-            </button>
-            <button
-              onClick={() => setActiveTab('qa')}
-              className={cn(
-                "flex-1 flex items-center justify-center gap-1.5 py-3 text-xs font-semibold transition-colors border-b-2",
-                activeTab === 'qa' ? "text-blue-700 border-blue-700" : "text-slate-400 border-transparent hover:text-slate-600"
-              )}
-            >
-              <MessageSquare size={13} /> Tanya Jawab
-            </button>
-          </div>
-
-          {/* Caption dirender di dalam LiveKitRoom (di atas), sidebar ini hanya untuk QA */}
-          {activeTab === 'caption' ? (
-            <div className="flex-1 flex items-center justify-center">
-              <p className="text-xs text-slate-400 text-center px-4">Panel caption aktif di area video</p>
-            </div>
-          ) : (
-            <QATab sessionId={session.id} />
-          )}
-        </div>
-      )}
     </div>
   );
 }
