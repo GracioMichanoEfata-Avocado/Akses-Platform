@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Radio, Clock, Users, FileText } from 'lucide-react';
+import { ArrowLeft, Radio, Clock, Users, FileText, Contrast } from 'lucide-react';
 import StudentSidebar from '@/components/shared/StudentSidebar';
 import { Card, CardContent } from '@/components/ui/card';
 import { createClient } from '@/lib/supabase/client';
@@ -23,18 +23,25 @@ import { FILTER_KONTRAS_VIDEO } from '@/lib/accessibility/material-features';
 // Krisp yang lebih kuat dipasang lewat <NoiseFilterSetup /> di bawah.
 const AUDIO_CAPTURE_OPTIONS = { echoCancellation: true, noiseSuppression: true, autoGainControl: true };
 
-// ─── Panel Transkrip/Subtitle real-time (harus di dalam LiveKitRoom karena
-// pakai useDataChannel). Ruang tersendiri, selalu tampil — supaya siswa
-// tunarungu bisa membaca ucapan guru berjalan secara real-time. ──────────
-function TranscriptPanel() {
-  const [captions, setCaptions] = useState<string[]>([]);
-  const bottomRef = useRef<HTMLDivElement>(null);
-
+// ─── Cuma menerima data channel, TIDAK merender UI apapun. Harus di dalam
+// <LiveKitRoom> karena pakai useDataChannel, tapi diteruskan ke state induk
+// lewat callback supaya panel visualnya bisa dirender DI LUAR area yang
+// diberi filter CSS — filter pada elemen jadi containing block baru untuk
+// anak `position: fixed`, yang merusak posisi panel kalau tetap bersarang
+// di dalam elemen yang difilter. ─────────────────────────────────────────
+function CaptionReceiver({ onCaption }: { onCaption: (text: string) => void }) {
   useDataChannel('caption', (msg) => {
     const text = new TextDecoder().decode(msg.payload);
-    if (text.trim().length === 0) return;
-    setCaptions((prev) => (prev[prev.length - 1] === text ? prev : [...prev, text]));
+    if (text.trim().length > 0) onCaption(text);
   });
+  return null;
+}
+
+// ─── Panel Transkrip/Subtitle real-time — dirender di luar area video yang
+// difilter, selalu tampil supaya siswa tunarungu bisa mengikuti ucapan guru
+// secara real-time. ───────────────────────────────────────────────────────
+function TranscriptPanel({ captions }: { captions: string[] }) {
+  const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -71,6 +78,11 @@ function TranscriptPanel() {
 export default function StudentLivePage() {
   const router = useRouter();
   const { highContrast } = useAccessibilityStore();
+  // Filter kontras video di live ikut menyala kalau toggle "Kontras Tinggi"
+  // global aktif — tombol di header tetap bisa dipakai murid untuk
+  // mematikan/menyalakan filter ini khusus untuk sesi live saja (sama
+  // seperti tombol "Filter Kontras" di halaman video materi).
+  const [kontrasAktif, setKontrasAktif] = useState(highContrast);
   const [token, setToken] = useState<string | null>(null);
   const [livekitUrl, setLivekitUrl] = useState<string | null>(null);
   const [session, setSession] = useState<any>(null);
@@ -79,6 +91,11 @@ export default function StudentLivePage() {
   const [joining, setJoining] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [elapsed, setElapsed] = useState(0);
+  const [captions, setCaptions] = useState<string[]>([]);
+
+  const handleCaption = useCallback((text: string) => {
+    setCaptions((prev) => (prev[prev.length - 1] === text ? prev : [...prev, text]));
+  }, []);
 
   // Daftar sesi live yang bisa diikuti (bukan langsung auto-join) —
   // biar murid pilih dulu sesi mana yang mau dibuka.
@@ -272,15 +289,32 @@ export default function StudentLivePage() {
           </div>
           <span className="text-white text-sm font-medium truncate">{session.judul}</span>
         </div>
-        <div className="hidden sm:flex items-center gap-1.5 text-slate-400 text-xs flex-shrink-0">
-          <Clock size={12} />
-          {formatElapsed(elapsed)}
+        <div className="flex items-center gap-3 flex-shrink-0">
+          <button
+            onClick={() => setKontrasAktif((v) => !v)}
+            className={cn(
+              'flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-lg transition-colors',
+              kontrasAktif ? 'bg-white text-slate-900' : 'bg-white/5 text-slate-300 hover:bg-white/10'
+            )}
+            aria-pressed={kontrasAktif}
+            title="Filter Kontras video live"
+          >
+            <Contrast size={13} />
+            <span className="hidden sm:inline">Kontras</span>
+          </button>
+          <div className="hidden sm:flex items-center gap-1.5 text-slate-400 text-xs">
+            <Clock size={12} />
+            {formatElapsed(elapsed)}
+          </div>
         </div>
       </div>
 
       {/* ── Video stage — full tampilan LiveKit, ruang kanan disisakan untuk
           panel transkrip/subtitle ── */}
-      <div className="flex-1 relative pt-14 sm:mr-80">
+      <div
+        className="flex-1 relative pt-14 sm:mr-80"
+        style={{ filter: kontrasAktif ? FILTER_KONTRAS_VIDEO : undefined }}
+      >
         <div className="absolute inset-0 top-14">
           <LiveKitRoom
             token={token}
@@ -291,16 +325,20 @@ export default function StudentLivePage() {
             data-lk-theme="default"
             onDisconnected={() => setError('Koneksi terputus dari kelas.')}
             className="h-full"
-            style={{ filter: highContrast ? FILTER_KONTRAS_VIDEO : undefined }}
           >
             <VideoConference />
             <RoomAudioRenderer />
             <NoiseFilterSetup />
-            {/* TranscriptPanel HARUS di dalam LiveKitRoom karena pakai useDataChannel */}
-            <TranscriptPanel />
+            {/* CaptionReceiver HARUS di dalam LiveKitRoom karena pakai useDataChannel */}
+            <CaptionReceiver onCaption={handleCaption} />
           </LiveKitRoom>
         </div>
       </div>
+
+      {/* Panel transkrip dirender DI LUAR div yang difilter, supaya
+          `position: fixed`-nya tidak rusak (filter CSS membuat elemen jadi
+          containing block baru untuk anak fixed). */}
+      <TranscriptPanel captions={captions} />
     </div>
   );
 }

@@ -15,8 +15,6 @@ import {
 import '@livekit/components-styles';
 import { cn } from '@/lib/utils/cn';
 import NoiseFilterSetup from '@/components/live/NoiseFilterSetup';
-import { useAccessibilityStore } from '@/lib/store/accessibility-store';
-import { FILTER_KONTRAS_VIDEO } from '@/lib/accessibility/material-features';
 
 // Audio lebih jernih untuk yang mendengarkan (mis. siswa tunanetra): kurangi
 // gema & suara latar, dan seimbangkan volume otomatis. Noise-cancellation
@@ -119,7 +117,6 @@ function CaptionPanel({ sessionId }: { sessionId: string }) {
 // Video full tampilan LiveKit + panel transkrip/subtitle tersendiri (bukan
 // Tanya Jawab — itu sudah ditangani chat bawaan LiveKit).
 export default function TeacherLivePage() {
-  const { highContrast } = useAccessibilityStore();
   const [token, setToken] = useState<string | null>(null);
   const [livekitUrl, setLivekitUrl] = useState<string | null>(null);
   const [session, setSession] = useState<any>(null);
@@ -255,7 +252,6 @@ export default function TeacherLivePage() {
             audio={AUDIO_CAPTURE_OPTIONS}
             video={true}
             className="h-full"
-            style={{ filter: highContrast ? FILTER_KONTRAS_VIDEO : undefined }}
           >
             <VideoConference />
             <RoomAudioRenderer />
