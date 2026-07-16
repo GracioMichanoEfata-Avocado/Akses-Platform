@@ -6,7 +6,7 @@ import type { PageVoiceCommand } from '@/components/accessibility/TalkbackProvid
 
 // Narasi otomatis per halaman (dipindah dari TalkbackProvider).
 export const PAGE_NARASI: Record<string, string> = {
-  '/student/dashboard': 'Beranda. Halaman ini menampilkan jadwal kelas dan materi terbaru.',
+  '/student/dashboard': 'Halo, selamat datang di AKSES. Berikan perintah suara Anda. Menu: Belajar, Kelas Live, Notifikasi, Profil.',
   '/student/learn': 'Katalog Materi. Tersedia daftar materi belajar.',
   '/student/live': 'Kelas Live.',
   '/student/notifications': 'Notifikasi.',
@@ -55,7 +55,7 @@ export function useAutoVoiceScan(
     };
   }, [aktif, scannedRef]);
 
-  // ── Pengumuman sekali per halaman (narasi + ringkas ≤5 tombol) ──
+  // ── Pengumuman sekali per halaman (cuma narasi singkat, tanpa daftar tombol) ──
   const prevPath = useRef('');
   useEffect(() => {
     if (!aktif) return;
@@ -66,22 +66,16 @@ export function useAutoVoiceScan(
       // Halaman ber-perintah-khusus (mis. kuis) memiliki alur suaranya sendiri.
       if ((pageCommandsRef.current?.length ?? 0) > 0) return;
 
-      const narasi =
-        Object.entries(PAGE_NARASI).find(
-          ([p]) => pathname === p || pathname.startsWith(p + '/')
-        )?.[1] || '';
+      // Kecocokan PERSIS saja (bukan prefix/startsWith): sebelumnya halaman
+      // seperti /student/learn/[id] ikut kebagian narasi /student/learn
+      // ("Katalog Materi...") padahal itu bukan halaman katalog. Halaman
+      // dinamis yang perlu narasi sendiri (mis. detail materi) mengatur
+      // narasinya sendiri-sendiri lewat registerPageCommands.
+      const narasi = PAGE_NARASI[pathname] || '';
 
-      const labels = (scannedRef.current || []).slice(0, 5).map(c => c.label);
-      const tombol = labels.length
-        ? ` Tombol tersedia: ${labels.join(
-            ', '
-          )}. Katakan apa saja untuk daftar lengkap, atau bacakan untuk mendengar isi halaman.`
-        : '';
-
-      const teks = (narasi + tombol).trim();
-      if (teks) speak(teks, 'interrupt');
+      if (narasi) speak(narasi, 'interrupt');
     }, 800);
 
     return () => clearTimeout(timer);
-  }, [pathname, aktif, scannedRef, pageCommandsRef]);
+  }, [pathname, aktif, pageCommandsRef]);
 }

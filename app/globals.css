@@ -53,23 +53,28 @@ body.high-contrast {
   --card: 17 17 17;
   --card-foreground: 255 255 255;
   --muted: 30 30 30;
-  --muted-foreground: 200 200 200;
+  --muted-foreground: 220 220 220;
   --border: 100 100 100;
   background-color: #000 !important;
   color: #fff !important;
 }
 
+/* Paksa semua teks jadi putih. Tanpa ini, kelas teks gelap yang dipakai di
+   seluruh aplikasi (mis. text-slate-800, text-blue-900) tetap gelap walau
+   latar sudah hitam — jadi tidak terbaca sama sekali untuk low vision. */
 body.high-contrast * {
+  color: #fff !important;
   border-color: #555 !important;
 }
 
+/* Latar terang (kartu putih, badge pastel apapun warnanya) digelapkan supaya
+   teks putih di atasnya tetap terbaca. Mencakup semua shade -50/-100
+   Tailwind (bukan cuma biru/indigo/putih/abu seperti sebelumnya), karena
+   badge/kartu di aplikasi ini memakai banyak warna pastel berbeda. */
 body.high-contrast .bg-white,
-body.high-contrast .bg-gray-50,
-body.high-contrast .bg-slate-50,
-body.high-contrast [class*="bg-blue"],
-body.high-contrast [class*="bg-indigo"] {
+body.high-contrast [class*="bg-"][class*="-50"],
+body.high-contrast [class*="bg-"][class*="-100"] {
   background-color: #111 !important;
-  color: #fff !important;
 }
 
 body.high-contrast .text-gray-500,
@@ -77,6 +82,36 @@ body.high-contrast .text-slate-500,
 body.high-contrast .text-gray-600,
 body.high-contrast .text-slate-600 {
   color: #ccc !important;
+}
+
+/* Glow lembut di sekeliling kotak/lingkaran berwarna (thumbnail materi,
+   avatar, slide, dsb), warnanya ikut warna asli elemen masing-masing lewat
+   custom property --glow-color (bukan currentColor, karena "color" sudah
+   dipaksa putih oleh aturan di atas). Cuma tampil di mode Kontras Tinggi
+   supaya terasa "high resolution" tanpa menyilaukan. */
+body.high-contrast .glow-tint {
+  box-shadow: 0 0 18px var(--glow-color, #fff);
+}
+
+/* Mode Split (Dark Spot in the Center / Central Scotoma): sidebar menu tetap
+   di kiri seperti biasa, konten utama digeser jauh dari titik tengah layar
+   ke kanan, menyisakan gutter kosong di tengah — supaya konten jatuh di
+   penglihatan tepi (peripheral), bukan di titik buta tengah. Cuma berlaku
+   dari breakpoint sm ke atas, sejalan dengan sidebar (`sm:ml-60`) yang cuma
+   tampil di lebar layar itu juga. */
+@media (min-width: 640px) {
+  body.split-mode [class*="ml-60"] {
+    margin-left: min(34vw, 30rem) !important;
+  }
+
+  /* Beberapa halaman membungkus kontennya dengan pembatas lebar + mx-auto
+     (supaya rata tengah secara normal) — di mode split itu bikin konten
+     malah mengambang di tengah zona kanan, bukan mepet ke tepi kanan layar.
+     Ubah jadi rata kanan di dalam zona kanan itu. */
+  body.split-mode [class*="ml-60"] [class*="mx-auto"] {
+    margin-left: auto !important;
+    margin-right: 0 !important;
+  }
 }
 
 body.high-contrast a:focus,

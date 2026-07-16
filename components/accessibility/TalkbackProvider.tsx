@@ -25,6 +25,11 @@ interface TalkbackContextType {
   toggleVoiceNav: () => void;
   registerPageCommands: (commands: PageVoiceCommand[]) => void;
   clearPageCommands: () => void;
+  // "Stop" khusus halaman aktif (mis. hentikan video/audio yang lagi jalan)
+  // — didahulukan dari arti "stop" global (matikan seluruh navigasi suara).
+  // Sengaja tidak diumumkan/dipromosikan ke pengguna, cuma tersedia diam-diam.
+  registerStopHandler: (fn: () => void) => void;
+  clearStopHandler: () => void;
   speakText: (text: string) => void;
 }
 
@@ -34,6 +39,8 @@ const TalkbackContext = createContext<TalkbackContextType>({
   toggleVoiceNav: () => {},
   registerPageCommands: () => {},
   clearPageCommands: () => {},
+  registerStopHandler: () => {},
+  clearStopHandler: () => {},
   speakText: () => {},
 });
 
@@ -46,10 +53,29 @@ export default function TalkbackProvider({ children }: { children: React.ReactNo
   // Voice nav tidak boleh aktif di halaman login/setup — memicu izin mic prematur
   // dan TTS welcome yang menyebut nama menu tertangkap mic → navigasi liar.
   const isLoginPage = pathname.startsWith('/student/login');
-  const { mode } = useAccessibilityStore();
+  const { highContrast, fontScale, applyToDOM, splitEnabled, ttsEnabled } = useAccessibilityStore();
 
-  // HANYA aktif kalau mode tunanetra atau keduanya
-  const isAktif = mode === 'tunanetra' || mode === 'both';
+  // Talkback & voice command adalah satu paket sistem suara — HANYA aktif
+  // kalau toggle "Teks ke Suara" aktif, bukan berdasarkan mode disabilitas.
+  // Kalau TTS dimatikan, tidak ada mic, tidak ada navigasi suara sama sekali.
+  const isAktif = ttsEnabled;
+
+  // Terapkan kontras tinggi & skala font ke <body> setiap kali berubah
+  // (termasuk saat baru di-set otomatis lewat pilihan mode di halaman setup).
+  // Dikecualikan di halaman login: kontras baru boleh mulai setelah masuk ke
+  // langkah "Atur Aksesibilitas Anda" (ditangani sendiri oleh halaman itu),
+  // bukan langsung di form login/kata sandi.
+  useEffect(() => {
+    if (isLoginPage) return;
+    applyToDOM();
+  }, [highContrast, fontScale, applyToDOM, isLoginPage]);
+
+  // Mode Split (Dark Spot in the Center): geser konten menjauh dari tengah
+  // layar lewat class body, lihat globals.css `.split-mode`.
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    document.body.classList.toggle('split-mode', splitEnabled && !isLoginPage);
+  }, [splitEnabled, isLoginPage]);
 
   // Toggle voice nav — pakai ref supaya tidak di-reset saat re-render/pindah halaman
   const voiceNavUserChoiceRef = useRef<boolean | null>(null); // null = belum pernah dipilih user
@@ -58,14 +84,15 @@ export default function TalkbackProvider({ children }: { children: React.ReactNo
   // Perintah suara dari halaman aktif
   const pageCommandsRef = useRef<PageVoiceCommand[]>([]);
   const scannedRef = useRef<ScannedCommand[]>([]);
+  const stopHandlerRef = useRef<(() => void) | null>(null);
   const [showHelp, setShowHelp] = useState(false);
 
-  // Set voice nav ON otomatis saat mode tunanetra aktif (hanya jika user belum pernah toggle)
+  // Set voice nav ON otomatis saat TTS aktif (hanya jika user belum pernah toggle)
   useEffect(() => {
     if (isAktif && voiceNavUserChoiceRef.current === null) {
       setIsVoiceNavAktif(true);
     } else if (!isAktif) {
-      // Kalau mode bukan tunanetra lagi, matikan semua
+      // Kalau TTS dimatikan, matikan semua
       setIsVoiceNavAktif(false);
       voiceNavUserChoiceRef.current = null;
       stopSpeaking();
@@ -79,6 +106,14 @@ export default function TalkbackProvider({ children }: { children: React.ReactNo
 
   const clearPageCommands = useCallback(() => {
     pageCommandsRef.current = [];
+  }, []);
+
+  const registerStopHandler = useCallback((fn: () => void) => {
+    stopHandlerRef.current = fn;
+  }, []);
+
+  const clearStopHandler = useCallback(() => {
+    stopHandlerRef.current = null;
   }, []);
 
   const toggleVoiceNav = useCallback(() => {
@@ -95,7 +130,7 @@ export default function TalkbackProvider({ children }: { children: React.ReactNo
 
   // Teruskan pageCommandsRef ke hook voice navigation
   useAutoVoiceScan(isVoiceNavAktif && isAktif && !isLoginPage, scannedRef, pageCommandsRef);
-  useVoiceNavigation(isVoiceNavAktif && isAktif && !isLoginPage, pageCommandsRef, scannedRef);
+  useVoiceNavigation(isVoiceNavAktif && isAktif && !isLoginPage, pageCommandsRef, scannedRef, stopHandlerRef);
 
   if (!isAktif || isLoginPage) return <>{children}</>;
 
@@ -106,6 +141,8 @@ export default function TalkbackProvider({ children }: { children: React.ReactNo
       toggleVoiceNav,
       registerPageCommands,
       clearPageCommands,
+      registerStopHandler,
+      clearStopHandler,
       speakText: speak,
     }}>
       {children}

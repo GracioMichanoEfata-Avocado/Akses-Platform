@@ -104,8 +104,8 @@ export default function EditStudentProfilePage() {
 
           {/* Preview Avatar */}
           <div className="flex flex-col items-center py-4">
-            <div className="w-20 h-20 rounded-2xl flex items-center justify-center text-white text-3xl font-bold shadow-lg mb-2"
-              style={{ backgroundColor: avatarColor }}>
+            <div className="glow-tint w-20 h-20 rounded-2xl flex items-center justify-center text-white text-3xl font-bold shadow-lg mb-2"
+              style={{ backgroundColor: avatarColor, '--glow-color': avatarColor } as React.CSSProperties}>
               {nama.charAt(0).toUpperCase() || '?'}
             </div>
             <p className="text-xs text-slate-500">Preview avatar</p>

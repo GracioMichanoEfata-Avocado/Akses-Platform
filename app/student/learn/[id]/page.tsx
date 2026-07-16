@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { ArrowLeft, Play, Pause, Volume2, VolumeX, Contrast, ChevronDown, ChevronUp, CheckCircle, Circle, Users, BookOpen, Maximize } from 'lucide-react';
 import StudentBottomNav from '@/components/shared/StudentBottomNav';
 import StudentSidebar from '@/components/shared/StudentSidebar';
@@ -10,11 +11,12 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { useAccessibilityStore } from '@/lib/store/accessibility-store';
-import { fiturUntukMode } from '@/lib/accessibility/material-features';
+import { fiturUntukMode, FILTER_KONTRAS_VIDEO } from '@/lib/accessibility/material-features';
 import SlideshowPlayer from '@/components/student/SlideshowPlayer';
 import { parseSlides, Slide } from '@/lib/slides/slide-data';
 import { createClient } from '@/lib/supabase/client';
 import { speak, speakLong, stopSpeaking, isTTSSpeaking } from '@/lib/hooks/useTalkback';
+import { useTalkbackContext, PageVoiceCommand } from '@/components/accessibility/TalkbackProvider';
 import { describeRequestState, TutorRequestRow } from '@/lib/tutor/request-state';
 import { formatDateShort } from '@/lib/utils/formatters';
 import { cn } from '@/lib/utils/cn';
@@ -26,10 +28,6 @@ interface Langkah {
   deskripsi: string;
   selesai: boolean;
 }
-
-// Kontras tinggi untuk sisa penglihatan (low vision): abu-abu penuh agar
-// warna tidak mengganggu, kontras dinaikkan tajam, sedikit dicerahkan.
-const FILTER_KONTRAS = 'grayscale(1) contrast(2.2) brightness(1.15)';
 
 interface MaterialDetail {
   id: string;
@@ -46,9 +44,14 @@ interface MaterialDetail {
 
 export default function MaterialDetailPage({ params }: { params: { id: string } }) {
   const { id } = params;
-  const { mode } = useAccessibilityStore();
+  const router = useRouter();
+  const { mode, highContrast, ttsEnabled } = useAccessibilityStore();
   const fitur = fiturUntukMode(mode);
-  const [kontrasAktif, setKontrasAktif] = useState(false);
+  const { registerPageCommands, clearPageCommands, registerStopHandler, clearStopHandler, isAktif } = useTalkbackContext();
+  // Filter kontras video ikut menyala kalau toggle "Kontras Tinggi" global
+  // (dari halaman setup) aktif — tombol di bawah tetap bisa dipakai untuk
+  // mematikan/menyalakan filter ini khusus untuk video ini saja.
+  const [kontrasAktif, setKontrasAktif] = useState(highContrast);
 
   const [material, setMaterial] = useState<MaterialDetail | null>(null);
   const [loadingMaterial, setLoadingMaterial] = useState(true);
@@ -156,6 +159,64 @@ export default function MaterialDetailPage({ params }: { params: { id: string } 
       if (ttsPollRef.current) clearInterval(ttsPollRef.current);
     };
   }, [id]);
+
+  // ── Voice command: umumkan pilihan yang BENAR-BENAR ada di materi ini
+  // (video, audio deskripsi, kuis, minta pendamping), lalu daftarkan supaya
+  // bisa diklik dengan menyebut namanya. "Stop" untuk video/audio (yang
+  // durasinya panjang) didaftarkan diam-diam lewat registerStopHandler —
+  // sengaja TIDAK disebut dalam pengumuman di atas. ──
+  useEffect(() => {
+    if (!isAktif || !material) return;
+
+    type Pilihan = { label: string; keywords: string[]; action: () => void };
+    const pilihan: Pilihan[] = [];
+
+    if (material.video_url) {
+      pilihan.push({ label: 'Video Materi', keywords: ['video materi', 'video'], action: toggleVideo });
+    }
+    if (ttsEnabled && material.transkrip.trim()) {
+      pilihan.push({ label: 'Audio Deskripsi', keywords: ['audio deskripsi', 'audio', 'deskripsi'], action: handleTTS });
+    }
+    pilihan.push({
+      label: 'Kuis',
+      keywords: ['kuis', 'mulai kuis', 'lanjut ke kuis'],
+      action: () => router.push(`/student/quiz/${material.id}`),
+    });
+    if (!describeRequestState(ajuan).disabled) {
+      pilihan.push({ label: 'Minta Pendamping', keywords: ['minta pendamping', 'pendamping'], action: handleMintaPendamping });
+    }
+
+    const commands: PageVoiceCommand[] = pilihan.map((p) => ({
+      keywords: p.keywords,
+      label: p.label,
+      action: p.action,
+    }));
+    registerPageCommands(commands);
+
+    registerStopHandler(() => {
+      // Cek state DOM/global langsung (bukan state React yang bisa basi di
+      // closure ini) — video & audio sama-sama bisa dihentikan tanpa mematikan
+      // navigasi suara.
+      if (videoRef.current && !videoRef.current.paused) {
+        videoRef.current.pause();
+        setVideoPlaying(false);
+      }
+      if (isTTSSpeaking()) {
+        stopTTS();
+      }
+    });
+
+    const timer = setTimeout(() => {
+      speak(`Silakan pilih, ${pilihan.map((p) => p.label).join(', ')}.`, 'interrupt');
+    }, 800);
+
+    return () => {
+      clearTimeout(timer);
+      clearPageCommands();
+      clearStopHandler();
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAktif, material, ttsEnabled, ajuan]);
 
   const toggleVideo = () => {
     if (!videoRef.current) return;
@@ -319,16 +380,14 @@ export default function MaterialDetailPage({ params }: { params: { id: string } 
             <p className="text-xs text-blue-600 font-medium">{material.mata_pelajaran}</p>
             <h1 className="text-sm font-semibold text-slate-900 truncate">{material.judul}</h1>
           </div>
-          <Badge variant={material.mode as 'audio' | 'visual' | 'both'} className="text-[10px] flex-shrink-0">
-            {material.mode === 'audio' ? '🔊 Audio' : material.mode === 'visual' ? '👁️ Visual' : '⚡ Keduanya'}
-          </Badge>
         </div>
 
         <div className="p-4 space-y-4 max-w-2xl mx-auto">
-          {/* Filter super kontras — hanya untuk mode tunanetra/keduanya.
-              Diterapkan pada kontainer player, jadi ikut mengenai <video>
-              begitu materi bervideo ada, tanpa kode tambahan. */}
-          {fitur.filterKontras && (
+          {/* Filter super kontras — cuma muncul kalau toggle "Kontras Tinggi"
+              global aktif (bukan berdasarkan mode disabilitas). Diterapkan
+              pada kontainer player, jadi ikut mengenai <video> begitu materi
+              bervideo ada, tanpa kode tambahan. */}
+          {highContrast && (
             <button
               onClick={() => setKontrasAktif(v => !v)}
               className={cn(
@@ -350,7 +409,7 @@ export default function MaterialDetailPage({ params }: { params: { id: string } 
             <div
               ref={videoContainerRef}
               className="relative rounded-2xl overflow-hidden shadow-sm bg-black group"
-              style={{ minHeight: '220px', filter: kontrasAktif ? FILTER_KONTRAS : undefined }}
+              style={{ minHeight: '220px', filter: kontrasAktif ? FILTER_KONTRAS_VIDEO : undefined }}
             >
               <video
                 ref={videoRef}
@@ -408,12 +467,13 @@ export default function MaterialDetailPage({ params }: { params: { id: string } 
           ) : (
             // ── PLAYER EMOJI (materi tanpa video maupun slide) ──
             <div
-              className="relative rounded-2xl overflow-hidden shadow-sm"
+              className="glow-tint relative rounded-2xl overflow-hidden shadow-sm"
               style={{
                 backgroundColor: material.thumbnail_color + '20',
                 minHeight: '180px',
-                filter: kontrasAktif ? FILTER_KONTRAS : undefined,
-              }}
+                filter: kontrasAktif ? FILTER_KONTRAS_VIDEO : undefined,
+                '--glow-color': material.thumbnail_color,
+              } as React.CSSProperties}
               role="region"
               aria-label="Area player materi"
             >
@@ -435,23 +495,26 @@ export default function MaterialDetailPage({ params }: { params: { id: string } 
           </div>
           )}
 
-          {/* Audio deskriptif — tersedia untuk semua mode, dan di luar cabang
-              player agar materi bervideo juga mendapatkannya. */}
-          <button
-            onClick={handleTTS}
-            disabled={!material.transkrip.trim()}
-            className={cn(
-              "w-full flex items-center justify-center gap-2 h-12 rounded-xl font-semibold text-sm shadow-sm transition-all focus-visible:ring-2 focus-visible:ring-blue-500 disabled:opacity-50",
-              isTTSPlaying
-                ? "bg-amber-500 text-white"
-                : "bg-white text-blue-800 border-2 border-blue-100 hover:bg-blue-50"
-            )}
-            aria-label={isTTSPlaying ? "Hentikan pembacaan teks" : "Putar audio deskriptif"}
-            aria-pressed={isTTSPlaying}
-          >
-            {isTTSPlaying ? <VolumeX size={16} /> : <Volume2 size={16} />}
-            {isTTSPlaying ? 'Hentikan' : 'Putar Audio'}
-          </button>
+          {/* Audio deskriptif — cuma muncul kalau toggle "Teks ke Suara" global
+              aktif, di luar cabang player agar materi bervideo juga
+              mendapatkannya saat toggle-nya nyala. */}
+          {ttsEnabled && (
+            <button
+              onClick={handleTTS}
+              disabled={!material.transkrip.trim()}
+              className={cn(
+                "w-full flex items-center justify-center gap-2 h-12 rounded-xl font-semibold text-sm shadow-sm transition-all focus-visible:ring-2 focus-visible:ring-blue-500 disabled:opacity-50",
+                isTTSPlaying
+                  ? "bg-amber-500 text-white"
+                  : "bg-white text-blue-800 border-2 border-blue-100 hover:bg-blue-50"
+              )}
+              aria-label={isTTSPlaying ? "Hentikan pembacaan teks" : "Putar audio deskriptif"}
+              aria-pressed={isTTSPlaying}
+            >
+              {isTTSPlaying ? <VolumeX size={16} /> : <Volume2 size={16} />}
+              {isTTSPlaying ? 'Hentikan' : 'Putar Audio'}
+            </button>
+          )}
 
           {/* Teks materi. Bagi tunarungu ia berperan sebagai panel transkrip —
               di sinilah subtitle bertimestamp akan dipasang setelah ada video. */}

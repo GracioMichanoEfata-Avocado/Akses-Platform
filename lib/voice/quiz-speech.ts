@@ -45,3 +45,32 @@ export function buildScoreSpeech(percentage: number, materialJudul: string): str
   }
   return `Maaf, nilai Anda ${percentage}. Nilai kuis belum mencukupi. Anda bisa mencoba kuis remedial.`;
 }
+
+// Dipakai saat "Lihat Pembahasan" dipilih. Sengaja HANYA membacakan soal yang
+// jawabannya salah beserta penjelasannya — soal yang sudah benar tidak perlu
+// diulang, cukup fokus ke yang perlu dipelajari lagi.
+export function buildReviewSpeech(
+  soal: QuizSoal[],
+  answers: Record<number, { selected: number; correct: boolean }>
+): string {
+  // Soal yang belum dijawab (mis. waktu habis) dihitung sebagai salah juga,
+  // bukan dilewati — siswa tetap perlu tahu jawaban yang benar.
+  const salah = soal
+    .map((s, idx) => ({ s, idx, ans: answers[idx] }))
+    .filter(({ ans }) => !ans || !ans.correct);
+
+  if (salah.length === 0) {
+    return 'Semua jawaban Anda benar. Kerja bagus!';
+  }
+
+  const bagian = salah.map(({ s, idx, ans }) => {
+    const hurufBenar = HURUF_PILIHAN[s.jawaban_benar];
+    if (!ans) {
+      return `Soal ${idx + 1}: ${s.pertanyaan}. Anda belum menjawab. Jawaban yang benar adalah ${hurufBenar}: ${s.pilihan[s.jawaban_benar]}. ${s.penjelasan}`;
+    }
+    const hurufAnda = HURUF_PILIHAN[ans.selected];
+    return `Soal ${idx + 1}: ${s.pertanyaan}. Jawaban Anda ${hurufAnda}, kurang tepat. Jawaban yang benar adalah ${hurufBenar}: ${s.pilihan[s.jawaban_benar]}. ${s.penjelasan}`;
+  });
+
+  return `Berikut pembahasan soal yang belum tepat. ${bagian.join(' ')}`;
+}

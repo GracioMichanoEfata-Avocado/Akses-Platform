@@ -269,8 +269,8 @@ export default function AIContentPage() {
                   className="bg-white rounded-2xl shadow-sm overflow-hidden"
                 >
                   <div
-                    className="w-full h-24 flex items-center justify-center gap-3"
-                    style={{ backgroundColor: vis.warna + '20' }}
+                    className="glow-tint w-full h-24 flex items-center justify-center gap-3"
+                    style={{ backgroundColor: vis.warna + '20', '--glow-color': vis.warna } as React.CSSProperties}
                     aria-hidden="true"
                   >
                     <span className="text-4xl">{vis.emojiIkon}</span>

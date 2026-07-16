@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
+import ContrastGuard from "@/components/accessibility/ContrastGuard";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -21,9 +22,12 @@ export default function RootLayout({
   return (
     <html lang="id" className={inter.className}>
       <body className="antialiased bg-slate-50">
-        <a href="#main-content" className="skip-to-content">
+        {/* data-voice-ignore: link ini untuk pengguna keyboard, bukan tombol
+            yang perlu dibacakan/dikenali sistem voice command. */}
+        <a href="#main-content" className="skip-to-content" data-voice-ignore>
           Langsung ke konten utama
         </a>
+        <ContrastGuard />
         {children}
       </body>
     </html>

@@ -46,7 +46,7 @@ ${material.transkrip ? `Konten: ${material.transkrip.substring(0, 1500)}` : ''}
 
 Siswa mendapat nilai ${skorAwal} dari 100 (standar lulus 70). Berdasarkan analisis fuzzy logic, tingkat kesulitan soal remedial yang harus dibuat adalah: ${TINGKAT_LABEL[fuzzy.tingkat]}.
 
-Buat 5 soal remedial pilihan ganda dalam Bahasa Indonesia dengan tingkat kesulitan tersebut. Soal HARUS BERBEDA dari kuis sebelumnya tapi tetap menguji konsep yang sama dari materi ini.
+Soal remedial WAJIB berisi TEPAT 5 objek — tidak boleh kurang, tidak boleh lebih. Soal HARUS BERBEDA dari kuis sebelumnya tapi tetap menguji konsep yang sama dari materi ini, dengan tingkat kesulitan tersebut.
 
 Balas HANYA dengan JSON, tanpa markdown, tanpa penjelasan:
 {
@@ -60,10 +60,43 @@ Balas HANYA dengan JSON, tanpa markdown, tanpa penjelasan:
   ]
 }`;
 
-    const result = await model.generateContent(prompt);
-    const rawText = result.response.text();
-    const cleaned = rawText.replace(/```json|```/g, '').trim();
-    const generated = JSON.parse(cleaned);
+    // Kadang jumlah soal yang dihasilkan meleset dari 5 walau sudah diminta
+    // eksplisit — dicoba ulang beberapa kali sebelum menyerah.
+    let generated: any = null;
+    let lastErr: any = null;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        const result = await model.generateContent(prompt);
+        const rawText = result.response.text();
+        const cleaned = rawText.replace(/```json|```/g, '').trim();
+        const parsed = JSON.parse(cleaned);
+
+        if (!Array.isArray(parsed.soal) || parsed.soal.length === 0) {
+          throw new Error('AI tidak menghasilkan array soal.');
+        }
+        if (parsed.soal.length > 5) {
+          parsed.soal = parsed.soal.slice(0, 5);
+        } else if (parsed.soal.length < 5) {
+          throw new Error(`AI cuma menghasilkan ${parsed.soal.length} soal remedial, bukan 5.`);
+        }
+
+        generated = parsed;
+        lastErr = null;
+        break;
+      } catch (e: any) {
+        lastErr = e;
+        if (attempt === 2) break;
+        await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
+      }
+    }
+
+    if (lastErr || !generated) {
+      console.error('Generate remedial gagal:', lastErr?.message);
+      return NextResponse.json(
+        { error: 'AI gagal menghasilkan 5 soal remedial yang valid. Coba lagi.' },
+        { status: 500 }
+      );
+    }
 
     // Simpan attempt remedial ke database
     const { data: attempt, error } = await supabase

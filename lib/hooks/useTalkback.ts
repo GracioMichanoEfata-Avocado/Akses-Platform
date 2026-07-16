@@ -3,11 +3,20 @@ import { useAccessibilityStore } from '@/lib/store/accessibility-store';
 
 // State global untuk track apakah TTS lagi ngomong
 let isSpeakingGlobal = false;
+let lastSpokeEndAt = 0; // timestamp TTS terakhir berhenti bicara
 let onSpeakEnd: (() => void) | null = null;
 let longStop = false; // penanda untuk menghentikan speakLong di tengah jalan
 
 export function isTTSSpeaking() {
   return isSpeakingGlobal;
+}
+
+// Hasil SpeechRecognition sering baru muncul beberapa ratus milidetik SETELAH
+// TTS sebenarnya berhenti bicara (mic keburu "dengar" ekor suaranya sendiri,
+// baru diproses browser belakangan). Guard yang cuma cek isTTSSpeaking() pada
+// saat itu juga bisa kebobolan. Tambahkan jeda aman setelah bicara selesai.
+export function isTTSSpeakingOrRecentlyEnded(graceMs = 900) {
+  return isSpeakingGlobal || (Date.now() - lastSpokeEndAt) < graceMs;
 }
 
 export function onTTSEnd(cb: () => void) {
@@ -38,11 +47,13 @@ export function speak(text: string, priority: 'normal' | 'interrupt' = 'normal')
   utterance.onstart = () => { isSpeakingGlobal = true; };
   utterance.onend = () => {
     isSpeakingGlobal = false;
+    lastSpokeEndAt = Date.now();
     onSpeakEnd?.();
     onSpeakEnd = null;
   };
   utterance.onerror = () => {
     isSpeakingGlobal = false;
+    lastSpokeEndAt = Date.now();
     onSpeakEnd?.();
     onSpeakEnd = null;
   };
@@ -70,6 +81,7 @@ export function speakLong(text: string, onDone?: () => void) {
   const berikut = () => {
     if (longStop || i >= potongan.length) {
       isSpeakingGlobal = false;
+      lastSpokeEndAt = Date.now();
       onDone?.();
       return;
     }
@@ -92,6 +104,7 @@ export function stopSpeaking() {
     longStop = true; // hentikan antrean speakLong agar tak lanjut ke potongan berikutnya
     window.speechSynthesis?.cancel();
     isSpeakingGlobal = false;
+    lastSpokeEndAt = Date.now();
   }
 }
 

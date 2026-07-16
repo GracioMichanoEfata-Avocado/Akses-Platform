@@ -1,13 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Eye, EyeOff, GraduationCap, Volume2, Subtitles, ZoomIn, ArrowRight, Check, AlertCircle } from 'lucide-react';
-import { useAccessibilityStore, DisabilitasMode, FontSize } from '@/lib/store/accessibility-store';
+import { Eye, EyeOff, GraduationCap, Volume2, Subtitles, ZoomIn, ArrowRight, Check, AlertCircle, Sparkles } from 'lucide-react';
+import { useAccessibilityStore, DisabilitasMode, FontSize, TunanetraSubtype } from '@/lib/store/accessibility-store';
 import { useRoleStore } from '@/lib/store/role-store';
 import { cn } from '@/lib/utils/cn';
 import { createClient } from '@/lib/supabase/client';
-import { speak } from '@/lib/hooks/useTalkback';
 
 type Step = 'login' | 'setup';
 
@@ -16,6 +15,13 @@ const MODES: { value: DisabilitasMode; label: string; desc: string; icon: string
   { value: 'tunarungu', label: 'Tunarungu', desc: 'Aktifkan subtitle & visual', icon: '👂' },
   { value: 'both', label: 'Keduanya', desc: 'Semua fitur aksesibilitas', icon: '♿' },
   { value: 'none', label: 'Tidak Ada', desc: 'Mode standar', icon: '👤' },
+];
+
+const TUNANETRA_SUBTYPES: { value: TunanetraSubtype; label: string; desc: string }[] = [
+  { value: 'blurry', label: 'Blurry Vision', desc: 'Teks besar, kontras tinggi, subtitle otomatis' },
+  { value: 'scotoma', label: 'Dark Spot in the Center', desc: 'Subtitle otomatis aktif' },
+  { value: 'low-contrast', label: 'Loss Distinction in Image', desc: 'Kontras tinggi, subtitle otomatis' },
+  { value: 'total', label: 'Total', desc: 'Teks ke suara aktif' },
 ];
 
 const FONT_SIZES: { value: FontSize; label: string; preview: string }[] = [
@@ -33,8 +39,23 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const { mode, setMode, fontSize, setFontSize, highContrast, setHighContrast, ttsEnabled, setTtsEnabled, setSetupDone } = useAccessibilityStore();
+  const {
+    mode, setMode, tunanetraSubtype, setTunanetraSubtype, splitEnabled, setSplitEnabled,
+    fontSize, setFontSize, highContrast, setHighContrast, ttsEnabled, setTtsEnabled,
+    subtitleEnabled, setSubtitleEnabled, setSetupDone, applyToDOM,
+  } = useAccessibilityStore();
   const { setLoggedIn, setRole, setStudentId } = useRoleStore();
+
+  // Kontras tinggi tidak boleh mulai di form login (kata sandi) — baru mulai
+  // begitu masuk ke langkah "Atur Aksesibilitas Anda". TalkbackProvider sendiri
+  // sengaja tidak menerapkan apapun di halaman /student/login (lihat komponen itu).
+  useEffect(() => {
+    if (step === 'setup') {
+      applyToDOM();
+    } else if (typeof document !== 'undefined') {
+      document.body.classList.remove('high-contrast');
+    }
+  }, [step, highContrast, applyToDOM]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -83,7 +104,7 @@ export default function LoginPage() {
         font_size: fontSize,
         high_contrast: highContrast,
         tts_enabled: ttsEnabled,
-        subtitle_enabled: true,
+        subtitle_enabled: subtitleEnabled,
       });
     }
 
@@ -91,14 +112,10 @@ export default function LoginPage() {
     setLoggedIn(true);
     setRole('student');
 
-    // Welcome talkback untuk tunanetra — WAJIB lewat speak() agar isTTSSpeaking()
-    // true selama narasi, sehingga voice-nav tidak menangkap kata di narasi
-    // (mis. "Kelas Live") dan memicu navigasi liar → prompt kamera + bounce login.
-    const isTunanetra = mode === 'tunanetra' || mode === 'both';
-    if (isTunanetra) {
-      const welcomeText = `Halo! Selamat datang di AKSES, platform belajar inklusif. Navigasi suara aktif otomatis. Bila diminta, izinkan akses mikrofon. Setelah itu, ucapkan nama menu untuk berpindah halaman. Menu yang tersedia: Beranda, Belajar, Kelas Live, Notifikasi, dan Profil.`;
-      setTimeout(() => speak(welcomeText, 'interrupt'), 500);
-    }
+    // Tidak ada narasi terpisah di sini lagi — begitu mendarat di dashboard,
+    // useAutoVoiceScan (lihat PAGE_NARASI di lib/hooks/useAutoVoiceScan.ts)
+    // yang mengucapkan sapaan singkat "Halo, selamat datang di AKSES..."
+    // satu-satunya. Dulu ada dua narasi terpisah yang saling tabrakan/kepotong.
 
     router.push('/student/dashboard');
   };
@@ -154,6 +171,40 @@ export default function LoginPage() {
                 ))}
               </div>
             </div>
+
+            {/* Sub-tipe Tunanetra (khusus mode Tunanetra / Keduanya) */}
+            {(mode === 'tunanetra' || mode === 'both') && (
+              <div>
+                <h2 className="text-sm font-semibold text-slate-700 uppercase tracking-wide mb-3">
+                  Jenis Gangguan Penglihatan
+                </h2>
+                <div className="grid grid-cols-2 gap-3">
+                  {TUNANETRA_SUBTYPES.map((s) => (
+                    <button
+                      key={s.value}
+                      onClick={() => setTunanetraSubtype(s.value)}
+                      className={cn(
+                        "p-3 rounded-2xl border-2 text-left transition-all focus-visible:ring-2 focus-visible:ring-blue-500",
+                        tunanetraSubtype === s.value
+                          ? "border-blue-600 bg-blue-50"
+                          : "border-slate-200 hover:border-blue-300"
+                      )}
+                      aria-pressed={tunanetraSubtype === s.value}
+                      aria-label={`Pilih jenis ${s.label}: ${s.desc}`}
+                    >
+                      <p className="text-sm font-semibold text-slate-800">{s.label}</p>
+                      <p className="text-xs text-slate-500">{s.desc}</p>
+                      {tunanetraSubtype === s.value && (
+                        <div className="mt-2 flex items-center gap-1 text-blue-600">
+                          <Check size={12} />
+                          <span className="text-xs font-medium">Dipilih</span>
+                        </div>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Pengaturan Detail */}
             <div>
@@ -225,12 +276,19 @@ export default function LoginPage() {
                   </div>
                 </div>
                 <button
-                  className="relative inline-flex h-6 w-11 items-center rounded-full bg-blue-600 transition-colors"
+                  onClick={() => setSubtitleEnabled(!subtitleEnabled)}
+                  className={cn(
+                    "relative inline-flex h-6 w-11 items-center rounded-full transition-colors",
+                    subtitleEnabled ? "bg-blue-600" : "bg-slate-200"
+                  )}
                   role="switch"
-                  aria-checked={true}
-                  aria-label="Subtitle aktif"
+                  aria-checked={subtitleEnabled}
+                  aria-label="Toggle subtitle otomatis"
                 >
-                  <span className="inline-block h-4 w-4 translate-x-6 transform rounded-full bg-white shadow" />
+                  <span className={cn(
+                    "inline-block h-4 w-4 transform rounded-full bg-white transition-transform shadow",
+                    subtitleEnabled ? "translate-x-6" : "translate-x-1"
+                  )} />
                 </button>
               </div>
 
@@ -259,6 +317,34 @@ export default function LoginPage() {
                   )} />
                 </button>
               </div>
+
+              {/* Fitur tambahan khusus Dark Spot in the Center — segera hadir */}
+              {tunanetraSubtype === 'scotoma' && (
+                <div className="flex items-center justify-between p-3 rounded-xl border border-slate-200 mt-3">
+                  <div className="flex items-center gap-2">
+                    <Sparkles size={16} className="text-amber-500" />
+                    <div>
+                      <p className="text-sm font-medium text-slate-700">Mode Split</p>
+                      <p className="text-xs text-slate-500">Geser konten menjauhi titik tengah layar</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setSplitEnabled(!splitEnabled)}
+                    className={cn(
+                      "relative inline-flex h-6 w-11 items-center rounded-full transition-colors",
+                      splitEnabled ? "bg-blue-600" : "bg-slate-200"
+                    )}
+                    role="switch"
+                    aria-checked={splitEnabled}
+                    aria-label="Toggle mode split"
+                  >
+                    <span className={cn(
+                      "inline-block h-4 w-4 transform rounded-full bg-white transition-transform shadow",
+                      splitEnabled ? "translate-x-6" : "translate-x-1"
+                    )} />
+                  </button>
+                </div>
+              )}
             </div>
           </div>
 

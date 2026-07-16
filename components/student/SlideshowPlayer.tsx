@@ -5,8 +5,7 @@ import { Play, Pause, ChevronLeft, ChevronRight } from 'lucide-react';
 import { speak, stopSpeaking, isTTSSpeaking } from '@/lib/hooks/useTalkback';
 import { Slide, durasiBaca } from '@/lib/slides/slide-data';
 import { cn } from '@/lib/utils/cn';
-
-const FILTER_KONTRAS = 'grayscale(1) contrast(2.2) brightness(1.15)';
+import { FILTER_KONTRAS_VIDEO } from '@/lib/accessibility/material-features';
 
 interface Props {
   slides: Slide[];
@@ -86,8 +85,12 @@ export default function SlideshowPlayer({ slides, kontrasAktif }: Props) {
       {/* Area slide — filter kontras dipasang di sini, sejajar dengan
           kontainer player lain di halaman materi. */}
       <div
-        className="relative rounded-2xl overflow-hidden shadow-sm"
-        style={{ backgroundColor: slide.warna + '20', filter: kontrasAktif ? FILTER_KONTRAS : undefined }}
+        className="glow-tint relative rounded-2xl overflow-hidden shadow-sm"
+        style={{
+          backgroundColor: slide.warna + '20',
+          filter: kontrasAktif ? FILTER_KONTRAS_VIDEO : undefined,
+          '--glow-color': slide.warna,
+        } as React.CSSProperties}
         role="region"
         aria-label={`Slide ${idx + 1} dari ${slides.length}: ${slide.judul}`}
       >

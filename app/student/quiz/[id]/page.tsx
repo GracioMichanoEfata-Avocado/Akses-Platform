@@ -42,8 +42,10 @@ export default function QuizPage({ params }: { params: { id: string } }) {
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const answersRef = useRef(answers);
   answersRef.current = answers;
-  const { mode } = useAccessibilityStore();
-  const isVoiceMode = mode === 'tunanetra' || mode === 'both';
+  const { ttsEnabled } = useAccessibilityStore();
+  // Voice mode kuis ikut sistem talkback global: aktif kalau toggle
+  // "Teks ke Suara" aktif, bukan berdasarkan mode disabilitas.
+  const isVoiceMode = ttsEnabled;
   const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
 
   useEffect(() => {
@@ -142,8 +144,11 @@ export default function QuizPage({ params }: { params: { id: string } }) {
     totalDurasi: DURASI_KUIS,
     percentage,
     materialJudul,
+    answers,
     onSelect: handleSelect,
     onLanjut: handleVoiceLanjut,
+    onReview: () => setShowReview(true),
+    onRetry: () => handleRetry(),
   });
 
   const saveQuizResult = async () => {

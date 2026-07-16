@@ -4,6 +4,7 @@ import {
   buildFeedbackSpeech,
   buildTimeReminder,
   buildScoreSpeech,
+  buildReviewSpeech,
   QuizSoal,
 } from './quiz-speech';
 
@@ -12,6 +13,13 @@ const soal: QuizSoal = {
   pilihan: ['4', '5', '6', '7'],
   jawaban_benar: 1,
   penjelasan: 'Dua ditambah tiga sama dengan lima.',
+};
+
+const soal2: QuizSoal = {
+  pertanyaan: 'Ibu kota Indonesia?',
+  pilihan: ['Bandung', 'Jakarta', 'Surabaya', 'Medan'],
+  jawaban_benar: 1,
+  penjelasan: 'Jakarta adalah ibu kota Indonesia.',
 };
 
 describe('buildQuestionSpeech', () => {
@@ -76,5 +84,33 @@ describe('buildScoreSpeech', () => {
     expect(text).toContain('69');
     expect(text).toContain('belum mencukupi');
     expect(text).toContain('remedial');
+  });
+});
+
+describe('buildReviewSpeech', () => {
+  it('semua benar: pesan singkat, tidak menyebut soal satu-satu', () => {
+    const text = buildReviewSpeech([soal, soal2], {
+      0: { selected: 1, correct: true },
+      1: { selected: 1, correct: true },
+    });
+    expect(text).toContain('Semua jawaban Anda benar');
+    expect(text).not.toContain('Soal 1');
+  });
+
+  it('cuma membacakan soal yang SALAH, bukan yang benar', () => {
+    const text = buildReviewSpeech([soal, soal2], {
+      0: { selected: 1, correct: true },
+      1: { selected: 0, correct: false },
+    });
+    expect(text).not.toContain('Berapa hasil 2 tambah 3?');
+    expect(text).toContain('Soal 2');
+    expect(text).toContain('Ibu kota Indonesia?');
+    expect(text).toContain('B: Jakarta');
+    expect(text).toContain('Jakarta adalah ibu kota Indonesia.');
+  });
+
+  it('soal tidak dijawab dihitung salah juga', () => {
+    const text = buildReviewSpeech([soal], {});
+    expect(text).toContain('Soal 1');
   });
 });

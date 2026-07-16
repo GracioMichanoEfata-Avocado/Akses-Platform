@@ -150,8 +150,8 @@ export default function ProfilePage() {
             <div className="bg-gradient-to-br from-blue-800 to-blue-600 h-20" />
             <CardContent className="p-4 pt-0 -mt-10">
               <div className="flex items-end gap-3 mb-4">
-                <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-white text-xl font-bold shadow-lg border-4 border-white"
-                  style={{ backgroundColor: editColor }}>
+                <div className="glow-tint w-16 h-16 rounded-2xl flex items-center justify-center text-white text-xl font-bold shadow-lg border-4 border-white"
+                  style={{ backgroundColor: editColor, '--glow-color': editColor } as React.CSSProperties}>
                   {editAvatar || editNama.charAt(0) || '?'}
                 </div>
                 <div className="pb-1 flex-1">

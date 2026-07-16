@@ -80,7 +80,7 @@ Buat dalam format JSON yang HANYA berisi JSON, tanpa penjelasan tambahan, tanpa 
 }
 
 Ketentuan:
-- Buat tepat 5 soal kuis dengan tingkat kesulitan bervariasi
+- Kuis WAJIB berisi TEPAT 5 objek soal — tidak boleh kurang, tidak boleh lebih. Array "kuis" harus punya persis 5 elemen, dengan tingkat kesulitan bervariasi (dari mudah ke sulit)
 - Buat 5 sampai 6 visualisasi konsep utama; masing-masing menjadi satu slide presentasi
 - Setiap "deskripsi" visualisasi 3-4 kalimat, ditulis untuk dibacakan sebagai narasi slide
 - audioDeskripsi harus sangat detail karena ini untuk siswa tunanetra
@@ -91,44 +91,52 @@ Ketentuan:
 
     const parts: any[] = [...pdfParts, { text: prompt }];
 
-    // Gemini sesekali mengembalikan 503 saat kelebihan beban — bersifat
-    // sementara. Coba ulang beberapa kali dengan jeda menaik sebelum menyerah.
-    let rawText = '';
+    // Gemini sesekali mengembalikan 503 saat kelebihan beban, atau kadang
+    // jumlah soal yang dihasilkan meleset dari 5 walau sudah diminta eksplisit
+    // — keduanya bersifat sementara/acak, jadi dicoba ulang di loop yang sama
+    // sebelum menyerah.
+    let generated: any = null;
     let lastErr: any = null;
     for (let attempt = 0; attempt < 3; attempt++) {
       try {
         const result = await model.generateContent(parts);
-        rawText = result.response.text();
+        const rawText = result.response.text();
+        const parsed = extractJson<any>(rawText);
+
+        if (!Array.isArray(parsed.kuis) || parsed.kuis.length === 0) {
+          throw new Error('AI tidak menghasilkan array kuis.');
+        }
+        if (parsed.kuis.length > 5) {
+          // Lebih dari 5: potong ke 5 pertama, tetap valid tanpa perlu ulang.
+          parsed.kuis = parsed.kuis.slice(0, 5);
+        } else if (parsed.kuis.length < 5) {
+          // Kurang dari 5: tidak aman dikarang sendiri, minta AI ulang.
+          throw new Error(`AI cuma menghasilkan ${parsed.kuis.length} soal, bukan 5.`);
+        }
+
+        generated = parsed;
         lastErr = null;
         break;
       } catch (e: any) {
         lastErr = e;
         const overload = /503|overloaded|high demand|unavailable/i.test(e?.message || '');
-        if (!overload || attempt === 2) break;
+        const jumlahSoalKurang = /cuma menghasilkan/i.test(e?.message || '');
+        if ((!overload && !jumlahSoalKurang) || attempt === 2) break;
         await new Promise(r => setTimeout(r, 1500 * (attempt + 1)));
       }
     }
 
-    if (lastErr) {
+    if (lastErr || !generated) {
       const overload = /503|overloaded|high demand|unavailable/i.test(lastErr?.message || '');
+      console.error('Generate materi gagal:', lastErr?.message);
       return NextResponse.json(
         {
           error: overload
             ? 'Server AI sedang sibuk. Tunggu sebentar lalu coba lagi.'
-            : 'Gagal memanggil AI: ' + (lastErr?.message || 'kesalahan tak dikenal'),
+            : 'AI gagal menghasilkan format yang benar (termasuk jumlah soal kuis). Coba lagi.',
         },
         { status: overload ? 503 : 500 }
       );
-    }
-
-    // Parse JSON
-    let generated;
-    try {
-      generated = extractJson(rawText);
-    } catch (e: any) {
-      // Log teks mentah agar kegagalan format bisa didiagnosa, bukan buta.
-      console.error('Parse materi gagal:', e?.message, '| mentah:', rawText.slice(0, 500));
-      return NextResponse.json({ error: 'AI gagal menghasilkan format yang benar. Coba lagi.' }, { status: 500 });
     }
 
     // Simpan materi ke database Supabase

@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { Search, Clock, BookOpen, Filter, Sparkles } from 'lucide-react';
+import { Search, Clock, BookOpen, Sparkles } from 'lucide-react';
 import StudentBottomNav from '@/components/shared/StudentBottomNav';
 import StudentSidebar from '@/components/shared/StudentSidebar';
 import AccessibilityBar from '@/components/accessibility/AccessibilityBar';
@@ -10,6 +10,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { createClient } from '@/lib/supabase/client';
+import { useTalkbackContext, PageVoiceCommand } from '@/components/accessibility/TalkbackProvider';
+import { speakLong } from '@/lib/hooks/useTalkback';
 
 interface Material {
   id: string;
@@ -30,15 +32,6 @@ interface LibraryItem {
   savedAt: string;
 }
 
-type FilterMode = 'all' | 'audio' | 'visual' | 'both';
-
-const filterOptions: { value: FilterMode; label: string }[] = [
-  { value: 'all', label: 'Semua' },
-  { value: 'audio', label: 'Tunanetra (Audio)' },
-  { value: 'visual', label: 'Tunarungu (Visual)' },
-  { value: 'both', label: 'Audio & Visual' },
-];
-
 function MaterialCardSkeleton() {
   return (
     <div className="bg-white rounded-xl border border-slate-100 p-3 animate-pulse">
@@ -52,7 +45,7 @@ function MaterialCardSkeleton() {
 
 export default function LearnPage() {
   const [search, setSearch] = useState('');
-  const [filter, setFilter] = useState<FilterMode>('all');
+  const [subjectFilter, setSubjectFilter] = useState('Semua');
   const [loading, setLoading] = useState(true);
   const [aiLibrary, setAiLibrary] = useState<LibraryItem[]>([]);
   const [materials, setMaterials] = useState<Material[]>([]);
@@ -110,14 +103,56 @@ export default function LearnPage() {
     loadMaterials();
   }, []);
 
+  // Daftar mata pelajaran dibangun dari materi yang benar-benar ada, bukan
+  // daftar tetap — otomatis ikut nambah kalau ada mata pelajaran baru.
+  const subjects = Array.from(new Set(materials.map((m) => m.mata_pelajaran))).sort();
+
   const filtered = materials.filter((m) => {
     const matchSearch =
       search === '' ||
       m.judul.toLowerCase().includes(search.toLowerCase()) ||
       m.mata_pelajaran.toLowerCase().includes(search.toLowerCase());
-    const matchFilter = filter === 'all' || m.mode === filter;
-    return matchSearch && matchFilter;
+    const matchSubject = subjectFilter === 'Semua' || m.mata_pelajaran === subjectFilter;
+    return matchSearch && matchSubject;
   });
+
+  // ── Voice command: sebut mata pelajaran -> langsung filter; "ada materi
+  // apa aja" -> dibacakan satu-satu; "ulang" -> dibacakan lagi (baca ulang
+  // daftar yang SAAT INI sedang tampil, jadi ikut mata pelajaran manapun). ──
+  const { registerPageCommands, clearPageCommands, isAktif } = useTalkbackContext();
+
+  const bacaDaftarMateri = useCallback(() => {
+    const teks = filtered.length > 0
+      ? filtered.map((m, i) => `${i + 1}. ${m.judul}.`).join(' ')
+      : `Tidak ada materi untuk ${subjectFilter === 'Semua' ? 'filter ini' : subjectFilter}.`;
+    speakLong(teks);
+  }, [filtered, subjectFilter]);
+
+  useEffect(() => {
+    if (!isAktif) return;
+
+    const commands: PageVoiceCommand[] = [
+      { keywords: ['semua'], label: 'Semua', action: () => setSubjectFilter('Semua') },
+      ...subjects.map((subj) => ({
+        keywords: [subj.toLowerCase()],
+        label: subj,
+        action: () => setSubjectFilter(subj),
+      })),
+      {
+        keywords: ['ada materi apa aja', 'ada materi apa saja', 'materi apa aja', 'materi apa saja', 'apa aja materinya', 'apa saja materinya'],
+        label: 'Ada materi apa saja',
+        action: bacaDaftarMateri,
+      },
+      {
+        keywords: ['ulang', 'ulangi', 'tolong ulang'],
+        label: 'Ulangi',
+        action: bacaDaftarMateri,
+      },
+    ];
+
+    registerPageCommands(commands);
+    return () => clearPageCommands();
+  }, [isAktif, subjects, bacaDaftarMateri, registerPageCommands, clearPageCommands]);
 
   return (
     <div className="flex min-h-screen bg-slate-50">
@@ -178,28 +213,42 @@ export default function LearnPage() {
             />
           </div>
 
-          {/* Filter Tabs */}
-          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide" role="group" aria-label="Filter mode aksesibilitas">
-            {filterOptions.map((opt) => (
+          {/* Filter Mata Pelajaran */}
+          {subjects.length > 0 && (
+            <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide" role="group" aria-label="Filter mata pelajaran">
               <button
-                key={opt.value}
-                onClick={() => setFilter(opt.value)}
+                onClick={() => setSubjectFilter('Semua')}
                 className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-all border ${
-                  filter === opt.value
+                  subjectFilter === 'Semua'
                     ? 'bg-blue-800 text-white border-blue-800'
                     : 'bg-white text-slate-600 border-slate-200 hover:border-blue-300'
                 }`}
-                aria-pressed={filter === opt.value}
-                aria-label={`Filter: ${opt.label}`}
+                aria-pressed={subjectFilter === 'Semua'}
+                aria-label="Filter: Semua mata pelajaran"
               >
-                {opt.label}
+                Semua
               </button>
-            ))}
-          </div>
+              {subjects.map((subj) => (
+                <button
+                  key={subj}
+                  onClick={() => setSubjectFilter(subj)}
+                  className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-all border ${
+                    subjectFilter === subj
+                      ? 'bg-blue-800 text-white border-blue-800'
+                      : 'bg-white text-slate-600 border-slate-200 hover:border-blue-300'
+                  }`}
+                  aria-pressed={subjectFilter === subj}
+                  aria-label={`Filter: ${subj}`}
+                >
+                  {subj}
+                </button>
+              ))}
+            </div>
+          )}
 
           {/* Stats */}
           <div className="flex items-center gap-2 text-sm text-slate-500">
-            <Filter size={14} />
+            <BookOpen size={14} />
             <span>{filtered.length} materi ditemukan</span>
           </div>
 
@@ -222,8 +271,8 @@ export default function LearnPage() {
                     <CardContent className="p-3">
                       {/* Thumbnail */}
                       <div
-                        className="w-full h-24 rounded-xl flex items-center justify-center text-3xl mb-3 relative"
-                        style={{ backgroundColor: m.thumbnail_color + '18' }}
+                        className="glow-tint w-full h-24 rounded-xl flex items-center justify-center text-3xl mb-3 relative"
+                        style={{ backgroundColor: m.thumbnail_color + '18', '--glow-color': m.thumbnail_color } as React.CSSProperties}
                         role="img"
                         aria-label={`Thumbnail materi ${m.judul}`}
                       >
@@ -235,25 +284,15 @@ export default function LearnPage() {
                         )}
                       </div>
 
-                      {/* Badges */}
-                      <div className="flex flex-wrap gap-1 mb-1.5">
-                        <Badge
-                          variant={m.mode === 'audio' ? 'audio' : m.mode === 'visual' ? 'visual' : 'secondary'}
-                          className="text-[10px] px-1.5"
-                        >
-                          {m.mode === 'audio' ? '🔊' : m.mode === 'visual' ? '👁️' : '⚡'}
-                          {' '}
-                          {m.mode === 'audio' ? 'Audio' : m.mode === 'visual' ? 'Visual' : 'Keduanya'}
-                        </Badge>
-                      </div>
-
                       {/* Title */}
                       <p className="text-xs font-semibold text-slate-800 leading-tight mb-1 line-clamp-2">
                         {m.judul}
                       </p>
 
-                      {/* Meta */}
-                      <p className="text-[10px] text-blue-600 font-medium mb-2">{m.mata_pelajaran}</p>
+                      {/* Label mata pelajaran */}
+                      <Badge variant="secondary" className="text-[10px] px-1.5 mb-2">
+                        {m.mata_pelajaran}
+                      </Badge>
 
                       <div className="flex items-center gap-1 text-slate-400 mb-2">
                         <Clock size={10} />

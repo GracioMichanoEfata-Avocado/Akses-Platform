@@ -8,9 +8,9 @@ import {
   QuizSoal,
   HURUF_PILIHAN,
   buildQuestionSpeech,
-  buildFeedbackSpeech,
   buildTimeReminder,
   buildScoreSpeech,
+  buildReviewSpeech,
 } from '@/lib/voice/quiz-speech';
 
 // Variasi transkripsi STT untuk tiap huruf pilihan (id-ID)
@@ -32,14 +32,18 @@ export interface UseQuizVoiceOptions {
   totalDurasi: number;
   percentage: number;
   materialJudul: string;
+  answers: Record<number, { selected: number; correct: boolean }>;
   onSelect: (idx: number) => void;
   onLanjut: (selectedIdx: number) => void;
+  onReview: () => void;
+  onRetry: () => void;
 }
 
 export function useQuizVoice(opts: UseQuizVoiceOptions): { triggerLanjut: () => void } {
   const {
     enabled, soal, currentIdx, selectedIdx, showResult,
-    timeLeft, totalDurasi, percentage, materialJudul, onSelect, onLanjut,
+    timeLeft, totalDurasi, percentage, materialJudul, answers,
+    onSelect, onLanjut, onReview, onRetry,
   } = opts;
   const { registerPageCommands, clearPageCommands } = useTalkbackContext();
 
@@ -95,7 +99,11 @@ export function useQuizVoice(opts: UseQuizVoiceOptions): { triggerLanjut: () => 
     const s = soal[currentIdx];
     if (!s) return;
     advancingRef.current = true;
-    speak(buildFeedbackSpeech(s, sel), 'interrupt');
+    // Sengaja TIDAK membacakan benar/salah di sini (buildFeedbackSpeech) —
+    // koreksi per-soal baru dibacakan nanti lewat "Lihat Pembahasan" setelah
+    // kuis selesai, bukan langsung tiap pindah soal.
+    const isLast = currentIdx >= soal.length - 1;
+    speak(isLast ? 'Baik, menghitung nilai.' : 'Baik, lanjut.', 'interrupt');
     waitTTSEnd(() => {
       advancingRef.current = false;
       onLanjut(sel);
@@ -184,6 +192,31 @@ export function useQuizVoice(opts: UseQuizVoiceOptions): { triggerLanjut: () => 
     }, 800);
     return () => clearTimeout(t);
   }, [enabled, showResult, percentage, materialJudul]);
+
+  // ── Perintah suara di layar hasil: "Lihat Pembahasan" (baca HANYA soal
+  // yang salah + penjelasannya) dan "Ulangi Kuis". ──
+  useEffect(() => {
+    if (!enabled || !showResult) return;
+
+    const commands: PageVoiceCommand[] = [
+      {
+        keywords: ['lihat pembahasan', 'pembahasan', 'lihat jawaban', 'jawaban'],
+        label: 'Lihat Pembahasan',
+        action: () => {
+          onReview();
+          speak(buildReviewSpeech(soal, answers), 'interrupt');
+        },
+      },
+      {
+        keywords: ['ulangi kuis', 'ulangi', 'ulang'],
+        label: 'Ulangi Kuis',
+        action: onRetry,
+      },
+    ];
+
+    registerPageCommands(commands);
+    return () => clearPageCommands();
+  }, [enabled, showResult, soal, answers, onReview, onRetry, registerPageCommands, clearPageCommands]);
 
   return { triggerLanjut };
 }

@@ -23,8 +23,11 @@ interface FuzzyResult {
 }
 
 // ── Fungsi keanggotaan trapesium ──
+// Guard batas pakai "<"/">" (bukan "<="/">=") supaya plateau yang menyentuh
+// tepi (mis. a === b === 0, seperti himpunan "Gagal Parah") tetap bernilai
+// keanggotaan 1 persis di titik itu, bukan 0.
 function trapesium(x: number, a: number, b: number, c: number, d: number): number {
-  if (x <= a || x >= d) return 0;
+  if (x < a || x > d) return 0;
   if (x >= b && x <= c) return 1;
   if (x > a && x < b) return (x - a) / (b - a);
   if (x > c && x < d) return (d - x) / (d - c);
