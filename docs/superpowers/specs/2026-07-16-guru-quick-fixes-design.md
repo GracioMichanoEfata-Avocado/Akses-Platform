@@ -10,35 +10,35 @@
 
 ---
 
-## T1 — Transkrip live tidak muncul sama sekali (guru & murid)
+## T1 — Transkrip live: tidak muncul sama sekali + rombak jadi subtitle di layar video
+
+**Revisi 2026-07-16 (setelah user kirim mockup):** desain awal (bubble mengambang + tab "Transkrip" terpisah di sidebar) diganti sesuai arahan user — transkrip harus tampil sebagai **subtitle permanen di atas area video** (seperti Zoom/Meet), muncul untuk **semua orang tanpa syarat mode aksesibilitas**, dan panel kanan disederhanakan jadi **cuma Tanya Jawab** (tab "Transkrip"/"Caption" dihapus dari sidebar).
 
 ### Gejala
-Saat sesi live berlangsung, tidak ada transkrip/caption yang muncul, baik di sisi guru maupun murid.
+1. Saat sesi live berlangsung, tidak ada transkrip/caption yang muncul sama sekali, baik di sisi guru maupun murid.
+2. Tampilan yang diinginkan: teks hasil dikte guru muncul sebagai baris subtitle di bagian bawah area video (persis seperti closed caption pada video call), terlihat oleh guru maupun murid — bukan disembunyikan di tab sidebar.
 
-### Akar masalah
-Ada dua penyebab independen yang bertumpuk:
-
-1. **Sisi murid — listener data channel digating oleh `subtitleEnabled`.**
-   Di `app/student/live/page.tsx:411-413`, komponen `LiveCaptionOverlay` — satu-satunya tempat yang memanggil `useDataChannel('caption', ...)`, yaitu listener yang menerima teks caption dari guru — hanya dirender jika `subtitleEnabled` bernilai `true`:
-   ```tsx
-   {subtitleEnabled && (
-     <LiveCaptionOverlay ttsEnabled={ttsLive} ttsRate={ttsRate} onNewCaption={handleNewCaption} />
-   )}
-   ```
-   Di `lib/store/accessibility-store.ts`, `setMode()` hanya meng-set `subtitleEnabled: true` otomatis untuk mode `tunarungu`/`both`. Untuk siswa **tunanetra** (default `subtitleEnabled: false`), `LiveCaptionOverlay` tidak pernah ter-mount → `useDataChannel` tidak pernah subscribe → `onNewCaption` tidak pernah dipanggil → state `captions` di `StudentLivePage` tetap kosong selamanya → `TranscriptTab` (panel di sidebar, yang seharusnya berguna untuk **semua** mode, bukan cuma tunarungu) ikut kosong.
-
-2. **Sisi guru — tidak ada `onerror` handler di `SpeechRecognition`.**
-   Di `app/teacher/actions/page.tsx` fungsi `CaptionTab`, instance `SpeechRecognition` (baris ~33-54) tidak memiliki `rec.onerror`. Bila mic permission ditolak, atau browser menghentikan recognition karena alasan lain (`audio-capture`, `network`, dll.), guru menekan "Mulai Caption Otomatis" tapi tidak terjadi apa-apa dan tidak ada indikasi kenapa — terlihat seperti fitur "tidak ada", padahal recognition gagal secara senyap.
+### Akar masalah (kenapa selama ini kosong)
+1. **Sisi murid — listener data channel digating oleh `subtitleEnabled`.** Di `app/student/live/page.tsx:411-413`, `LiveCaptionOverlay` — satu-satunya tempat yang memanggil `useDataChannel('caption', ...)` — hanya dirender bila `subtitleEnabled` true. Karena `setMode()` di `lib/store/accessibility-store.ts` cuma set `subtitleEnabled: true` otomatis untuk mode tunarungu/both, siswa tunanetra (default `subtitleEnabled: false`) tidak pernah subscribe ke data channel → transkrip kosong selamanya untuk mereka.
+2. **Sisi guru — tidak ada `onerror` handler di `SpeechRecognition`.** Di `CaptionTab` (`app/teacher/actions/page.tsx`, baris ~33-54), bila mic permission ditolak atau recognition gagal, tidak ada indikasi apapun — terlihat seperti fitur tidak berfungsi.
+3. **Sisi guru — caption sendiri tidak pernah ditampilkan di atas video guru**, cuma di kotak kecil dalam tab sidebar yang terpisah dari area video.
 
 ### Perbaikan
 
-**A. Pisahkan listener data channel dari kondisi render overlay (murid).**
-- **File:** `app/student/live/page.tsx`
-- Pindahkan pemanggilan `useDataChannel('caption', ...)` ke komponen yang **selalu** dirender di dalam `<LiveKitRoom>` (tidak bergantung pada `subtitleEnabled`), sehingga `handleNewCaption` — dan karenanya state `captions` yang dipakai `TranscriptTab` — selalu terisi untuk **semua** mode aksesibilitas.
-- Tetap gating **tampilan bubble overlay + auto-TTS** (efek visual/suara di atas video) di balik `subtitleEnabled`, karena itu memang didesain sebagai fitur tambahan untuk tunarungu/keduanya — bukan dihapus, cuma dipisah dari listener-nya.
-- Pendekatan konkret: pecah `LiveCaptionOverlay` jadi dua bagian — hook/komponen kecil tanpa UI yang selalu mount dan memanggil `useDataChannel` + `onNewCaption`, dan bagian render bubble yang menerima `caption`/`visible` sebagai props dan hanya dirender bila `subtitleEnabled`. Cara termudah: render komponen listener selalu, teruskan `subtitleEnabled` sebagai prop ke dalamnya untuk memutuskan apakah bubble+TTS ditampilkan, alih-alih membungkus seluruh komponen dengan `{subtitleEnabled && ...}` di parent.
+**A. Komponen `LiveSubtitleBar` — subtitle permanen di bawah area video, tanpa syarat mode.**
+- Buat komponen kecil bersama (mis. `components/live/LiveSubtitleBar.tsx`) yang menampilkan bar semi-transparan gelap di bagian bawah area `<LiveKitRoom>`, teks besar-terbaca, menampilkan baris caption terkini. **Tidak digating oleh `subtitleEnabled`** apapun — selalu tampil untuk siapapun yang ada di kelas live, guru maupun murid, semua mode aksesibilitas. Ini otomatis menuntaskan bug T1.1 (transkrip kosong untuk tunanetra) karena tidak ada lagi kondisi yang menyembunyikan listener-nya.
+- **Sisi murid** (`app/student/live/page.tsx`): ganti `LiveCaptionOverlay` (bubble atas + auto-hide 6 detik) dengan `LiveSubtitleBar` yang selalu mount di dalam `<LiveKitRoom>` dan selalu subscribe `useDataChannel('caption', ...)`. Toggle "Bacakan caption otomatis" (`ttsLive`, tombol TTS di header) tetap dipertahankan sebagai fitur terpisah, opsional, dan tetap bisa ditoggle murid manapun.
+- **Sisi guru** (`app/teacher/actions/page.tsx`): render `LiveSubtitleBar` yang sama di dalam `<LiveKitRoom>`, menampilkan `caption` (state hasil dikte lokal) langsung — tidak perlu lewat data channel karena guru adalah sumbernya.
+- Riwayat caption lama (`history`/`session_transcripts`) **tidak lagi ditampilkan live** sebagai daftar di sidebar (lihat poin C) — tetap disimpan ke tabel `session_transcripts` untuk keperluan lain (catatan sesi), sesuai perilaku yang sudah ada, hanya tidak dirender sebagai panel scroll saat sesi berlangsung.
 
-**B. Tambah `onerror` handler (guru).**
+**B. Kontrol mulai/berhenti caption (guru) pindah ke dekat subtitle bar.**
+- Sebelumnya tombol "Mulai/Hentikan Caption Otomatis" ada di dalam tab sidebar "Caption". Karena tab itu dihapus (poin C), pindahkan tombol ini jadi kontrol kecil mengambang menempel di `LiveSubtitleBar` sisi guru (mis. ikon mic kecil di ujung bar) — tetap fungsi yang sama (`toggleListening`), cuma posisinya pindah ke atas video, bukan di sidebar.
+
+**C. Sederhanakan panel kanan jadi cuma Tanya Jawab (kedua sisi).**
+- **Guru** (`app/teacher/actions/page.tsx`): hapus tab switcher "Caption"/"Tanya Jawab" — sidebar kanan langsung render `QATab` saja, tanpa tab bar.
+- **Murid** (`app/student/live/page.tsx`): hapus `TranscriptTab` dan tab switcher "Transkrip"/"Tanya Jawab" — sidebar kanan langsung render `QuestionTab` saja, tanpa tab bar. State `captions`/`activeTab` yang jadi tidak terpakai ikut dihapus.
+
+**D. Tambah `onerror` handler (guru).**
 - **File:** `app/teacher/actions/page.tsx`, dalam `CaptionTab`
 - Tambahkan:
   ```ts
@@ -51,10 +51,13 @@ Ada dua penyebab independen yang bertumpuk:
   ```
 - Ikuti pola yang sama dengan `rec.onerror` yang sudah ada di `lib/hooks/useVoiceNavigation.ts:160-165` (konsisten dengan bagian aplikasi lain).
 
+**Catatan `subtitleEnabled` (store):** field ini tetap ada di `accessibility-store.ts` (masih dipakai di `app/student/profile/page.tsx` untuk menampilkan setting), hanya **tidak lagi dipakai untuk gating** apapun di halaman live. Tidak ada perubahan pada store itu sendiri.
+
 ### Kriteria sukses
-- Siswa mode **tunanetra** (tanpa mengubah pengaturan subtitle) yang masuk kelas live dan guru mengaktifkan caption: panel **Transkrip** di sidebar terisi teks berjalan, sama seperti mode tunarungu/keduanya.
-- Bubble caption mengambang di atas video (dan auto-TTS-nya) **tetap** hanya muncul untuk mode tunarungu/keduanya — perilaku ini tidak berubah.
-- Guru yang menekan "Mulai Caption Otomatis" dan menolak izin mikrofon melihat pesan error yang jelas, bukan tombol yang terlihat tidak berfungsi.
+- Siapapun (guru atau murid, mode apapun) yang masuk kelas live saat guru mengaktifkan caption: melihat subtitle berjalan di bagian bawah area video secara real-time.
+- Guru melihat subtitle dari dikte suaranya sendiri langsung di atas video-nya (bukan hanya di kotak kecil terpisah).
+- Panel kanan pada kedua sisi hanya berisi Tanya Jawab — tidak ada tab "Transkrip"/"Caption" lagi.
+- Guru yang menekan tombol mulai caption dan menolak izin mikrofon melihat pesan error yang jelas, bukan tombol yang terlihat tidak berfungsi.
 
 ---
 
@@ -105,4 +108,4 @@ Terapkan pola yang identik dengan perbaikan `TeacherSidebar` (T3, 2026-07-09):
 ## Verifikasi keseluruhan
 - `npx tsc --noEmit` — tidak ada error baru terkait file yang disentuh.
 - `npm run build` — sukses.
-- Uji manual: (T1) sesi live dengan siswa mode tunanetra melihat transkrip terisi + guru dapat pesan error saat mic ditolak; (Onboarding) folder hilang, README bersih; (Sidebar murid) nama ter-update setelah edit profil.
+- Uji manual: (T1) sesi live — subtitle muncul di bawah video untuk guru & murid (mode apapun), panel kanan cuma Tanya Jawab di kedua sisi, guru dapat pesan error saat mic ditolak; (Onboarding) folder hilang, README bersih; (Sidebar murid) nama ter-update setelah edit profil.
