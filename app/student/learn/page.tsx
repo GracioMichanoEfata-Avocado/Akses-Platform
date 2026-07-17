@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import { Search, Clock, BookOpen, Sparkles, ChevronLeft } from 'lucide-react';
 import StudentBottomNav from '@/components/shared/StudentBottomNav';
@@ -156,23 +156,33 @@ export default function LearnPage() {
   // Section mata pelajaran selalu lengkap (sama seperti daftar saat guru
   // buat sesi live) + mapel lain yang mungkin dipakai materi tapi belum
   // ada di daftar baku, supaya tidak ada materi yang "hilang".
-  const materialSubjects = Array.from(new Set(materials.map((m) => m.mata_pelajaran))).sort();
-  const subjects = [
-    ...MATA_PELAJARAN,
-    ...materialSubjects.filter((s) => !MATA_PELAJARAN.includes(s)),
-  ];
+  const materialSubjects = useMemo(
+    () => Array.from(new Set(materials.map((m) => m.mata_pelajaran))).sort(),
+    [materials]
+  );
+  const subjects = useMemo(
+    () => [...MATA_PELAJARAN, ...materialSubjects.filter((s) => !MATA_PELAJARAN.includes(s))],
+    [materialSubjects]
+  );
 
   const searching = search.trim() !== '';
-  const searchResults = materials.filter((m) =>
-    m.judul.toLowerCase().includes(search.toLowerCase()) ||
-    m.mata_pelajaran.toLowerCase().includes(search.toLowerCase())
+  const searchResults = useMemo(
+    () => materials.filter((m) =>
+      m.judul.toLowerCase().includes(search.toLowerCase()) ||
+      m.mata_pelajaran.toLowerCase().includes(search.toLowerCase())
+    ),
+    [materials, search]
   );
-  const subjectMaterials = selectedSubject
-    ? materials.filter((m) => m.mata_pelajaran === selectedSubject)
-    : [];
+  const subjectMaterials = useMemo(
+    () => selectedSubject ? materials.filter((m) => m.mata_pelajaran === selectedSubject) : [],
+    [materials, selectedSubject]
+  );
 
   // Daftar materi yang SEDANG tampil (dipakai voice command "ada materi apa aja"/"ulang").
-  const visibleMaterials = searching ? searchResults : selectedSubject ? subjectMaterials : [];
+  const visibleMaterials = useMemo(
+    () => searching ? searchResults : selectedSubject ? subjectMaterials : [],
+    [searching, searchResults, selectedSubject, subjectMaterials]
+  );
 
   // ── Voice command: sebut mata pelajaran -> buka section-nya; "ada materi
   // apa aja" -> dibacakan satu-satu; "ulang" -> dibacakan lagi; "kembali"/

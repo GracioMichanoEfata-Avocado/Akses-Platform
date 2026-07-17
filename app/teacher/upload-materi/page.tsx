@@ -470,7 +470,7 @@ export default function UploadMateriPage() {
             </button>
 
             <p className="text-center text-xs text-slate-400">
-              AI otomatis bikin slide bernarasi yang tampil sebagai "video" materi — tidak perlu upload video manual.
+              AI otomatis bikin slide bernarasi yang tampil sebagai &quot;video&quot; materi — tidak perlu upload video manual.
               Tetap mau bikin materi tanpa AI sama sekali?{' '}
               <a href="/teacher/upload-manual" className="text-blue-700 hover:underline font-medium">
                 Buka Upload Manual
