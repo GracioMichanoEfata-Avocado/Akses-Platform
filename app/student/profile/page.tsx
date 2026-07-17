@@ -16,6 +16,7 @@ import { useAccessibilityStore, FontSize, DisabilitasMode } from '@/lib/store/ac
 import { useRoleStore } from '@/lib/store/role-store';
 import { createClient } from '@/lib/supabase/client';
 import { cn } from '@/lib/utils/cn';
+import BackButton from '@/components/shared/BackButton';
 
 const MODES: { value: DisabilitasMode; label: string; icon: string }[] = [
   { value: 'tunanetra', label: 'Tunanetra', icon: '👁️' },
@@ -132,7 +133,10 @@ export default function ProfilePage() {
       <StudentSidebar />
       <main className="flex-1 sm:ml-60 pb-20 sm:pb-4">
         <div className="sticky top-0 z-20 bg-white/90 backdrop-blur-sm border-b border-slate-100 px-4 py-3 flex items-center justify-between">
-          <h1 className="font-bold text-slate-900">Profil Saya</h1>
+          <h1 className="font-bold text-slate-900 flex items-center gap-2">
+            <BackButton href="/student/dashboard" />
+            Profil Saya
+          </h1>
           <div className="flex items-center gap-2">
             <Link href="/student/profile/edit"
               className="flex items-center gap-1.5 text-xs bg-blue-50 text-blue-700 border border-blue-200 px-3 py-1.5 rounded-xl hover:bg-blue-100 transition-colors">

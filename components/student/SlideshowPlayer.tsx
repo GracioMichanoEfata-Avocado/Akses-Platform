@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, forwardRef, useImperativeHandle } from 'react';
 import { Play, Pause, ChevronLeft, ChevronRight } from 'lucide-react';
 import { speak, stopSpeaking, isTTSSpeaking } from '@/lib/hooks/useTalkback';
 import { Slide, durasiBaca } from '@/lib/slides/slide-data';
@@ -12,7 +12,18 @@ interface Props {
   kontrasAktif: boolean;
 }
 
-export default function SlideshowPlayer({ slides, kontrasAktif }: Props) {
+// Slide presentasi + narasi AI ini berperan sebagai "video" untuk materi
+// hasil generate AI (yang tidak punya video_url). Play/pause diekspos lewat
+// ref supaya halaman materi bisa memicu & menghentikannya dari voice command
+// "video materi"/"stop", sama seperti kontrol <video> asli.
+export interface SlideshowPlayerHandle {
+  play: () => void;
+  pause: () => void;
+  toggle: () => void;
+  isPlaying: () => boolean;
+}
+
+const SlideshowPlayer = forwardRef<SlideshowPlayerHandle, Props>(function SlideshowPlayer({ slides, kontrasAktif }, ref) {
   const [idx, setIdx] = useState(0);
   const [berjalan, setBerjalan] = useState(false);
 
@@ -46,7 +57,9 @@ export default function SlideshowPlayer({ slides, kontrasAktif }: Props) {
     if (!slide) return;
 
     bersihkanTimer();
-    speak(`${slide.judul}. ${slide.deskripsi}`, 'interrupt');
+    // Slide gambar upload manual bisa saja tanpa deskripsi — tetap bacakan
+    // judulnya saja daripada diam sama sekali.
+    speak(slide.deskripsi ? `${slide.judul}. ${slide.deskripsi}` : slide.judul, 'interrupt');
 
     const lanjut = () => {
       bersihkanTimer();
@@ -77,6 +90,13 @@ export default function SlideshowPlayer({ slides, kontrasAktif }: Props) {
     setIdx(Math.max(0, Math.min(slides.length - 1, ke)));
   };
 
+  useImperativeHandle(ref, () => ({
+    play: () => setBerjalan(true),
+    pause: berhenti,
+    toggle: () => setBerjalan((b) => !b),
+    isPlaying: () => berjalan,
+  }), [berhenti, berjalan]);
+
   const slide = slides[idx];
   if (!slide) return null;
 
@@ -94,10 +114,22 @@ export default function SlideshowPlayer({ slides, kontrasAktif }: Props) {
         role="region"
         aria-label={`Slide ${idx + 1} dari ${slides.length}: ${slide.judul}`}
       >
-        <div className="flex flex-col items-center justify-center h-52 gap-3 px-4">
-          <span className="text-6xl" aria-hidden="true">{slide.emojiIkon}</span>
-          <h3 className="text-base font-bold text-slate-900 text-center">{slide.judul}</h3>
-        </div>
+        {slide.gambarUrl ? (
+          <div className="flex flex-col items-center justify-center h-52 gap-2 px-4">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={slide.gambarUrl}
+              alt={slide.judul}
+              className="max-h-40 max-w-full object-contain rounded-lg"
+            />
+            <h3 className="text-sm font-bold text-slate-900 text-center">{slide.judul}</h3>
+          </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center h-52 gap-3 px-4">
+            <span className="text-6xl" aria-hidden="true">{slide.emojiIkon}</span>
+            <h3 className="text-base font-bold text-slate-900 text-center">{slide.judul}</h3>
+          </div>
+        )}
 
         {/* Penanda posisi */}
         <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5" aria-hidden="true">
@@ -110,11 +142,28 @@ export default function SlideshowPlayer({ slides, kontrasAktif }: Props) {
         </div>
       </div>
 
-      {/* Caption — selalu tampil. Inilah nilainya bagi siswa tunarungu, dan
-          ia sinkron dengan sendirinya karena kita yang mengatur pergantian. */}
-      <div className="bg-slate-900 text-white rounded-xl px-4 py-3" aria-live="polite">
-        <p className="text-sm leading-relaxed text-center">{slide.deskripsi}</p>
-      </div>
+      {/* Poin penting — "diagram teks" ringkas pendukung deskripsi, cuma ada
+          di slide hasil AI. */}
+      {slide.poinPenting && slide.poinPenting.length > 0 && (
+        <ul className="bg-blue-50 border border-blue-100 rounded-xl px-4 py-3 space-y-1.5">
+          {slide.poinPenting.map((poin, i) => (
+            <li key={i} className="text-sm text-blue-900 flex gap-2">
+              <span aria-hidden="true">•</span>
+              <span>{poin}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {/* Caption — selalu tampil kalau ada deskripsi. Inilah nilainya bagi
+          siswa tunarungu, dan ia sinkron dengan sendirinya karena kita yang
+          mengatur pergantian. Slide gambar manual tanpa deskripsi tidak
+          menampilkan kotak kosong. */}
+      {slide.deskripsi && (
+        <div className="bg-slate-900 text-white rounded-xl px-4 py-3" aria-live="polite">
+          <p className="text-sm leading-relaxed text-center">{slide.deskripsi}</p>
+        </div>
+      )}
 
       {/* Kontrol. Label dipilih agar tidak menyerobot perintah suara tombol lain
           di halaman ini: scanClickables mencocokkan substring dan tombol yang
@@ -148,4 +197,6 @@ export default function SlideshowPlayer({ slides, kontrasAktif }: Props) {
       </div>
     </div>
   );
-}
+});
+
+export default SlideshowPlayer;

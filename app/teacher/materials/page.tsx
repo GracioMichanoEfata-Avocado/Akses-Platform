@@ -1,7 +1,10 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { BookOpen, Plus, Pencil, Trash2, Video, X, Check, Search, AlertCircle, FileText, Loader2 } from 'lucide-react';
+import {
+  BookOpen, Plus, Pencil, Trash2, Video, X, Check, Search, AlertCircle, FileText, Loader2,
+  Sparkles, Upload, Image as ImageIcon,
+} from 'lucide-react';
 import Link from 'next/link';
 import TeacherSidebar from '@/components/shared/TeacherSidebar';
 import AccessibilityBar from '@/components/accessibility/AccessibilityBar';
@@ -9,6 +12,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { createClient } from '@/lib/supabase/client';
 import { cn } from '@/lib/utils/cn';
+import { Slide, parseSlides } from '@/lib/slides/slide-data';
+import BackButton from '@/components/shared/BackButton';
 
 interface Material {
   id: string;
@@ -22,7 +27,18 @@ interface Material {
   transkrip: string | null;
   is_ai_generated: boolean;
   created_at: string;
+  slides: unknown;
 }
+
+interface KuisItem {
+  id?: string;
+  pertanyaan: string;
+  opsi: [string, string, string, string];
+  jawabanBenar: number;
+  penjelasan: string;
+}
+
+const KUIS_KOSONG = (): KuisItem => ({ pertanyaan: '', opsi: ['', '', '', ''], jawabanBenar: 0, penjelasan: '' });
 
 export default function TeacherMaterialsPage() {
   const [materials, setMaterials] = useState<Material[]>([]);
@@ -37,6 +53,15 @@ export default function TeacherMaterialsPage() {
   const [expandedTranscriptId, setExpandedTranscriptId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState('');
+  const [showAddMenu, setShowAddMenu] = useState(false);
+
+  // Edit slide & kuis (dimuat terpisah cuma saat materi tertentu dibuka edit)
+  const [editSlides, setEditSlides] = useState<Slide[]>([]);
+  const [editNewSlideFiles, setEditNewSlideFiles] = useState<File[]>([]);
+  const [editQuiz, setEditQuiz] = useState<KuisItem[]>([]);
+  const [editQuizId, setEditQuizId] = useState<string | null>(null);
+  const [loadingEditExtra, setLoadingEditExtra] = useState(false);
+  const editSlideInputRef = useRef<HTMLInputElement>(null);
 
   // Pakai ref buat nyimpen target ID upload — bukan state, biar langsung tersedia pas file dipilih
   const uploadTargetRef = useRef<string | null>(null);
@@ -48,7 +73,7 @@ export default function TeacherMaterialsPage() {
     const supabase = createClient();
     const { data } = await supabase
       .from('materials')
-      .select('id, judul, mata_pelajaran, deskripsi, mode, thumbnail_color, thumbnail_emoji, video_url, transkrip, is_ai_generated, created_at')
+      .select('id, judul, mata_pelajaran, deskripsi, mode, thumbnail_color, thumbnail_emoji, video_url, transkrip, is_ai_generated, created_at, slides')
       .order('created_at', { ascending: false });
     setMaterials(data || []);
     setLoading(false);
@@ -60,24 +85,142 @@ export default function TeacherMaterialsPage() {
   };
 
   // ── EDIT ──
-  const handleStartEdit = (m: Material) => {
+  const handleStartEdit = async (m: Material) => {
     setEditingId(m.id);
     setEditData({ judul: m.judul, mata_pelajaran: m.mata_pelajaran, deskripsi: m.deskripsi, mode: m.mode });
+    setEditSlides(parseSlides(m.slides));
+    setEditNewSlideFiles([]);
+    setEditQuiz([]);
+    setEditQuizId(null);
+    setLoadingEditExtra(true);
+
+    const supabase = createClient();
+    const { data: quiz } = await supabase
+      .from('quizzes').select('id').eq('material_id', m.id).maybeSingle();
+    if (quiz) {
+      setEditQuizId(quiz.id);
+      const { data: questions } = await supabase
+        .from('quiz_questions')
+        .select('id, pertanyaan, pilihan, jawaban_benar, penjelasan')
+        .eq('quiz_id', quiz.id);
+      setEditQuiz((questions || []).map((q) => ({
+        id: q.id,
+        pertanyaan: q.pertanyaan,
+        opsi: q.pilihan as [string, string, string, string],
+        jawabanBenar: q.jawaban_benar,
+        penjelasan: q.penjelasan || '',
+      })));
+    }
+    setLoadingEditExtra(false);
+  };
+
+  const handleRemoveEditSlide = (idx: number) => {
+    setEditSlides((prev) => prev.filter((_, i) => i !== idx));
+  };
+
+  const handleEditSlideCaption = (idx: number, value: string) => {
+    setEditSlides((prev) => prev.map((s, i) => (i === idx ? { ...s, judul: value, deskripsi: value } : s)));
+  };
+
+  const handleAddEditSlideFiles = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length > 0) setEditNewSlideFiles((prev) => [...prev, ...files]);
+    e.target.value = '';
+  };
+
+  const addEditQuestion = () => setEditQuiz((prev) => [...prev, KUIS_KOSONG()]);
+  const removeEditQuestion = (idx: number) => setEditQuiz((prev) => prev.filter((_, i) => i !== idx));
+  const updateEditQuestion = (idx: number, patch: Partial<KuisItem>) => {
+    setEditQuiz((prev) => prev.map((q, i) => (i === idx ? { ...q, ...patch } : q)));
+  };
+  const updateEditOption = (soalIdx: number, optIdx: number, value: string) => {
+    setEditQuiz((prev) => prev.map((q, i) => {
+      if (i !== soalIdx) return q;
+      const opsi = [...q.opsi] as [string, string, string, string];
+      opsi[optIdx] = value;
+      return { ...q, opsi };
+    }));
   };
 
   const handleSaveEdit = async () => {
     if (!editingId) return;
+    const kuisLengkap = editQuiz.every((q) => q.pertanyaan.trim() && q.opsi.every((o) => o.trim()));
+    if (editQuiz.length > 0 && !kuisLengkap) {
+      showToast('Semua soal kuis harus punya pertanyaan dan 4 opsi terisi (atau hapus soal yang belum lengkap).');
+      return;
+    }
     setSaving(true);
     const supabase = createClient();
-    const { error } = await supabase.from('materials')
-      .update({ judul: editData.judul, mata_pelajaran: editData.mata_pelajaran, deskripsi: editData.deskripsi, mode: editData.mode })
-      .eq('id', editingId);
-    if (error) showToast('Gagal menyimpan: ' + error.message);
-    else {
-      setMaterials(prev => prev.map(m => m.id === editingId ? { ...m, ...editData } as Material : m));
-      showToast('Materi berhasil diperbarui!');
-      setEditingId(null);
+    const { data: { user } } = await supabase.auth.getUser();
+
+    // Upload gambar slide baru (kalau ada), gabung dengan slide lama yang tersisa
+    let finalSlides = [...editSlides];
+    if (editNewSlideFiles.length > 0 && user) {
+      for (let i = 0; i < editNewSlideFiles.length; i++) {
+        const f = editNewSlideFiles[i];
+        const ext = f.name.split('.').pop();
+        const fileName = `${user.id}/${editingId}-${Date.now()}-${i}.${ext}`;
+        const { error: uploadError } = await supabase.storage
+          .from('materi-slides')
+          .upload(fileName, f, { cacheControl: '3600', upsert: false });
+        if (uploadError) {
+          showToast(`Gagal upload gambar slide baru: ${uploadError.message}`);
+          setSaving(false);
+          return;
+        }
+        const { data: urlData } = supabase.storage.from('materi-slides').getPublicUrl(fileName);
+        finalSlides.push({
+          judul: `Slide ${finalSlides.length + 1}`,
+          emojiIkon: '🖼️',
+          deskripsi: '',
+          warna: '#1E40AF',
+          gambarUrl: urlData.publicUrl,
+        });
+      }
     }
+
+    const { error } = await supabase.from('materials')
+      .update({
+        judul: editData.judul,
+        mata_pelajaran: editData.mata_pelajaran,
+        deskripsi: editData.deskripsi,
+        mode: editData.mode,
+        slides: finalSlides.length > 0 ? finalSlides : null,
+      })
+      .eq('id', editingId);
+
+    if (error) {
+      showToast('Gagal menyimpan: ' + error.message);
+      setSaving(false);
+      return;
+    }
+
+    // Kuis: hapus soal lama lalu tulis ulang dari state edit (lebih sederhana
+    // & aman daripada diff per-soal satu-satu).
+    let quizId = editQuizId;
+    if (!quizId && editQuiz.length > 0) {
+      const { data: newQuiz } = await supabase
+        .from('quizzes').insert({ material_id: editingId, judul: `Kuis: ${editData.judul}` }).select().single();
+      quizId = newQuiz?.id || null;
+    }
+    if (quizId) {
+      await supabase.from('quiz_questions').delete().eq('quiz_id', quizId);
+      if (editQuiz.length > 0) {
+        await supabase.from('quiz_questions').insert(
+          editQuiz.map((q) => ({
+            quiz_id: quizId,
+            pertanyaan: q.pertanyaan.trim(),
+            pilihan: q.opsi,
+            jawaban_benar: q.jawabanBenar,
+            penjelasan: q.penjelasan.trim(),
+          }))
+        );
+      }
+    }
+
+    setMaterials(prev => prev.map(m => m.id === editingId ? { ...m, ...editData, slides: finalSlides } as Material : m));
+    showToast('Materi berhasil diperbarui!');
+    setEditingId(null);
     setSaving(false);
   };
 
@@ -164,19 +307,64 @@ export default function TeacherMaterialsPage() {
     m.mata_pelajaran.toLowerCase().includes(search.toLowerCase())
   );
 
+  // Kelompokkan per mata pelajaran, section diurutkan A-Z; materi di dalam
+  // tiap section tetap urutan terbaru dulu (mengikuti urutan `materials`).
+  const groupedBySubject = filtered.reduce<Record<string, Material[]>>((acc, m) => {
+    const key = m.mata_pelajaran || 'Umum';
+    (acc[key] ||= []).push(m);
+    return acc;
+  }, {});
+  const subjectSections = Object.keys(groupedBySubject).sort((a, b) => a.localeCompare(b));
+
   return (
     <div className="flex min-h-screen bg-slate-50">
       <TeacherSidebar />
       <main className="flex-1 sm:ml-60 pb-4">
         <div className="sticky top-0 z-20 bg-white/90 backdrop-blur-sm border-b border-slate-100 px-4 py-3 flex items-center justify-between">
           <h1 className="font-bold text-slate-900 flex items-center gap-2">
+            <BackButton href="/teacher/dashboard" />
             <BookOpen size={18} className="text-blue-700" />
             Kelola Materi ({materials.length})
           </h1>
-          <Link href="/teacher/upload-materi"
-            className="flex items-center gap-1.5 bg-blue-800 text-white text-xs px-3 py-2 rounded-xl hover:bg-blue-700 transition-colors">
-            <Plus size={14} /> Tambah Materi
-          </Link>
+          <div className="relative">
+            <button
+              onClick={() => setShowAddMenu((v) => !v)}
+              className="flex items-center gap-1.5 bg-blue-800 text-white text-xs px-3 py-2 rounded-xl hover:bg-blue-700 transition-colors"
+              aria-haspopup="true"
+              aria-expanded={showAddMenu}
+            >
+              <Plus size={14} /> Tambah Materi
+            </button>
+            {showAddMenu && (
+              <>
+                <div className="fixed inset-0 z-30" onClick={() => setShowAddMenu(false)} aria-hidden="true" />
+                <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-xl shadow-xl border border-slate-100 z-40 overflow-hidden">
+                  <Link
+                    href="/teacher/upload-materi"
+                    onClick={() => setShowAddMenu(false)}
+                    className="flex items-start gap-2.5 px-3.5 py-3 hover:bg-slate-50 transition-colors border-b border-slate-100"
+                  >
+                    <Sparkles size={16} className="text-blue-700 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-sm font-semibold text-slate-800">Bantuan AI</p>
+                      <p className="text-[11px] text-slate-500">Generate kuis, deskripsi & slide dari teks/PDF</p>
+                    </div>
+                  </Link>
+                  <Link
+                    href="/teacher/upload-manual"
+                    onClick={() => setShowAddMenu(false)}
+                    className="flex items-start gap-2.5 px-3.5 py-3 hover:bg-slate-50 transition-colors"
+                  >
+                    <Upload size={16} className="text-emerald-700 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-sm font-semibold text-slate-800">Upload Manual</p>
+                      <p className="text-[11px] text-slate-500">Isi sendiri kuis, deskripsi, slide & video</p>
+                    </div>
+                  </Link>
+                </div>
+              </>
+            )}
+          </div>
         </div>
 
         <div className="p-4 max-w-3xl mx-auto space-y-4">
@@ -208,9 +396,16 @@ export default function TeacherMaterialsPage() {
           ) : filtered.length === 0 ? (
             <p className="text-center text-slate-400 text-sm py-12">Belum ada materi</p>
           ) : (
-            <div className="space-y-3">
-              <p className="text-xs text-slate-500">{filtered.length} materi</p>
-              {filtered.map(m => (
+            <div className="space-y-6">
+              <p className="text-xs text-slate-500">{filtered.length} materi, {subjectSections.length} mata pelajaran</p>
+              {subjectSections.map((subjek) => (
+                <div key={subjek} className="space-y-3">
+                  <h2 className="text-sm font-bold text-slate-700 flex items-center gap-2">
+                    {subjek}
+                    <span className="text-xs font-normal text-slate-400">({groupedBySubject[subjek].length})</span>
+                  </h2>
+                  <div className="space-y-3">
+                    {groupedBySubject[subjek].map(m => (
                 <Card key={m.id} className="border-0 shadow-sm overflow-hidden">
                   <CardContent className="p-4">
                     {editingId === m.id ? (
@@ -241,6 +436,87 @@ export default function TeacherMaterialsPage() {
                             <option value="visual">Visual</option>
                           </select>
                         </div>
+                        {loadingEditExtra ? (
+                          <div className="flex items-center gap-2 text-xs text-slate-400 py-2">
+                            <Loader2 size={13} className="animate-spin" /> Memuat slide & kuis...
+                          </div>
+                        ) : (
+                          <>
+                            {/* ── Edit Slide ── */}
+                            <div className="border-t border-slate-100 pt-3">
+                              <label className="text-xs font-semibold text-slate-600 mb-2 flex items-center gap-1.5">
+                                <ImageIcon size={13} /> Slide ({editSlides.length + editNewSlideFiles.length})
+                              </label>
+                              <div className="space-y-1.5">
+                                {editSlides.map((s, i) => (
+                                  <div key={i} className="flex items-center gap-2 border border-slate-200 rounded-lg p-1.5">
+                                    {s.gambarUrl ? (
+                                      // eslint-disable-next-line @next/next/no-img-element
+                                      <img src={s.gambarUrl} alt="" className="w-9 h-9 object-cover rounded flex-shrink-0" />
+                                    ) : (
+                                      <span className="w-9 h-9 rounded flex items-center justify-center text-lg flex-shrink-0" style={{ backgroundColor: s.warna + '20' }}>{s.emojiIkon}</span>
+                                    )}
+                                    <input value={s.judul} onChange={e => handleEditSlideCaption(i, e.target.value)}
+                                      className="flex-1 min-w-0 h-8 px-2 text-xs border border-slate-200 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                                    <button onClick={() => handleRemoveEditSlide(i)} className="p-1 text-slate-400 hover:text-red-500 flex-shrink-0">
+                                      <X size={13} />
+                                    </button>
+                                  </div>
+                                ))}
+                                {editNewSlideFiles.map((f, i) => (
+                                  <div key={`new-${i}`} className="flex items-center gap-2 border border-emerald-200 bg-emerald-50 rounded-lg p-1.5">
+                                    <ImageIcon size={16} className="text-emerald-600 flex-shrink-0" />
+                                    <span className="flex-1 text-xs text-emerald-700 truncate">{f.name} (baru)</span>
+                                    <button onClick={() => setEditNewSlideFiles(prev => prev.filter((_, idx) => idx !== i))} className="p-1 text-slate-400 hover:text-red-500 flex-shrink-0">
+                                      <X size={13} />
+                                    </button>
+                                  </div>
+                                ))}
+                              </div>
+                              <button onClick={() => editSlideInputRef.current?.click()}
+                                className="mt-1.5 flex items-center gap-1.5 text-xs text-blue-700 hover:text-blue-800 font-medium">
+                                <Plus size={13} /> Tambah Gambar Slide
+                              </button>
+                              <input ref={editSlideInputRef} type="file" accept="image/*" multiple className="sr-only" onChange={handleAddEditSlideFiles} />
+                            </div>
+
+                            {/* ── Edit Kuis ── */}
+                            <div className="border-t border-slate-100 pt-3 space-y-2">
+                              <label className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
+                                Kuis ({editQuiz.length} soal)
+                              </label>
+                              {editQuiz.map((soal, soalIdx) => (
+                                <div key={soalIdx} className="border border-slate-200 rounded-lg p-2.5 space-y-2">
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-[10px] font-bold text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded-full">Soal {soalIdx + 1}</span>
+                                    <button onClick={() => removeEditQuestion(soalIdx)} className="text-[10px] text-red-500 hover:text-red-700 flex items-center gap-1">
+                                      <Trash2 size={11} /> Hapus
+                                    </button>
+                                  </div>
+                                  <textarea value={soal.pertanyaan} onChange={e => updateEditQuestion(soalIdx, { pertanyaan: e.target.value })}
+                                    placeholder="Pertanyaan..." rows={2}
+                                    className="w-full p-2 rounded-md border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" />
+                                  {soal.opsi.map((opsi, optIdx) => (
+                                    <div key={optIdx} className="flex items-center gap-1.5">
+                                      <input type="radio" name={`edit-jawaban-${m.id}-${soalIdx}`} checked={soal.jawabanBenar === optIdx}
+                                        onChange={() => updateEditQuestion(soalIdx, { jawabanBenar: optIdx })} />
+                                      <input value={opsi} onChange={e => updateEditOption(soalIdx, optIdx, e.target.value)}
+                                        placeholder={`Opsi ${String.fromCharCode(65 + optIdx)}`}
+                                        className="flex-1 h-7 px-2 text-xs rounded-md border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                                    </div>
+                                  ))}
+                                  <input value={soal.penjelasan} onChange={e => updateEditQuestion(soalIdx, { penjelasan: e.target.value })}
+                                    placeholder="Penjelasan (opsional)"
+                                    className="w-full h-7 px-2 text-xs rounded-md border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                                </div>
+                              ))}
+                              <button onClick={addEditQuestion} className="flex items-center gap-1.5 text-xs text-blue-700 hover:text-blue-800 font-medium">
+                                <Plus size={13} /> Tambah Soal
+                              </button>
+                            </div>
+                          </>
+                        )}
+
                         <div className="flex gap-2">
                           <button onClick={handleSaveEdit} disabled={saving}
                             className="flex items-center gap-1.5 bg-blue-800 text-white text-xs px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50">
@@ -379,6 +655,9 @@ export default function TeacherMaterialsPage() {
                     )}
                   </CardContent>
                 </Card>
+                    ))}
+                  </div>
+                </div>
               ))}
             </div>
           )}

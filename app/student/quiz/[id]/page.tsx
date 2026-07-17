@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { ArrowLeft, CheckCircle, XCircle, Trophy, RotateCcw, BookOpen, Clock, AlertTriangle, Sparkles } from 'lucide-react';
 import StudentBottomNav from '@/components/shared/StudentBottomNav';
 import StudentSidebar from '@/components/shared/StudentSidebar';
+import BackButton from '@/components/shared/BackButton';
 import AccessibilityBar from '@/components/accessibility/AccessibilityBar';
 import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
@@ -351,9 +352,10 @@ export default function QuizPage({ params }: { params: { id: string } }) {
       <StudentSidebar />
       <main className="flex-1 sm:ml-60 pb-20 sm:pb-4">
         <div className="sticky top-0 z-20 bg-white/90 backdrop-blur-sm border-b border-slate-100 px-4 py-3 flex items-center gap-3">
-          <Link href={`/student/learn/${id}`} className="text-slate-600 hover:text-slate-900 p-1.5 rounded-lg hover:bg-slate-100">
-            <ArrowLeft size={18} />
-          </Link>
+          <BackButton
+            href={`/student/learn/${id}`}
+            confirmMessage="Yakin mau keluar sekarang? Progres kuis kamu akan hilang."
+          />
           <div className="flex-1">
             <p className="text-xs text-blue-600 font-medium">Kuis: {materialJudul}</p>
             <div className="flex items-center gap-2 mt-1">

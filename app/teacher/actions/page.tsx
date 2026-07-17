@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Radio, Clock, PhoneOff, Mic, MicOff, FileText } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Radio, Clock, PhoneOff, Mic, MicOff, FileText, ArrowLeft } from 'lucide-react';
 import TeacherSidebar from '@/components/shared/TeacherSidebar';
 import AccessibilityBar from '@/components/accessibility/AccessibilityBar';
 import { Card, CardContent } from '@/components/ui/card';
 import { createClient } from '@/lib/supabase/client';
+import BackButton from '@/components/shared/BackButton';
 import {
   LiveKitRoom,
   VideoConference,
@@ -30,6 +31,11 @@ function CaptionPanel({ sessionId }: { sessionId: string }) {
   const [isListening, setIsListening] = useState(false);
   const [history, setHistory] = useState<string[]>([]);
   const supabase = createClient();
+  // rec.onend/onerror di bawah dibuat SEKALI saat mount (deps cuma sessionId)
+  // — kalau baca `isListening` langsung dari closure, nilainya selalu basi
+  // (state saat efek pertama jalan, tidak pernah ter-update). Pakai ref
+  // supaya callback selalu baca status TERKINI.
+  const isListeningRef = useRef(false);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -54,13 +60,18 @@ function CaptionPanel({ sessionId }: { sessionId: string }) {
     };
 
     rec.onerror = (e: any) => {
-      if (e.error === 'not-allowed') {
-        alert('Izin mikrofon ditolak. Aktifkan mikrofon di pengaturan browser lalu coba lagi.');
+      // 'no-speech'/'aborted'/'network' itu wajar & sementara (mis. jeda
+      // hening sebentar) — jangan matikan status mendengarkan, biarkan
+      // rec.onend yang start ulang otomatis. Cuma masalah izin/hardware
+      // yang benar-benar menghentikan (tidak ada gunanya restart otomatis).
+      if (e.error === 'not-allowed' || e.error === 'audio-capture') {
+        alert('Izin mikrofon ditolak/tidak tersedia. Aktifkan mikrofon di pengaturan browser lalu coba lagi.');
+        isListeningRef.current = false;
+        setIsListening(false);
       }
-      setIsListening(false);
     };
 
-    rec.onend = () => { if (isListening) rec.start(); };
+    rec.onend = () => { if (isListeningRef.current) { try { rec.start(); } catch {} } };
     setRecognition(rec);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionId]);
@@ -70,8 +81,15 @@ function CaptionPanel({ sessionId }: { sessionId: string }) {
       alert('Browser Anda tidak mendukung Speech Recognition. Gunakan Chrome.');
       return;
     }
-    if (isListening) { recognition.stop(); setIsListening(false); }
-    else { recognition.start(); setIsListening(true); }
+    if (isListening) {
+      isListeningRef.current = false;
+      recognition.stop();
+      setIsListening(false);
+    } else {
+      isListeningRef.current = true;
+      recognition.start();
+      setIsListening(true);
+    }
   };
 
   return (
@@ -221,6 +239,13 @@ export default function TeacherLivePage() {
       {/* ── Header meeting ── */}
       <div className="fixed top-0 left-0 right-0 z-40 h-14 bg-slate-900/95 backdrop-blur-sm border-b border-white/5 flex items-center justify-between px-4">
         <div className="flex items-center gap-3 min-w-0">
+          <button
+            onClick={endSession}
+            aria-label="Kembali"
+            className="p-1.5 -ml-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors flex-shrink-0"
+          >
+            <ArrowLeft size={16} />
+          </button>
           <div className="flex items-center gap-1.5 bg-red-600 px-2.5 py-1 rounded-md flex-shrink-0">
             <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" />
             <span className="text-white text-[11px] font-bold tracking-wide">LIVE</span>
@@ -294,7 +319,10 @@ function SessionSelector({ teacherName, onStart, error }: {
       <TeacherSidebar />
       <main className="flex-1 sm:ml-60 p-4 max-w-2xl mx-auto">
         <div className="mb-6">
-          <h1 className="text-xl font-bold text-slate-900 mb-1">Kelas Live</h1>
+          <h1 className="text-xl font-bold text-slate-900 mb-1 flex items-center gap-2">
+            <BackButton href="/teacher/dashboard" />
+            Kelas Live
+          </h1>
           <p className="text-sm text-slate-500">Pilih sesi yang ingin dimulai, {teacherName}</p>
         </div>
 

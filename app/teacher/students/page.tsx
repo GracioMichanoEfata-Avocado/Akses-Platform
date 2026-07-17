@@ -11,6 +11,7 @@ import { Progress } from '@/components/ui/progress';
 import { createClient } from '@/lib/supabase/client';
 import { getDisabilitasLabel, getDisabilitasBadgeColor } from '@/lib/utils/formatters';
 import { cn } from '@/lib/utils/cn';
+import BackButton from '@/components/shared/BackButton';
 
 type FilterType = 'all' | 'tunanetra' | 'tunarungu' | 'both' | 'none';
 
@@ -74,6 +75,7 @@ export default function StudentsPage() {
       <main id="main-content" className="flex-1 sm:ml-60 pb-4">
         <div className="sticky top-0 z-20 bg-white/90 backdrop-blur-sm border-b border-slate-100 px-4 py-3">
           <h1 className="font-bold text-slate-900 flex items-center gap-2">
+            <BackButton href="/teacher/dashboard" />
             <Users size={18} className="text-blue-700" />
             Manajemen Siswa
           </h1>

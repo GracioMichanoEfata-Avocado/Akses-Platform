@@ -6,6 +6,10 @@ export interface Slide {
   emojiIkon: string;
   deskripsi: string;
   warna: string;
+  /** URL gambar untuk slide yang diupload manual oleh guru (bukan hasil AI). */
+  gambarUrl?: string;
+  /** Poin-poin ringkas ("diagram teks") pendukung deskripsi, khusus slide hasil AI. */
+  poinPenting?: string[];
 }
 
 export const EMOJI_DEFAULT = '📘';
@@ -31,16 +35,24 @@ export function parseSlides(raw: unknown): Slide[] {
 
     const judul = teksBersih((item as any).judul);
     const deskripsi = teksBersih((item as any).deskripsi);
-    if (!judul || !deskripsi) continue;
+    const gambarUrl = teksBersih((item as any).gambarUrl);
+    // Slide sah kalau ada judul, DAN (deskripsi buat narasi ATAU gambar
+    // upload manual). Slide gambar manual boleh tanpa deskripsi.
+    if (!judul || (!deskripsi && !gambarUrl)) continue;
 
     const emoji = teksBersih((item as any).emojiIkon);
     const warna = teksBersih((item as any).warna);
+    const poinPenting = Array.isArray((item as any).poinPenting)
+      ? (item as any).poinPenting.map(teksBersih).filter(Boolean)
+      : undefined;
 
     keluar.push({
       judul,
       deskripsi,
       emojiIkon: emoji || EMOJI_DEFAULT,
       warna: HEX_ENAM.test(warna) ? warna : WARNA_DEFAULT,
+      ...(gambarUrl ? { gambarUrl } : {}),
+      ...(poinPenting && poinPenting.length > 0 ? { poinPenting } : {}),
     });
   }
   return keluar;

@@ -70,9 +70,10 @@ Buat dalam format JSON yang HANYA berisi JSON, tanpa penjelasan tambahan, tanpa 
   ],
   "visualisasi": [
     {
-      "judul": "nama konsep",
+      "judul": "nama SATU konsep spesifik, bukan judul umum materi",
       "emojiIkon": "emoji relevan",
-      "deskripsi": "deskripsi visual 2-3 kalimat",
+      "deskripsi": "narasi 2-3 kalimat untuk dibacakan, menjelaskan konsep ini saja",
+      "poinPenting": ["poin ringkas 1", "poin ringkas 2", "poin ringkas 3"],
       "warna": "#hexcolor"
     }
   ],
@@ -81,8 +82,9 @@ Buat dalam format JSON yang HANYA berisi JSON, tanpa penjelasan tambahan, tanpa 
 
 Ketentuan:
 - Kuis WAJIB berisi TEPAT 5 objek soal — tidak boleh kurang, tidak boleh lebih. Array "kuis" harus punya persis 5 elemen, dengan tingkat kesulitan bervariasi (dari mudah ke sulit)
-- Buat 5 sampai 6 visualisasi konsep utama; masing-masing menjadi satu slide presentasi
-- Setiap "deskripsi" visualisasi 3-4 kalimat, ditulis untuk dibacakan sebagai narasi slide
+- Buat 7 sampai 10 slide visualisasi (bukan 5-6) — pecah materi jadi konsep-konsep yang lebih kecil dan fokus, seperti slide presentasi sungguhan, bukan cuma ringkasan besar dibagi rata. Tiap slide HARUS fokus ke SATU konsep/langkah/istilah spesifik, bukan gabungan beberapa hal sekaligus
+- Setiap "deskripsi" visualisasi 2-3 kalimat, ditulis untuk dibacakan sebagai narasi slide, HANYA tentang konsep spesifik slide itu
+- "poinPenting": 2-4 poin singkat (maksimal 8 kata per poin) yang merangkum inti slide itu secara visual — ini tampil sebagai daftar poin di layar (semacam diagram teks sederhana), BUKAN pengulangan kalimat "deskripsi", tapi kata kunci/fakta inti yang bisa dibaca sekilas
 - audioDeskripsi harus sangat detail karena ini untuk siswa tunanetra
 - Semua teks dalam Bahasa Indonesia
 - jawabanBenar adalah index (0-3) dari array opsi

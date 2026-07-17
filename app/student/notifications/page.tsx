@@ -8,6 +8,7 @@ import StudentSidebar from '@/components/shared/StudentSidebar';
 import AccessibilityBar from '@/components/accessibility/AccessibilityBar';
 import { createClient } from '@/lib/supabase/client';
 import { cn } from '@/lib/utils/cn';
+import BackButton from '@/components/shared/BackButton';
 
 interface Notif {
   id: string;
@@ -134,6 +135,7 @@ export default function NotificationsPage() {
       <main className="flex-1 sm:ml-60 pb-20 sm:pb-4">
         <div className="sticky top-0 z-20 bg-white/90 backdrop-blur-sm border-b border-slate-100 px-4 py-3 flex items-center justify-between">
           <h1 className="font-bold text-slate-900 flex items-center gap-2">
+            <BackButton href="/student/dashboard" />
             <Bell size={18} className="text-blue-700" />
             Notifikasi
             {unreadCount > 0 && (

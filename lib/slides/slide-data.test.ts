@@ -55,6 +55,41 @@ describe('parseSlides — pengisian default', () => {
   });
 });
 
+describe('parseSlides — slide gambar manual (tanpa AI)', () => {
+  it('slide dengan gambarUrl tapi tanpa deskripsi tetap lolos', () => {
+    const hasil = parseSlides([{ judul: 'Slide 1', gambarUrl: 'https://x.test/a.png' }]);
+    expect(hasil).toHaveLength(1);
+    expect(hasil[0].gambarUrl).toBe('https://x.test/a.png');
+    expect(hasil[0].deskripsi).toBe('');
+  });
+
+  it('tanpa deskripsi maupun gambarUrl tetap dibuang', () => {
+    expect(parseSlides([{ judul: 'Slide 1' }])).toEqual([]);
+  });
+
+  it('gambarUrl kosong/bukan string tidak dianggap ada', () => {
+    expect(parseSlides([{ judul: 'Slide 1', gambarUrl: '   ' }])).toEqual([]);
+    expect(parseSlides([{ judul: 'Slide 1', gambarUrl: 42 }])).toEqual([]);
+  });
+});
+
+describe('parseSlides — poinPenting (diagram teks AI)', () => {
+  it('poinPenting array string disimpan', () => {
+    const hasil = parseSlides([{ ...sah, poinPenting: ['Poin satu', 'Poin dua'] }]);
+    expect(hasil[0].poinPenting).toEqual(['Poin satu', 'Poin dua']);
+  });
+
+  it('poinPenting kosong/bukan array tidak disertakan', () => {
+    expect(parseSlides([{ ...sah, poinPenting: [] }])[0].poinPenting).toBeUndefined();
+    expect(parseSlides([{ ...sah, poinPenting: 'bukan array' }])[0].poinPenting).toBeUndefined();
+  });
+
+  it('elemen poinPenting yang bukan string/kosong disaring', () => {
+    const hasil = parseSlides([{ ...sah, poinPenting: ['Valid', '', 42, '  '] }]);
+    expect(hasil[0].poinPenting).toEqual(['Valid']);
+  });
+});
+
 describe('durasiBaca', () => {
   it('teks pendek tetap tampil minimal 4 detik', () => {
     expect(durasiBaca('Halo')).toBe(4000);

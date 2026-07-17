@@ -12,7 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { useAccessibilityStore } from '@/lib/store/accessibility-store';
 import { fiturUntukMode, FILTER_KONTRAS_VIDEO } from '@/lib/accessibility/material-features';
-import SlideshowPlayer from '@/components/student/SlideshowPlayer';
+import SlideshowPlayer, { SlideshowPlayerHandle } from '@/components/student/SlideshowPlayer';
 import { parseSlides, Slide } from '@/lib/slides/slide-data';
 import { createClient } from '@/lib/supabase/client';
 import { speak, speakLong, stopSpeaking, isTTSSpeaking } from '@/lib/hooks/useTalkback';
@@ -68,6 +68,8 @@ export default function MaterialDetailPage({ params }: { params: { id: string } 
 
   // Video player state
   const videoRef = useRef<HTMLVideoElement>(null);
+  // Slideshow AI (video pengganti untuk materi tanpa video_url asli)
+  const slideshowRef = useRef<SlideshowPlayerHandle>(null);
   const videoContainerRef = useRef<HTMLDivElement>(null);
   const [videoPlaying, setVideoPlaying] = useState(false);
   const [videoMuted, setVideoMuted] = useState(false);
@@ -173,6 +175,10 @@ export default function MaterialDetailPage({ params }: { params: { id: string } 
 
     if (material.video_url) {
       pilihan.push({ label: 'Video Materi', keywords: ['video materi', 'video'], action: toggleVideo });
+    } else if (material.slides.length > 0) {
+      // Materi hasil AI tanpa video asli: slide bernarasi otomatis berperan
+      // sebagai video, jadi dapat perintah suara yang sama seperti video asli.
+      pilihan.push({ label: 'Video Materi', keywords: ['video materi', 'video', 'putar slide', 'mainkan slide'], action: () => slideshowRef.current?.play() });
     }
     if (ttsEnabled && material.transkrip.trim()) {
       pilihan.push({ label: 'Audio Deskripsi', keywords: ['audio deskripsi', 'audio', 'deskripsi'], action: handleTTS });
@@ -200,6 +206,9 @@ export default function MaterialDetailPage({ params }: { params: { id: string } 
       if (videoRef.current && !videoRef.current.paused) {
         videoRef.current.pause();
         setVideoPlaying(false);
+      }
+      if (slideshowRef.current?.isPlaying()) {
+        slideshowRef.current.pause();
       }
       if (isTTSSpeaking()) {
         stopTTS();
@@ -462,8 +471,11 @@ export default function MaterialDetailPage({ params }: { params: { id: string } 
               )}
             </div>
           ) : material.slides.length > 0 ? (
-            // ── PRESENTASI SLIDE (materi hasil AI, tanpa video) ──
-            <SlideshowPlayer slides={material.slides} kontrasAktif={kontrasAktif} />
+            // ── PRESENTASI SLIDE BERNARASI (video pengganti untuk materi hasil AI) ──
+            <div className="space-y-2">
+              <Badge className="bg-purple-100 text-purple-700 border-0 text-[10px]">🎬 Video Materi (AI)</Badge>
+              <SlideshowPlayer ref={slideshowRef} slides={material.slides} kontrasAktif={kontrasAktif} />
+            </div>
           ) : (
             // ── PLAYER EMOJI (materi tanpa video maupun slide) ──
             <div

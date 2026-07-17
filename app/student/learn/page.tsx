@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { Search, Clock, BookOpen, Sparkles } from 'lucide-react';
+import { Search, Clock, BookOpen, Sparkles, ChevronLeft } from 'lucide-react';
 import StudentBottomNav from '@/components/shared/StudentBottomNav';
 import StudentSidebar from '@/components/shared/StudentSidebar';
 import AccessibilityBar from '@/components/accessibility/AccessibilityBar';
@@ -12,6 +12,8 @@ import { Progress } from '@/components/ui/progress';
 import { createClient } from '@/lib/supabase/client';
 import { useTalkbackContext, PageVoiceCommand } from '@/components/accessibility/TalkbackProvider';
 import { speakLong } from '@/lib/hooks/useTalkback';
+import BackButton from '@/components/shared/BackButton';
+import { MATA_PELAJARAN, getSubjectEmoji } from '@/lib/constants/subjects';
 
 interface Material {
   id: string;
@@ -43,9 +45,57 @@ function MaterialCardSkeleton() {
   );
 }
 
+function MaterialCard({ m }: { m: Material }) {
+  return (
+    <Link href={`/student/learn/${m.id}`} className="block">
+      <Card className="hover:shadow-md transition-all card-hover border-0 shadow-sm h-full">
+        <CardContent className="p-3">
+          {/* Thumbnail */}
+          <div
+            className="glow-tint w-full h-24 rounded-xl flex items-center justify-center text-3xl mb-3 relative"
+            style={{ backgroundColor: m.thumbnail_color + '18', '--glow-color': m.thumbnail_color } as React.CSSProperties}
+            role="img"
+            aria-label={`Thumbnail materi ${m.judul}`}
+          >
+            {m.thumbnail_emoji}
+            {m.progress === 100 && (
+              <div className="absolute top-2 right-2 w-5 h-5 bg-emerald-500 rounded-full flex items-center justify-center">
+                <span className="text-white text-[10px]">✓</span>
+              </div>
+            )}
+          </div>
+
+          {/* Title */}
+          <p className="text-xs font-semibold text-slate-800 leading-tight mb-1 line-clamp-2">
+            {m.judul}
+          </p>
+
+          {/* Label mata pelajaran */}
+          <Badge variant="secondary" className="text-[10px] px-1.5 mb-2">
+            {m.mata_pelajaran}
+          </Badge>
+
+          <div className="flex items-center gap-1 text-slate-400 mb-2">
+            <Clock size={10} />
+            <span className="text-[10px]">{m.durasi} menit</span>
+          </div>
+
+          {/* Progress */}
+          {m.progress > 0 && (
+            <div className="mt-auto">
+              <Progress value={m.progress} className="h-1.5" />
+              <p className="text-[10px] text-slate-400 mt-0.5">{m.progress}% selesai</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </Link>
+  );
+}
+
 export default function LearnPage() {
   const [search, setSearch] = useState('');
-  const [subjectFilter, setSubjectFilter] = useState('Semua');
+  const [selectedSubject, setSelectedSubject] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [aiLibrary, setAiLibrary] = useState<LibraryItem[]>([]);
   const [materials, setMaterials] = useState<Material[]>([]);
@@ -103,40 +153,52 @@ export default function LearnPage() {
     loadMaterials();
   }, []);
 
-  // Daftar mata pelajaran dibangun dari materi yang benar-benar ada, bukan
-  // daftar tetap — otomatis ikut nambah kalau ada mata pelajaran baru.
-  const subjects = Array.from(new Set(materials.map((m) => m.mata_pelajaran))).sort();
+  // Section mata pelajaran selalu lengkap (sama seperti daftar saat guru
+  // buat sesi live) + mapel lain yang mungkin dipakai materi tapi belum
+  // ada di daftar baku, supaya tidak ada materi yang "hilang".
+  const materialSubjects = Array.from(new Set(materials.map((m) => m.mata_pelajaran))).sort();
+  const subjects = [
+    ...MATA_PELAJARAN,
+    ...materialSubjects.filter((s) => !MATA_PELAJARAN.includes(s)),
+  ];
 
-  const filtered = materials.filter((m) => {
-    const matchSearch =
-      search === '' ||
-      m.judul.toLowerCase().includes(search.toLowerCase()) ||
-      m.mata_pelajaran.toLowerCase().includes(search.toLowerCase());
-    const matchSubject = subjectFilter === 'Semua' || m.mata_pelajaran === subjectFilter;
-    return matchSearch && matchSubject;
-  });
+  const searching = search.trim() !== '';
+  const searchResults = materials.filter((m) =>
+    m.judul.toLowerCase().includes(search.toLowerCase()) ||
+    m.mata_pelajaran.toLowerCase().includes(search.toLowerCase())
+  );
+  const subjectMaterials = selectedSubject
+    ? materials.filter((m) => m.mata_pelajaran === selectedSubject)
+    : [];
 
-  // ── Voice command: sebut mata pelajaran -> langsung filter; "ada materi
-  // apa aja" -> dibacakan satu-satu; "ulang" -> dibacakan lagi (baca ulang
-  // daftar yang SAAT INI sedang tampil, jadi ikut mata pelajaran manapun). ──
+  // Daftar materi yang SEDANG tampil (dipakai voice command "ada materi apa aja"/"ulang").
+  const visibleMaterials = searching ? searchResults : selectedSubject ? subjectMaterials : [];
+
+  // ── Voice command: sebut mata pelajaran -> buka section-nya; "ada materi
+  // apa aja" -> dibacakan satu-satu; "ulang" -> dibacakan lagi; "kembali"/
+  // "semua mata pelajaran" -> tutup section, balik ke daftar mata pelajaran. ──
   const { registerPageCommands, clearPageCommands, isAktif } = useTalkbackContext();
 
   const bacaDaftarMateri = useCallback(() => {
-    const teks = filtered.length > 0
-      ? filtered.map((m, i) => `${i + 1}. ${m.judul}.`).join(' ')
-      : `Tidak ada materi untuk ${subjectFilter === 'Semua' ? 'filter ini' : subjectFilter}.`;
+    if (!selectedSubject && !searching) {
+      speakLong(`Pilih salah satu mata pelajaran: ${subjects.join(', ')}.`);
+      return;
+    }
+    const label = searching ? 'pencarian ini' : selectedSubject!;
+    const teks = visibleMaterials.length > 0
+      ? visibleMaterials.map((m, i) => `${i + 1}. ${m.judul}.`).join(' ')
+      : `Tidak ada materi untuk ${label}.`;
     speakLong(teks);
-  }, [filtered, subjectFilter]);
+  }, [visibleMaterials, selectedSubject, searching, subjects]);
 
   useEffect(() => {
     if (!isAktif) return;
 
     const commands: PageVoiceCommand[] = [
-      { keywords: ['semua'], label: 'Semua', action: () => setSubjectFilter('Semua') },
       ...subjects.map((subj) => ({
         keywords: [subj.toLowerCase()],
         label: subj,
-        action: () => setSubjectFilter(subj),
+        action: () => { setSearch(''); setSelectedSubject(subj); },
       })),
       {
         keywords: ['ada materi apa aja', 'ada materi apa saja', 'materi apa aja', 'materi apa saja', 'apa aja materinya', 'apa saja materinya'],
@@ -147,6 +209,11 @@ export default function LearnPage() {
         keywords: ['ulang', 'ulangi', 'tolong ulang'],
         label: 'Ulangi',
         action: bacaDaftarMateri,
+      },
+      {
+        keywords: ['kembali', 'balik', 'semua mata pelajaran', 'daftar mata pelajaran'],
+        label: 'Kembali ke daftar mata pelajaran',
+        action: () => { setSearch(''); setSelectedSubject(null); },
       },
     ];
 
@@ -162,6 +229,7 @@ export default function LearnPage() {
         {/* Top Bar */}
         <div className="sticky top-0 z-20 bg-white/90 backdrop-blur-sm border-b border-slate-100 px-4 py-3 flex items-center justify-between">
           <h1 className="font-bold text-slate-900 flex items-center gap-2">
+            <BackButton href="/student/dashboard" />
             <BookOpen size={18} className="text-blue-700" />
             Ekosistem Materi
           </h1>
@@ -213,104 +281,87 @@ export default function LearnPage() {
             />
           </div>
 
-          {/* Filter Mata Pelajaran */}
-          {subjects.length > 0 && (
-            <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide" role="group" aria-label="Filter mata pelajaran">
-              <button
-                onClick={() => setSubjectFilter('Semua')}
-                className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-all border ${
-                  subjectFilter === 'Semua'
-                    ? 'bg-blue-800 text-white border-blue-800'
-                    : 'bg-white text-slate-600 border-slate-200 hover:border-blue-300'
-                }`}
-                aria-pressed={subjectFilter === 'Semua'}
-                aria-label="Filter: Semua mata pelajaran"
-              >
-                Semua
-              </button>
-              {subjects.map((subj) => (
-                <button
-                  key={subj}
-                  onClick={() => setSubjectFilter(subj)}
-                  className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-all border ${
-                    subjectFilter === subj
-                      ? 'bg-blue-800 text-white border-blue-800'
-                      : 'bg-white text-slate-600 border-slate-200 hover:border-blue-300'
-                  }`}
-                  aria-pressed={subjectFilter === subj}
-                  aria-label={`Filter: ${subj}`}
-                >
-                  {subj}
-                </button>
-              ))}
-            </div>
-          )}
-
-          {/* Stats */}
-          <div className="flex items-center gap-2 text-sm text-slate-500">
-            <BookOpen size={14} />
-            <span>{filtered.length} materi ditemukan</span>
-          </div>
-
-          {/* Grid */}
+          {/* Loading */}
           {loading ? (
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               {Array.from({ length: 6 }).map((_, i) => <MaterialCardSkeleton key={i} />)}
             </div>
-          ) : filtered.length === 0 ? (
-            <div className="text-center py-12">
-              <div className="text-4xl mb-3">🔍</div>
-              <p className="text-slate-500 font-medium">Materi tidak ditemukan</p>
-              <p className="text-slate-400 text-sm mt-1">Coba kata kunci atau filter yang berbeda</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-              {filtered.map((m) => (
-                <Link key={m.id} href={`/student/learn/${m.id}`} className="block">
-                  <Card className="hover:shadow-md transition-all card-hover border-0 shadow-sm h-full">
-                    <CardContent className="p-3">
-                      {/* Thumbnail */}
-                      <div
-                        className="glow-tint w-full h-24 rounded-xl flex items-center justify-center text-3xl mb-3 relative"
-                        style={{ backgroundColor: m.thumbnail_color + '18', '--glow-color': m.thumbnail_color } as React.CSSProperties}
-                        role="img"
-                        aria-label={`Thumbnail materi ${m.judul}`}
-                      >
-                        {m.thumbnail_emoji}
-                        {m.progress === 100 && (
-                          <div className="absolute top-2 right-2 w-5 h-5 bg-emerald-500 rounded-full flex items-center justify-center">
-                            <span className="text-white text-[10px]">✓</span>
-                          </div>
-                        )}
+          ) : searching ? (
+            <>
+              <div className="flex items-center gap-2 text-sm text-slate-500">
+                <BookOpen size={14} />
+                <span>{searchResults.length} materi ditemukan</span>
+              </div>
+              {searchResults.length === 0 ? (
+                <div className="text-center py-12">
+                  <div className="text-4xl mb-3">🔍</div>
+                  <p className="text-slate-500 font-medium">Materi tidak ditemukan</p>
+                  <p className="text-slate-400 text-sm mt-1">Coba kata kunci yang berbeda</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  {searchResults.map((m) => <MaterialCard key={m.id} m={m} />)}
+                </div>
+              )}
+            </>
+          ) : !selectedSubject ? (
+            <>
+              <div className="flex items-center gap-2 text-sm text-slate-500">
+                <BookOpen size={14} />
+                <span>{subjects.length} mata pelajaran</span>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3" role="list" aria-label="Daftar mata pelajaran">
+                {subjects.map((subj) => {
+                  const count = materials.filter((m) => m.mata_pelajaran === subj).length;
+                  return (
+                    <button
+                      key={subj}
+                      onClick={() => setSelectedSubject(subj)}
+                      role="listitem"
+                      aria-label={`Buka mata pelajaran ${subj}, ${count} materi`}
+                      className={`text-left rounded-xl border p-3 transition-all card-hover ${
+                        count > 0 ? 'bg-white border-slate-100 hover:shadow-md' : 'bg-slate-50 border-slate-100'
+                      }`}
+                    >
+                      <div className="w-full h-16 rounded-lg bg-blue-50 flex items-center justify-center text-2xl mb-2">
+                        {getSubjectEmoji(subj)}
                       </div>
-
-                      {/* Title */}
-                      <p className="text-xs font-semibold text-slate-800 leading-tight mb-1 line-clamp-2">
-                        {m.judul}
+                      <p className="text-xs font-semibold text-slate-800 leading-tight mb-1">{subj}</p>
+                      <p className="text-[10px] text-slate-400">
+                        {count > 0 ? `${count} materi` : 'Belum ada materi'}
                       </p>
-
-                      {/* Label mata pelajaran */}
-                      <Badge variant="secondary" className="text-[10px] px-1.5 mb-2">
-                        {m.mata_pelajaran}
-                      </Badge>
-
-                      <div className="flex items-center gap-1 text-slate-400 mb-2">
-                        <Clock size={10} />
-                        <span className="text-[10px]">{m.durasi} menit</span>
-                      </div>
-
-                      {/* Progress */}
-                      {m.progress > 0 && (
-                        <div className="mt-auto">
-                          <Progress value={m.progress} className="h-1.5" />
-                          <p className="text-[10px] text-slate-400 mt-0.5">{m.progress}% selesai</p>
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-                </Link>
-              ))}
-            </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="flex items-center justify-between gap-2">
+                <button
+                  onClick={() => setSelectedSubject(null)}
+                  className="flex items-center gap-1 text-sm font-semibold text-slate-900 hover:text-blue-700"
+                >
+                  <ChevronLeft size={16} />
+                  <span className="text-xl">{getSubjectEmoji(selectedSubject)}</span>
+                  {selectedSubject}
+                </button>
+                <span className="text-xs text-slate-400">{subjectMaterials.length} materi</span>
+              </div>
+              {subjectMaterials.length === 0 ? (
+                <div className="text-center py-12">
+                  <div className="text-4xl mb-3">{getSubjectEmoji(selectedSubject)}</div>
+                  <p className="text-slate-500 font-medium">Belum ada materi untuk {selectedSubject}</p>
+                  <button onClick={() => setSelectedSubject(null)} className="text-blue-700 text-sm mt-2 hover:underline">
+                    ← Pilih mata pelajaran lain
+                  </button>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  {subjectMaterials.map((m) => <MaterialCard key={m.id} m={m} />)}
+                </div>
+              )}
+            </>
           )}
         </div>
       </main>

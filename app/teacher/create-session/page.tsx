@@ -8,8 +8,8 @@ import AccessibilityBar from '@/components/accessibility/AccessibilityBar';
 import { Card, CardContent } from '@/components/ui/card';
 import { createClient } from '@/lib/supabase/client';
 import { cn } from '@/lib/utils/cn';
-
-const MATA_PELAJARAN = ['Biologi', 'IPA', 'Matematika', 'Fisika', 'Kimia', 'Bahasa Indonesia', 'Sejarah', 'Geografi', 'Ekonomi', 'Seni Budaya'];
+import BackButton from '@/components/shared/BackButton';
+import { MATA_PELAJARAN } from '@/lib/constants/subjects';
 
 export default function CreateSessionPage() {
   const router = useRouter();
@@ -93,6 +93,7 @@ export default function CreateSessionPage() {
       <main id="main-content" className="flex-1 sm:ml-60 pb-4">
         <div className="sticky top-0 z-20 bg-white/90 backdrop-blur-sm border-b border-slate-100 px-4 py-3">
           <h1 className="font-bold text-slate-900 flex items-center gap-2">
+            <BackButton href="/teacher/dashboard" />
             <PlusCircle size={18} className="text-blue-700" />
             Buat Sesi Ajar
           </h1>

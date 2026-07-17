@@ -10,6 +10,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { createClient } from '@/lib/supabase/client';
 import { useRoleStore } from '@/lib/store/role-store';
+import BackButton from '@/components/shared/BackButton';
 
 export default function TeacherProfilePage() {
   const router = useRouter();
@@ -67,7 +68,10 @@ export default function TeacherProfilePage() {
       <TeacherSidebar />
       <main className="flex-1 sm:ml-60 pb-4">
         <div className="sticky top-0 z-20 bg-white/90 backdrop-blur-sm border-b border-slate-100 px-4 py-3 flex items-center justify-between">
-          <h1 className="font-bold text-slate-900">Profil Pendamping</h1>
+          <h1 className="font-bold text-slate-900 flex items-center gap-2">
+            <BackButton href="/teacher/dashboard" />
+            Profil Pendamping
+          </h1>
           <div className="flex items-center gap-2">
             <Link href="/teacher/profile/edit"
               className="flex items-center gap-1.5 text-xs bg-emerald-50 text-emerald-700 border border-emerald-200 px-3 py-1.5 rounded-xl hover:bg-emerald-100 transition-colors">

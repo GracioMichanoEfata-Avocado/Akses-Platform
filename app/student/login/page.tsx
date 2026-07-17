@@ -2,11 +2,12 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Eye, EyeOff, GraduationCap, Volume2, Subtitles, ZoomIn, ArrowRight, Check, AlertCircle, Sparkles } from 'lucide-react';
+import { Eye, EyeOff, GraduationCap, Volume2, Subtitles, ZoomIn, ArrowRight, ArrowLeft, Check, AlertCircle, Sparkles } from 'lucide-react';
 import { useAccessibilityStore, DisabilitasMode, FontSize, TunanetraSubtype } from '@/lib/store/accessibility-store';
 import { useRoleStore } from '@/lib/store/role-store';
 import { cn } from '@/lib/utils/cn';
 import { createClient } from '@/lib/supabase/client';
+import BackButton from '@/components/shared/BackButton';
 
 type Step = 'login' | 'setup';
 
@@ -126,6 +127,13 @@ export default function LoginPage() {
         <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden">
           {/* Header */}
           <div className="bg-gradient-to-r from-blue-800 to-blue-600 p-6 text-white">
+            <button
+              onClick={() => setStep('login')}
+              className="mb-2 p-1.5 -ml-1.5 rounded-lg text-blue-200 hover:text-white hover:bg-white/10 transition-colors"
+              aria-label="Kembali ke form login"
+            >
+              <ArrowLeft size={16} />
+            </button>
             <div className="flex items-center gap-3 mb-1">
               <div className="w-8 h-8 bg-white/20 rounded-xl flex items-center justify-center">
                 <GraduationCap size={18} />
@@ -371,6 +379,7 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-900 via-blue-800 to-blue-700 flex items-center justify-center p-4">
+      <BackButton href="/" dark className="fixed top-4 left-4 p-2 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-colors" />
       <div className="w-full max-w-sm">
         {/* Logo */}
         <div className="text-center mb-8">

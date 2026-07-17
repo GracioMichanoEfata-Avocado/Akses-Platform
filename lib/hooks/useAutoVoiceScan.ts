@@ -7,7 +7,7 @@ import type { PageVoiceCommand } from '@/components/accessibility/TalkbackProvid
 // Narasi otomatis per halaman (dipindah dari TalkbackProvider).
 export const PAGE_NARASI: Record<string, string> = {
   '/student/dashboard': 'Halo, selamat datang di AKSES. Berikan perintah suara Anda. Menu: Belajar, Kelas Live, Notifikasi, Profil.',
-  '/student/learn': 'Katalog Materi. Tersedia daftar materi belajar.',
+  '/student/learn': 'Katalog Materi. Sebutkan mata pelajaran, misalnya Matematika atau Fisika, untuk membuka materinya.',
   '/student/live': 'Kelas Live.',
   '/student/notifications': 'Notifikasi.',
   '/student/profile': 'Profil Saya.',
