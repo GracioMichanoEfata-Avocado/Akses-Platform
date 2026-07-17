@@ -1,0 +1,205 @@
+{
+  "boundaries": [
+    [
+      36.4,
+      "sangat_mudah",
+      "mudah"
+    ],
+    [
+      59.1,
+      "mudah",
+      "sedang"
+    ],
+    [
+      69.9,
+      "sedang",
+      "mudah"
+    ]
+  ],
+  "rows": [
+    {
+      "score": 0,
+      "gagalParah": 1.0,
+      "gagal": 0.0,
+      "hampirLulus": 0.0,
+      "tingkat": "sangat_mudah",
+      "perluRemedial": true
+    },
+    {
+      "score": 5,
+      "gagalParah": 1.0,
+      "gagal": 0.0,
+      "hampirLulus": 0.0,
+      "tingkat": "sangat_mudah",
+      "perluRemedial": true
+    },
+    {
+      "score": 10,
+      "gagalParah": 1.0,
+      "gagal": 0.0,
+      "hampirLulus": 0.0,
+      "tingkat": "sangat_mudah",
+      "perluRemedial": true
+    },
+    {
+      "score": 20,
+      "gagalParah": 1.0,
+      "gagal": 0.0,
+      "hampirLulus": 0.0,
+      "tingkat": "sangat_mudah",
+      "perluRemedial": true
+    },
+    {
+      "score": 25,
+      "gagalParah": 1.0,
+      "gagal": 0.0,
+      "hampirLulus": 0.0,
+      "tingkat": "sangat_mudah",
+      "perluRemedial": true
+    },
+    {
+      "score": 30,
+      "gagalParah": 0.75,
+      "gagal": 0.0,
+      "hampirLulus": 0.0,
+      "tingkat": "sangat_mudah",
+      "perluRemedial": true
+    },
+    {
+      "score": 35,
+      "gagalParah": 0.5,
+      "gagal": 0.333,
+      "hampirLulus": 0.0,
+      "tingkat": "sangat_mudah",
+      "perluRemedial": true
+    },
+    {
+      "score": 40,
+      "gagalParah": 0.25,
+      "gagal": 0.667,
+      "hampirLulus": 0.0,
+      "tingkat": "mudah",
+      "perluRemedial": true
+    },
+    {
+      "score": 44,
+      "gagalParah": 0.05,
+      "gagal": 0.933,
+      "hampirLulus": 0.0,
+      "tingkat": "mudah",
+      "perluRemedial": true
+    },
+    {
+      "score": 45,
+      "gagalParah": 0.0,
+      "gagal": 1.0,
+      "hampirLulus": 0.0,
+      "tingkat": "mudah",
+      "perluRemedial": true
+    },
+    {
+      "score": 46,
+      "gagalParah": 0.0,
+      "gagal": 1.0,
+      "hampirLulus": 0.0,
+      "tingkat": "mudah",
+      "perluRemedial": true
+    },
+    {
+      "score": 50,
+      "gagalParah": 0.0,
+      "gagal": 1.0,
+      "hampirLulus": 0.0,
+      "tingkat": "mudah",
+      "perluRemedial": true
+    },
+    {
+      "score": 54,
+      "gagalParah": 0.0,
+      "gagal": 1.0,
+      "hampirLulus": 0.0,
+      "tingkat": "mudah",
+      "perluRemedial": true
+    },
+    {
+      "score": 55,
+      "gagalParah": 0.0,
+      "gagal": 1.0,
+      "hampirLulus": 0.0,
+      "tingkat": "mudah",
+      "perluRemedial": true
+    },
+    {
+      "score": 56,
+      "gagalParah": 0.0,
+      "gagal": 0.9,
+      "hampirLulus": 0.143,
+      "tingkat": "mudah",
+      "perluRemedial": true
+    },
+    {
+      "score": 60,
+      "gagalParah": 0.0,
+      "gagal": 0.5,
+      "hampirLulus": 0.714,
+      "tingkat": "sedang",
+      "perluRemedial": true
+    },
+    {
+      "score": 62,
+      "gagalParah": 0.0,
+      "gagal": 0.3,
+      "hampirLulus": 1.0,
+      "tingkat": "sedang",
+      "perluRemedial": true
+    },
+    {
+      "score": 65,
+      "gagalParah": 0.0,
+      "gagal": 0.0,
+      "hampirLulus": 1.0,
+      "tingkat": "sedang",
+      "perluRemedial": true
+    },
+    {
+      "score": 68,
+      "gagalParah": 0.0,
+      "gagal": 0.0,
+      "hampirLulus": 1.0,
+      "tingkat": "sedang",
+      "perluRemedial": true
+    },
+    {
+      "score": 69,
+      "gagalParah": 0.0,
+      "gagal": 0.0,
+      "hampirLulus": 1.0,
+      "tingkat": "sedang",
+      "perluRemedial": true
+    },
+    {
+      "score": 70,
+      "gagalParah": 0.0,
+      "gagal": 0.0,
+      "hampirLulus": 0.0,
+      "tingkat": "mudah",
+      "perluRemedial": false
+    },
+    {
+      "score": 80,
+      "gagalParah": 0.0,
+      "gagal": 0.0,
+      "hampirLulus": 0.0,
+      "tingkat": "mudah",
+      "perluRemedial": false
+    },
+    {
+      "score": 100,
+      "gagalParah": 0.0,
+      "gagal": 0.0,
+      "hampirLulus": 0.0,
+      "tingkat": "mudah",
+      "perluRemedial": false
+    }
+  ]
+}

@@ -1,0 +1,884 @@
+{
+  "total_cases": 74,
+  "mismatches": 0,
+  "results": [
+    {
+      "session": null,
+      "peran": "teacher",
+      "expected_allow": false,
+      "got_allow": false,
+      "reason": "Ruang tidak ditemukan"
+    },
+    {
+      "session": null,
+      "peran": "student",
+      "expected_allow": false,
+      "got_allow": false,
+      "reason": "Ruang tidak ditemukan"
+    },
+    {
+      "session": {
+        "status": "scheduled",
+        "tipe": "kelas",
+        "guru": "owner",
+        "student_id": "null"
+      },
+      "peran": "teacher",
+      "expected_allow": true,
+      "got_allow": true,
+      "reason": ""
+    },
+    {
+      "session": {
+        "status": "scheduled",
+        "tipe": "kelas",
+        "guru": "owner",
+        "student_id": "null"
+      },
+      "peran": "student",
+      "expected_allow": false,
+      "got_allow": false,
+      "reason": "Sesi belum dimulai"
+    },
+    {
+      "session": {
+        "status": "scheduled",
+        "tipe": "kelas",
+        "guru": "owner",
+        "student_id": "match"
+      },
+      "peran": "teacher",
+      "expected_allow": true,
+      "got_allow": true,
+      "reason": ""
+    },
+    {
+      "session": {
+        "status": "scheduled",
+        "tipe": "kelas",
+        "guru": "owner",
+        "student_id": "match"
+      },
+      "peran": "student",
+      "expected_allow": false,
+      "got_allow": false,
+      "reason": "Sesi belum dimulai"
+    },
+    {
+      "session": {
+        "status": "scheduled",
+        "tipe": "kelas",
+        "guru": "owner",
+        "student_id": "other"
+      },
+      "peran": "teacher",
+      "expected_allow": true,
+      "got_allow": true,
+      "reason": ""
+    },
+    {
+      "session": {
+        "status": "scheduled",
+        "tipe": "kelas",
+        "guru": "owner",
+        "student_id": "other"
+      },
+      "peran": "student",
+      "expected_allow": false,
+      "got_allow": false,
+      "reason": "Sesi belum dimulai"
+    },
+    {
+      "session": {
+        "status": "scheduled",
+        "tipe": "kelas",
+        "guru": "other",
+        "student_id": "null"
+      },
+      "peran": "teacher",
+      "expected_allow": false,
+      "got_allow": false,
+      "reason": "Anda bukan pengajar sesi ini"
+    },
+    {
+      "session": {
+        "status": "scheduled",
+        "tipe": "kelas",
+        "guru": "other",
+        "student_id": "null"
+      },
+      "peran": "student",
+      "expected_allow": false,
+      "got_allow": false,
+      "reason": "Sesi belum dimulai"
+    },
+    {
+      "session": {
+        "status": "scheduled",
+        "tipe": "kelas",
+        "guru": "other",
+        "student_id": "match"
+      },
+      "peran": "teacher",
+      "expected_allow": false,
+      "got_allow": false,
+      "reason": "Anda bukan pengajar sesi ini"
+    },
+    {
+      "session": {
+        "status": "scheduled",
+        "tipe": "kelas",
+        "guru": "other",
+        "student_id": "match"
+      },
+      "peran": "student",
+      "expected_allow": false,
+      "got_allow": false,
+      "reason": "Sesi belum dimulai"
+    },
+    {
+      "session": {
+        "status": "scheduled",
+        "tipe": "kelas",
+        "guru": "other",
+        "student_id": "other"
+      },
+      "peran": "teacher",
+      "expected_allow": false,
+      "got_allow": false,
+      "reason": "Anda bukan pengajar sesi ini"
+    },
+    {
+      "session": {
+        "status": "scheduled",
+        "tipe": "kelas",
+        "guru": "other",
+        "student_id": "other"
+      },
+      "peran": "student",
+      "expected_allow": false,
+      "got_allow": false,
+      "reason": "Sesi belum dimulai"
+    },
+    {
+      "session": {
+        "status": "scheduled",
+        "tipe": "privat",
+        "guru": "owner",
+        "student_id": "null"
+      },
+      "peran": "teacher",
+      "expected_allow": true,
+      "got_allow": true,
+      "reason": ""
+    },
+    {
+      "session": {
+        "status": "scheduled",
+        "tipe": "privat",
+        "guru": "owner",
+        "student_id": "null"
+      },
+      "peran": "student",
+      "expected_allow": false,
+      "got_allow": false,
+      "reason": "Sesi belum dimulai"
+    },
+    {
+      "session": {
+        "status": "scheduled",
+        "tipe": "privat",
+        "guru": "owner",
+        "student_id": "match"
+      },
+      "peran": "teacher",
+      "expected_allow": true,
+      "got_allow": true,
+      "reason": ""
+    },
+    {
+      "session": {
+        "status": "scheduled",
+        "tipe": "privat",
+        "guru": "owner",
+        "student_id": "match"
+      },
+      "peran": "student",
+      "expected_allow": false,
+      "got_allow": false,
+      "reason": "Sesi belum dimulai"
+    },
+    {
+      "session": {
+        "status": "scheduled",
+        "tipe": "privat",
+        "guru": "owner",
+        "student_id": "other"
+      },
+      "peran": "teacher",
+      "expected_allow": true,
+      "got_allow": true,
+      "reason": ""
+    },
+    {
+      "session": {
+        "status": "scheduled",
+        "tipe": "privat",
+        "guru": "owner",
+        "student_id": "other"
+      },
+      "peran": "student",
+      "expected_allow": false,
+      "got_allow": false,
+      "reason": "Sesi belum dimulai"
+    },
+    {
+      "session": {
+        "status": "scheduled",
+        "tipe": "privat",
+        "guru": "other",
+        "student_id": "null"
+      },
+      "peran": "teacher",
+      "expected_allow": false,
+      "got_allow": false,
+      "reason": "Anda bukan pengajar sesi ini"
+    },
+    {
+      "session": {
+        "status": "scheduled",
+        "tipe": "privat",
+        "guru": "other",
+        "student_id": "null"
+      },
+      "peran": "student",
+      "expected_allow": false,
+      "got_allow": false,
+      "reason": "Sesi belum dimulai"
+    },
+    {
+      "session": {
+        "status": "scheduled",
+        "tipe": "privat",
+        "guru": "other",
+        "student_id": "match"
+      },
+      "peran": "teacher",
+      "expected_allow": false,
+      "got_allow": false,
+      "reason": "Anda bukan pengajar sesi ini"
+    },
+    {
+      "session": {
+        "status": "scheduled",
+        "tipe": "privat",
+        "guru": "other",
+        "student_id": "match"
+      },
+      "peran": "student",
+      "expected_allow": false,
+      "got_allow": false,
+      "reason": "Sesi belum dimulai"
+    },
+    {
+      "session": {
+        "status": "scheduled",
+        "tipe": "privat",
+        "guru": "other",
+        "student_id": "other"
+      },
+      "peran": "teacher",
+      "expected_allow": false,
+      "got_allow": false,
+      "reason": "Anda bukan pengajar sesi ini"
+    },
+    {
+      "session": {
+        "status": "scheduled",
+        "tipe": "privat",
+        "guru": "other",
+        "student_id": "other"
+      },
+      "peran": "student",
+      "expected_allow": false,
+      "got_allow": false,
+      "reason": "Sesi belum dimulai"
+    },
+    {
+      "session": {
+        "status": "live",
+        "tipe": "kelas",
+        "guru": "owner",
+        "student_id": "null"
+      },
+      "peran": "teacher",
+      "expected_allow": true,
+      "got_allow": true,
+      "reason": ""
+    },
+    {
+      "session": {
+        "status": "live",
+        "tipe": "kelas",
+        "guru": "owner",
+        "student_id": "null"
+      },
+      "peran": "student",
+      "expected_allow": true,
+      "got_allow": true,
+      "reason": ""
+    },
+    {
+      "session": {
+        "status": "live",
+        "tipe": "kelas",
+        "guru": "owner",
+        "student_id": "match"
+      },
+      "peran": "teacher",
+      "expected_allow": true,
+      "got_allow": true,
+      "reason": ""
+    },
+    {
+      "session": {
+        "status": "live",
+        "tipe": "kelas",
+        "guru": "owner",
+        "student_id": "match"
+      },
+      "peran": "student",
+      "expected_allow": true,
+      "got_allow": true,
+      "reason": ""
+    },
+    {
+      "session": {
+        "status": "live",
+        "tipe": "kelas",
+        "guru": "owner",
+        "student_id": "other"
+      },
+      "peran": "teacher",
+      "expected_allow": true,
+      "got_allow": true,
+      "reason": ""
+    },
+    {
+      "session": {
+        "status": "live",
+        "tipe": "kelas",
+        "guru": "owner",
+        "student_id": "other"
+      },
+      "peran": "student",
+      "expected_allow": true,
+      "got_allow": true,
+      "reason": ""
+    },
+    {
+      "session": {
+        "status": "live",
+        "tipe": "kelas",
+        "guru": "other",
+        "student_id": "null"
+      },
+      "peran": "teacher",
+      "expected_allow": false,
+      "got_allow": false,
+      "reason": "Anda bukan pengajar sesi ini"
+    },
+    {
+      "session": {
+        "status": "live",
+        "tipe": "kelas",
+        "guru": "other",
+        "student_id": "null"
+      },
+      "peran": "student",
+      "expected_allow": true,
+      "got_allow": true,
+      "reason": ""
+    },
+    {
+      "session": {
+        "status": "live",
+        "tipe": "kelas",
+        "guru": "other",
+        "student_id": "match"
+      },
+      "peran": "teacher",
+      "expected_allow": false,
+      "got_allow": false,
+      "reason": "Anda bukan pengajar sesi ini"
+    },
+    {
+      "session": {
+        "status": "live",
+        "tipe": "kelas",
+        "guru": "other",
+        "student_id": "match"
+      },
+      "peran": "student",
+      "expected_allow": true,
+      "got_allow": true,
+      "reason": ""
+    },
+    {
+      "session": {
+        "status": "live",
+        "tipe": "kelas",
+        "guru": "other",
+        "student_id": "other"
+      },
+      "peran": "teacher",
+      "expected_allow": false,
+      "got_allow": false,
+      "reason": "Anda bukan pengajar sesi ini"
+    },
+    {
+      "session": {
+        "status": "live",
+        "tipe": "kelas",
+        "guru": "other",
+        "student_id": "other"
+      },
+      "peran": "student",
+      "expected_allow": true,
+      "got_allow": true,
+      "reason": ""
+    },
+    {
+      "session": {
+        "status": "live",
+        "tipe": "privat",
+        "guru": "owner",
+        "student_id": "null"
+      },
+      "peran": "teacher",
+      "expected_allow": true,
+      "got_allow": true,
+      "reason": ""
+    },
+    {
+      "session": {
+        "status": "live",
+        "tipe": "privat",
+        "guru": "owner",
+        "student_id": "null"
+      },
+      "peran": "student",
+      "expected_allow": false,
+      "got_allow": false,
+      "reason": "Sesi ini khusus siswa lain"
+    },
+    {
+      "session": {
+        "status": "live",
+        "tipe": "privat",
+        "guru": "owner",
+        "student_id": "match"
+      },
+      "peran": "teacher",
+      "expected_allow": true,
+      "got_allow": true,
+      "reason": ""
+    },
+    {
+      "session": {
+        "status": "live",
+        "tipe": "privat",
+        "guru": "owner",
+        "student_id": "match"
+      },
+      "peran": "student",
+      "expected_allow": true,
+      "got_allow": true,
+      "reason": ""
+    },
+    {
+      "session": {
+        "status": "live",
+        "tipe": "privat",
+        "guru": "owner",
+        "student_id": "other"
+      },
+      "peran": "teacher",
+      "expected_allow": true,
+      "got_allow": true,
+      "reason": ""
+    },
+    {
+      "session": {
+        "status": "live",
+        "tipe": "privat",
+        "guru": "owner",
+        "student_id": "other"
+      },
+      "peran": "student",
+      "expected_allow": false,
+      "got_allow": false,
+      "reason": "Sesi ini khusus siswa lain"
+    },
+    {
+      "session": {
+        "status": "live",
+        "tipe": "privat",
+        "guru": "other",
+        "student_id": "null"
+      },
+      "peran": "teacher",
+      "expected_allow": false,
+      "got_allow": false,
+      "reason": "Anda bukan pengajar sesi ini"
+    },
+    {
+      "session": {
+        "status": "live",
+        "tipe": "privat",
+        "guru": "other",
+        "student_id": "null"
+      },
+      "peran": "student",
+      "expected_allow": false,
+      "got_allow": false,
+      "reason": "Sesi ini khusus siswa lain"
+    },
+    {
+      "session": {
+        "status": "live",
+        "tipe": "privat",
+        "guru": "other",
+        "student_id": "match"
+      },
+      "peran": "teacher",
+      "expected_allow": false,
+      "got_allow": false,
+      "reason": "Anda bukan pengajar sesi ini"
+    },
+    {
+      "session": {
+        "status": "live",
+        "tipe": "privat",
+        "guru": "other",
+        "student_id": "match"
+      },
+      "peran": "student",
+      "expected_allow": true,
+      "got_allow": true,
+      "reason": ""
+    },
+    {
+      "session": {
+        "status": "live",
+        "tipe": "privat",
+        "guru": "other",
+        "student_id": "other"
+      },
+      "peran": "teacher",
+      "expected_allow": false,
+      "got_allow": false,
+      "reason": "Anda bukan pengajar sesi ini"
+    },
+    {
+      "session": {
+        "status": "live",
+        "tipe": "privat",
+        "guru": "other",
+        "student_id": "other"
+      },
+      "peran": "student",
+      "expected_allow": false,
+      "got_allow": false,
+      "reason": "Sesi ini khusus siswa lain"
+    },
+    {
+      "session": {
+        "status": "ended",
+        "tipe": "kelas",
+        "guru": "owner",
+        "student_id": "null"
+      },
+      "peran": "teacher",
+      "expected_allow": true,
+      "got_allow": true,
+      "reason": ""
+    },
+    {
+      "session": {
+        "status": "ended",
+        "tipe": "kelas",
+        "guru": "owner",
+        "student_id": "null"
+      },
+      "peran": "student",
+      "expected_allow": false,
+      "got_allow": false,
+      "reason": "Sesi belum dimulai"
+    },
+    {
+      "session": {
+        "status": "ended",
+        "tipe": "kelas",
+        "guru": "owner",
+        "student_id": "match"
+      },
+      "peran": "teacher",
+      "expected_allow": true,
+      "got_allow": true,
+      "reason": ""
+    },
+    {
+      "session": {
+        "status": "ended",
+        "tipe": "kelas",
+        "guru": "owner",
+        "student_id": "match"
+      },
+      "peran": "student",
+      "expected_allow": false,
+      "got_allow": false,
+      "reason": "Sesi belum dimulai"
+    },
+    {
+      "session": {
+        "status": "ended",
+        "tipe": "kelas",
+        "guru": "owner",
+        "student_id": "other"
+      },
+      "peran": "teacher",
+      "expected_allow": true,
+      "got_allow": true,
+      "reason": ""
+    },
+    {
+      "session": {
+        "status": "ended",
+        "tipe": "kelas",
+        "guru": "owner",
+        "student_id": "other"
+      },
+      "peran": "student",
+      "expected_allow": false,
+      "got_allow": false,
+      "reason": "Sesi belum dimulai"
+    },
+    {
+      "session": {
+        "status": "ended",
+        "tipe": "kelas",
+        "guru": "other",
+        "student_id": "null"
+      },
+      "peran": "teacher",
+      "expected_allow": false,
+      "got_allow": false,
+      "reason": "Anda bukan pengajar sesi ini"
+    },
+    {
+      "session": {
+        "status": "ended",
+        "tipe": "kelas",
+        "guru": "other",
+        "student_id": "null"
+      },
+      "peran": "student",
+      "expected_allow": false,
+      "got_allow": false,
+      "reason": "Sesi belum dimulai"
+    },
+    {
+      "session": {
+        "status": "ended",
+        "tipe": "kelas",
+        "guru": "other",
+        "student_id": "match"
+      },
+      "peran": "teacher",
+      "expected_allow": false,
+      "got_allow": false,
+      "reason": "Anda bukan pengajar sesi ini"
+    },
+    {
+      "session": {
+        "status": "ended",
+        "tipe": "kelas",
+        "guru": "other",
+        "student_id": "match"
+      },
+      "peran": "student",
+      "expected_allow": false,
+      "got_allow": false,
+      "reason": "Sesi belum dimulai"
+    },
+    {
+      "session": {
+        "status": "ended",
+        "tipe": "kelas",
+        "guru": "other",
+        "student_id": "other"
+      },
+      "peran": "teacher",
+      "expected_allow": false,
+      "got_allow": false,
+      "reason": "Anda bukan pengajar sesi ini"
+    },
+    {
+      "session": {
+        "status": "ended",
+        "tipe": "kelas",
+        "guru": "other",
+        "student_id": "other"
+      },
+      "peran": "student",
+      "expected_allow": false,
+      "got_allow": false,
+      "reason": "Sesi belum dimulai"
+    },
+    {
+      "session": {
+        "status": "ended",
+        "tipe": "privat",
+        "guru": "owner",
+        "student_id": "null"
+      },
+      "peran": "teacher",
+      "expected_allow": true,
+      "got_allow": true,
+      "reason": ""
+    },
+    {
+      "session": {
+        "status": "ended",
+        "tipe": "privat",
+        "guru": "owner",
+        "student_id": "null"
+      },
+      "peran": "student",
+      "expected_allow": false,
+      "got_allow": false,
+      "reason": "Sesi belum dimulai"
+    },
+    {
+      "session": {
+        "status": "ended",
+        "tipe": "privat",
+        "guru": "owner",
+        "student_id": "match"
+      },
+      "peran": "teacher",
+      "expected_allow": true,
+      "got_allow": true,
+      "reason": ""
+    },
+    {
+      "session": {
+        "status": "ended",
+        "tipe": "privat",
+        "guru": "owner",
+        "student_id": "match"
+      },
+      "peran": "student",
+      "expected_allow": false,
+      "got_allow": false,
+      "reason": "Sesi belum dimulai"
+    },
+    {
+      "session": {
+        "status": "ended",
+        "tipe": "privat",
+        "guru": "owner",
+        "student_id": "other"
+      },
+      "peran": "teacher",
+      "expected_allow": true,
+      "got_allow": true,
+      "reason": ""
+    },
+    {
+      "session": {
+        "status": "ended",
+        "tipe": "privat",
+        "guru": "owner",
+        "student_id": "other"
+      },
+      "peran": "student",
+      "expected_allow": false,
+      "got_allow": false,
+      "reason": "Sesi belum dimulai"
+    },
+    {
+      "session": {
+        "status": "ended",
+        "tipe": "privat",
+        "guru": "other",
+        "student_id": "null"
+      },
+      "peran": "teacher",
+      "expected_allow": false,
+      "got_allow": false,
+      "reason": "Anda bukan pengajar sesi ini"
+    },
+    {
+      "session": {
+        "status": "ended",
+        "tipe": "privat",
+        "guru": "other",
+        "student_id": "null"
+      },
+      "peran": "student",
+      "expected_allow": false,
+      "got_allow": false,
+      "reason": "Sesi belum dimulai"
+    },
+    {
+      "session": {
+        "status": "ended",
+        "tipe": "privat",
+        "guru": "other",
+        "student_id": "match"
+      },
+      "peran": "teacher",
+      "expected_allow": false,
+      "got_allow": false,
+      "reason": "Anda bukan pengajar sesi ini"
+    },
+    {
+      "session": {
+        "status": "ended",
+        "tipe": "privat",
+        "guru": "other",
+        "student_id": "match"
+      },
+      "peran": "student",
+      "expected_allow": false,
+      "got_allow": false,
+      "reason": "Sesi belum dimulai"
+    },
+    {
+      "session": {
+        "status": "ended",
+        "tipe": "privat",
+        "guru": "other",
+        "student_id": "other"
+      },
+      "peran": "teacher",
+      "expected_allow": false,
+      "got_allow": false,
+      "reason": "Anda bukan pengajar sesi ini"
+    },
+    {
+      "session": {
+        "status": "ended",
+        "tipe": "privat",
+        "guru": "other",
+        "student_id": "other"
+      },
+      "peran": "student",
+      "expected_allow": false,
+      "got_allow": false,
+      "reason": "Sesi belum dimulai"
+    }
+  ]
+}

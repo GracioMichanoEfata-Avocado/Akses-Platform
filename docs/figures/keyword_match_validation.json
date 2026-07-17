@@ -1,0 +1,195 @@
+{
+  "total": 27,
+  "passed": 27,
+  "cases": [
+    {
+      "transcript": "a",
+      "keyword": "a",
+      "mode": "word",
+      "expected": true,
+      "got": true
+    },
+    {
+      "transcript": "saya pilih a",
+      "keyword": "a",
+      "mode": "word",
+      "expected": true,
+      "got": true
+    },
+    {
+      "transcript": "apa",
+      "keyword": "a",
+      "mode": "word",
+      "expected": false,
+      "got": false
+    },
+    {
+      "transcript": "aduh",
+      "keyword": "a",
+      "mode": "word",
+      "expected": false,
+      "got": false
+    },
+    {
+      "transcript": "pilihan a",
+      "keyword": "a",
+      "mode": "word",
+      "expected": true,
+      "got": true
+    },
+    {
+      "transcript": "baca",
+      "keyword": "a",
+      "mode": "word",
+      "expected": false,
+      "got": false
+    },
+    {
+      "transcript": "b",
+      "keyword": "b",
+      "mode": "word",
+      "expected": true,
+      "got": true
+    },
+    {
+      "transcript": "saya rasa be",
+      "keyword": "be",
+      "mode": "word",
+      "expected": true,
+      "got": true
+    },
+    {
+      "transcript": "beranda",
+      "keyword": "be",
+      "mode": "word",
+      "expected": false,
+      "got": false
+    },
+    {
+      "transcript": "tolong buka beranda dong",
+      "keyword": "beranda",
+      "mode": "includes",
+      "expected": true,
+      "got": true
+    },
+    {
+      "transcript": "aku mau ke halaman belajar sekarang",
+      "keyword": "belajar",
+      "mode": "includes",
+      "expected": true,
+      "got": true
+    },
+    {
+      "transcript": "buka kelas live nya",
+      "keyword": "kelas live",
+      "mode": "includes",
+      "expected": true,
+      "got": true
+    },
+    {
+      "transcript": "ada notifikasi baru gak",
+      "keyword": "notifikasi",
+      "mode": "includes",
+      "expected": true,
+      "got": true
+    },
+    {
+      "transcript": "mau lihat profil saya",
+      "keyword": "profil",
+      "mode": "includes",
+      "expected": true,
+      "got": true
+    },
+    {
+      "transcript": "stop dulu",
+      "keyword": "stop",
+      "mode": "includes",
+      "expected": true,
+      "got": true
+    },
+    {
+      "transcript": "berhenti sebentar",
+      "keyword": "berhenti",
+      "mode": "includes",
+      "expected": true,
+      "got": true
+    },
+    {
+      "transcript": "tolong diam dulu",
+      "keyword": "diam",
+      "mode": "includes",
+      "expected": true,
+      "got": true
+    },
+    {
+      "transcript": "hentikan videonya",
+      "keyword": "hentikan",
+      "mode": "includes",
+      "expected": true,
+      "got": true
+    },
+    {
+      "transcript": "bantuan dong",
+      "keyword": "bantuan",
+      "mode": "includes",
+      "expected": true,
+      "got": true
+    },
+    {
+      "transcript": "apa aja perintahnya",
+      "keyword": "apa aja",
+      "mode": "includes",
+      "expected": true,
+      "got": true
+    },
+    {
+      "transcript": "bacakan halaman ini",
+      "keyword": "bacakan halaman",
+      "mode": "includes",
+      "expected": true,
+      "got": true
+    },
+    {
+      "transcript": "saya mau belajar matematika",
+      "keyword": "beranda",
+      "mode": "includes",
+      "expected": false,
+      "got": false
+    },
+    {
+      "transcript": "lanjut ke soal berikutnya",
+      "keyword": "ulangi",
+      "mode": "word",
+      "expected": false,
+      "got": false
+    },
+    {
+      "transcript": "ulangi soal ini",
+      "keyword": "ulangi",
+      "mode": "word",
+      "expected": true,
+      "got": true
+    },
+    {
+      "transcript": "saya pilih jawaban c",
+      "keyword": "jawaban c",
+      "mode": "includes",
+      "expected": true,
+      "got": true
+    },
+    {
+      "transcript": "c",
+      "keyword": "c",
+      "mode": "word",
+      "expected": true,
+      "got": true
+    },
+    {
+      "transcript": "se",
+      "keyword": "c",
+      "mode": "word",
+      "expected": false,
+      "got": false
+    }
+  ]
+}
