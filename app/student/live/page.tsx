@@ -29,23 +29,30 @@ const AUDIO_CAPTURE_OPTIONS = { echoCancellation: true, noiseSuppression: true, 
 // diberi filter CSS — filter pada elemen jadi containing block baru untuk
 // anak `position: fixed`, yang merusak posisi panel kalau tetap bersarang
 // di dalam elemen yang difilter. ─────────────────────────────────────────
-function CaptionReceiver({ onCaption }: { onCaption: (text: string) => void }) {
+function CaptionReceiver({ onCaption }: { onCaption: (text: string, isFinal: boolean) => void }) {
   useDataChannel('caption', (msg) => {
-    const text = new TextDecoder().decode(msg.payload);
-    if (text.trim().length > 0) onCaption(text);
+    const raw = new TextDecoder().decode(msg.payload);
+    try {
+      const { text, isFinal } = JSON.parse(raw);
+      if (typeof text === 'string' && text.trim().length > 0) onCaption(text, !!isFinal);
+    } catch {
+      // Payload tak terduga — abaikan daripada merusak transkrip.
+    }
   });
   return null;
 }
 
 // ─── Panel Transkrip/Subtitle real-time — dirender di luar area video yang
 // difilter, selalu tampil supaya siswa tunarungu bisa mengikuti ucapan guru
-// secara real-time. ───────────────────────────────────────────────────────
-function TranscriptPanel({ captions }: { captions: string[] }) {
+// secara real-time. Baris final tersimpan permanen di `captions`; `liveCaption`
+// cuma pratinjau kalimat yang masih berjalan (tumbuh kata demi kata), supaya
+// tetap terasa real-time tanpa membuat satu baris transkrip per kata. ─────
+function TranscriptPanel({ captions, liveCaption }: { captions: string[]; liveCaption: string }) {
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [captions]);
+  }, [captions, liveCaption]);
 
   return (
     <div className="fixed top-14 bottom-0 right-0 w-full sm:w-80 bg-white border-l border-slate-200 z-30 flex flex-col shadow-2xl">
@@ -53,7 +60,7 @@ function TranscriptPanel({ captions }: { captions: string[] }) {
         <FileText size={13} /> Transkrip Live
       </div>
       <div className="flex-1 overflow-y-auto px-4 py-3 space-y-2.5">
-        {captions.length === 0 ? (
+        {captions.length === 0 && !liveCaption ? (
           <div className="flex flex-col items-center justify-center h-full text-center px-4">
             <FileText size={28} className="text-slate-300 mb-2" />
             <p className="text-xs text-slate-400">Transkripsi akan muncul di sini saat pendamping berbicara...</p>
@@ -66,6 +73,14 @@ function TranscriptPanel({ captions }: { captions: string[] }) {
                 <span>{c}</span>
               </div>
             ))}
+            {liveCaption && (
+              <div className="flex gap-2.5 text-xs text-slate-400 italic leading-relaxed pb-2.5">
+                <span className="text-slate-300 flex-shrink-0 font-mono mt-0.5">
+                  <span className="inline-block w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse" />
+                </span>
+                <span>{liveCaption}</span>
+              </div>
+            )}
             <div ref={bottomRef} />
           </>
         )}
@@ -92,8 +107,14 @@ export default function StudentLivePage() {
   const [error, setError] = useState<string | null>(null);
   const [elapsed, setElapsed] = useState(0);
   const [captions, setCaptions] = useState<string[]>([]);
+  const [liveCaption, setLiveCaption] = useState('');
 
-  const handleCaption = useCallback((text: string) => {
+  const handleCaption = useCallback((text: string, isFinal: boolean) => {
+    if (!isFinal) {
+      setLiveCaption(text);
+      return;
+    }
+    setLiveCaption('');
     setCaptions((prev) => (prev[prev.length - 1] === text ? prev : [...prev, text]));
   }, []);
 
@@ -338,7 +359,7 @@ export default function StudentLivePage() {
       {/* Panel transkrip dirender DI LUAR div yang difilter, supaya
           `position: fixed`-nya tidak rusak (filter CSS membuat elemen jadi
           containing block baru untuk anak fixed). */}
-      <TranscriptPanel captions={captions} />
+      <TranscriptPanel captions={captions} liveCaption={liveCaption} />
     </div>
   );
 }

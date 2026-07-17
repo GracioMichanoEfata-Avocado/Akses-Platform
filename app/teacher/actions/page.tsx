@@ -51,7 +51,12 @@ function CaptionPanel({ sessionId }: { sessionId: string }) {
       const result = event.results[event.results.length - 1];
       const text = result[0].transcript;
 
-      send(new TextEncoder().encode(text), { reliable: true });
+      // Payload JSON (bukan teks mentah) supaya sisi murid bisa membedakan
+      // teks yang masih berjalan (interim, tumbuh kata demi kata) dari yang
+      // sudah final — tanpa ini murid melihat tiap tahap pertumbuhan interim
+      // sebagai baris transkrip terpisah ("per kata"), sedangkan guru cuma
+      // menyimpan satu baris per kalimat final ("per kalimat").
+      send(new TextEncoder().encode(JSON.stringify({ text, isFinal: result.isFinal })), { reliable: true });
 
       if (result.isFinal) {
         await supabase.from('session_transcripts').insert({ session_id: sessionId, isi: text });

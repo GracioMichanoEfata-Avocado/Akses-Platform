@@ -1,11 +1,13 @@
 'use client';
 
 import { useState, useRef, useCallback } from 'react';
-import { Upload, X, FileText, File, Plus, Trash2, Play, Square, Sparkles, Check } from 'lucide-react';
+import { Upload, X, FileText, File, Plus, Trash2, Play, Square, Sparkles, Check, Film, Loader2 } from 'lucide-react';
 import TeacherSidebar from '@/components/shared/TeacherSidebar';
 import AccessibilityBar from '@/components/accessibility/AccessibilityBar';
 import { cn } from '@/lib/utils/cn';
 import BackButton from '@/components/shared/BackButton';
+import { createClient } from '@/lib/supabase/client';
+import { renderNarratedVideo } from '@/lib/video/render-narrated-video';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 interface KuisItem {
@@ -20,6 +22,7 @@ interface VisualisasiItem {
   emojiIkon: string;
   deskripsi: string;
   warna: string;
+  poinPenting?: string[];
 }
 
 interface AIResult {
@@ -270,6 +273,7 @@ export default function UploadMateriPage() {
   const [activeTab, setActiveTab] = useState<TabType>('ringkasan');
   const [toast, setToast] = useState('');
   const [savedMaterialId, setSavedMaterialId] = useState<string | null>(null);
+  const [videoGen, setVideoGen] = useState<{ status: 'idle' | 'audio' | 'recording' | 'uploading' | 'error'; msg: string }>({ status: 'idle', msg: '' });
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const PROCESSING_MSGS = [
@@ -359,6 +363,53 @@ export default function UploadMateriPage() {
       setToast('Materi sedang diproses, coba refresh halaman materi.');
     }
     setTimeout(() => setToast(''), 4000);
+  };
+
+  // ── Video otomatis: slide + narasi AI direkam jadi file video sungguhan
+  // langsung di browser (canvas + MediaRecorder), lalu diupload ke bucket
+  // videos yang sama dengan upload manual. Prosesnya berjalan real-time
+  // seiring durasi narasi — jangan tutup tab sampai selesai.
+  const handleGenerateVideo = async () => {
+    if (!result || !savedMaterialId || result.visualisasi.length === 0) return;
+    try {
+      setVideoGen({ status: 'audio', msg: 'Menyiapkan narasi audio...' });
+      const texts = result.visualisasi.map((v) => `${v.judul}. ${v.deskripsi}`);
+      const audioRes = await fetch('/api/generate-narration-audio', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ texts }),
+      });
+      const audioData = await audioRes.json();
+      if (!audioRes.ok) throw new Error(audioData.error || 'Gagal membuat audio narasi.');
+
+      setVideoGen({ status: 'recording', msg: `Merekam slide 1/${result.visualisasi.length}...` });
+      const videoBlob = await renderNarratedVideo(
+        result.visualisasi,
+        audioData.audios,
+        (i, total) => setVideoGen({ status: 'recording', msg: `Merekam slide ${i}/${total}...` })
+      );
+
+      setVideoGen({ status: 'uploading', msg: 'Mengupload video...' });
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Sesi login habis, silakan login ulang.');
+
+      const fileName = `${user.id}/${savedMaterialId}-${Date.now()}.webm`;
+      const { error: uploadError } = await supabase.storage
+        .from('videos')
+        .upload(fileName, videoBlob, { cacheControl: '3600', upsert: false, contentType: 'video/webm' });
+      if (uploadError) throw new Error('Gagal upload video: ' + uploadError.message);
+
+      const { data: urlData } = supabase.storage.from('videos').getPublicUrl(fileName);
+      await supabase.from('materials').update({ video_url: urlData.publicUrl }).eq('id', savedMaterialId);
+
+      setVideoGen({ status: 'idle', msg: '' });
+      setToast('✅ Video otomatis berhasil dibuat & tersimpan!');
+      setTimeout(() => setToast(''), 4000);
+    } catch (err: any) {
+      setVideoGen({ status: 'error', msg: err?.message || 'Gagal membuat video otomatis.' });
+      setTimeout(() => setVideoGen({ status: 'idle', msg: '' }), 6000);
+    }
   };
 
   const handleReset = () => {
@@ -851,6 +902,40 @@ export default function UploadMateriPage() {
               </p>
             </div>
           )}
+
+          {/* Video Otomatis — rekam slide + narasi AI jadi file video sungguhan */}
+          <div className="bg-white rounded-2xl p-5 shadow-sm space-y-2.5">
+            <div className="flex items-center gap-2">
+              <Film size={16} className="text-purple-600" />
+              <h3 className="text-sm font-semibold text-slate-800">Video Otomatis dari AI</h3>
+            </div>
+            <p className="text-xs text-slate-500">
+              Rekam slide di atas jadi video bernarasi sungguhan (bukan cuma presentasi interaktif). Prosesnya berjalan seiring durasi narasi — jangan tutup tab sampai selesai.
+            </p>
+            <button
+              onClick={handleGenerateVideo}
+              disabled={!savedMaterialId || videoGen.status === 'audio' || videoGen.status === 'recording' || videoGen.status === 'uploading'}
+              className={cn(
+                'w-full py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-colors',
+                !savedMaterialId
+                  ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                  : 'bg-purple-700 text-white hover:bg-purple-800 disabled:opacity-60'
+              )}
+              aria-label="Buat video otomatis dari slide dan narasi AI"
+            >
+              {videoGen.status === 'audio' || videoGen.status === 'recording' || videoGen.status === 'uploading' ? (
+                <><Loader2 size={16} className="animate-spin" /> {videoGen.msg}</>
+              ) : (
+                <><Film size={16} /> Buat Video Otomatis</>
+              )}
+            </button>
+            {!savedMaterialId && (
+              <p className="text-[11px] text-amber-600">Simpan materi ke library dulu sebelum bisa membuat video.</p>
+            )}
+            {videoGen.status === 'error' && (
+              <p className="text-[11px] text-red-600">{videoGen.msg}</p>
+            )}
+          </div>
 
           {/* Action Buttons */}
           <div className="flex gap-3 pt-2">
