@@ -461,8 +461,8 @@ Berdasarkan arsitektur dan fitur saat ini, berikut adalah roadmap pengembangan y
 
 | Kontributor | Role |
 |-------------|------|
-| [@guzelaz23](https://github.com/guzelaz23) | Product Owner, UI/UX Designer, Frontend Developer |
-
+| [@guzelaz23](https://github.com/guzelaz23) | UI/UX Designer, Full Stack Developer |
+| [@GracioMichanoEfata-Avocado](https://GracioMichanoEfata-Avocado) | Full Stack Developer |
 ---
 
 <p align="center">
