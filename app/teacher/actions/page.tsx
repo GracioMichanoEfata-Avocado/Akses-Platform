@@ -251,10 +251,17 @@ export default function TeacherLivePage() {
     return (
       <div className="flex min-h-screen">
         <TeacherSidebar />
-        <main className="flex-1 lg:ml-60 flex items-center justify-center bg-slate-50">
-          <div className="text-center">
-            <div className="w-9 h-9 border-2 border-emerald-300 border-t-emerald-700 rounded-full animate-spin mx-auto mb-3" />
-            <p className="text-slate-400 text-sm">Memuat sesi...</p>
+        <main className="flex-1 lg:ml-60 bg-slate-50">
+          {/* Di bawah lg sidebar tersembunyi; tanpa ini layar "memuat" tidak
+              punya navigasi apa pun kalau pemuatannya tersendat. */}
+          <div className="px-4 py-3 lg:hidden">
+            <TeacherMobileNav />
+          </div>
+          <div className="flex items-center justify-center min-h-[60vh]">
+            <div className="text-center">
+              <div className="w-9 h-9 border-2 border-emerald-300 border-t-emerald-700 rounded-full animate-spin mx-auto mb-3" />
+              <p className="text-slate-400 text-sm">Memuat sesi...</p>
+            </div>
           </div>
         </main>
       </div>

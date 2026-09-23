@@ -352,12 +352,17 @@ export default function StudentLivePage() {
       {/* ── Header meeting ── */}
       <div className="fixed top-0 left-0 right-0 z-40 h-14 bg-slate-900/95 backdrop-blur-sm border-b border-white/5 flex items-center justify-between px-4">
         <div className="flex items-center gap-3 min-w-0">
+          {/* Diberi latar + label supaya terbaca sebagai tombol. Versi lama
+              cuma panah 16px `text-slate-400` di atas latar hampir hitam —
+              nyaris tak terlihat, padahal ini satu-satunya jalan keluar siswa
+              dari kelas (guru punya tombol "Akhiri Sesi" yang mencolok). */}
           <button
             onClick={() => router.push('/student/dashboard')}
-            className="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-white/5 flex-shrink-0"
-            aria-label="Kembali"
+            className="flex items-center gap-1.5 bg-white/10 hover:bg-white/20 text-slate-200 hover:text-white px-2.5 py-1.5 rounded-lg transition-colors flex-shrink-0"
+            aria-label="Keluar dari kelas live"
           >
             <ArrowLeft size={16} />
+            <span className="text-xs font-semibold hidden min-[380px]:inline">Keluar</span>
           </button>
           <div className="flex items-center gap-1.5 bg-red-600 px-2.5 py-1 rounded-md flex-shrink-0">
             <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" />
