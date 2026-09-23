@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { LogOut, Pencil, BookOpen, Calendar, Users, BarChart2 } from 'lucide-react';
 import TeacherSidebar from '@/components/shared/TeacherSidebar';
+import TeacherMobileNav from '@/components/shared/TeacherMobileNav';
 import AccessibilityBar from '@/components/accessibility/AccessibilityBar';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -55,7 +56,7 @@ export default function TeacherProfilePage() {
   if (loading) return (
     <div className="flex min-h-screen">
       <TeacherSidebar />
-      <main className="flex-1 sm:ml-60 flex items-center justify-center">
+      <main className="flex-1 lg:ml-60 flex items-center justify-center">
         <div className="w-8 h-8 border-2 border-emerald-300 border-t-emerald-700 rounded-full animate-spin" />
       </main>
     </div>
@@ -66,12 +67,15 @@ export default function TeacherProfilePage() {
   return (
     <div className="flex min-h-screen bg-slate-50">
       <TeacherSidebar />
-      <main className="flex-1 sm:ml-60 pb-4">
+      <main className="flex-1 lg:ml-60 pb-4">
         <div className="sticky top-0 z-20 bg-white/90 backdrop-blur-sm border-b border-slate-100 px-4 py-3 flex items-center justify-between">
-          <h1 className="font-bold text-slate-900 flex items-center gap-2">
-            <BackButton href="/teacher/dashboard" />
-            Profil Pendamping
-          </h1>
+          <div className="flex items-center gap-2 min-w-0">
+            <TeacherMobileNav />
+            <h1 className="font-bold text-slate-900 flex items-center gap-2 min-w-0">
+              <BackButton href="/teacher/dashboard" />
+              <span className="truncate">Profil Pendamping</span>
+            </h1>
+          </div>
           <div className="flex items-center gap-2">
             <Link href="/teacher/profile/edit"
               className="flex items-center gap-1.5 text-xs bg-emerald-50 text-emerald-700 border border-emerald-200 px-3 py-1.5 rounded-xl hover:bg-emerald-100 transition-colors">
@@ -94,9 +98,12 @@ export default function TeacherProfilePage() {
                   style={{ backgroundColor: profile?.avatar_color || '#059669' }}>
                   {profile?.avatar || profile?.nama?.charAt(0) || '?'}
                 </div>
-                <div className="pb-1">
-                  <h2 className="font-bold text-slate-900 text-lg leading-tight">{profile?.nama || 'Pendamping'}</h2>
-                  <p className="text-slate-500 text-sm">{profile?.email}</p>
+                {/* min-w-0 wajib: tanpa itu email panjang tanpa spasi memaksa
+                    flex item ini selebar min-content dan mendorong barisnya
+                    melewati tepi layar. */}
+                <div className="pb-1 min-w-0 flex-1">
+                  <h2 className="font-bold text-slate-900 text-lg leading-tight truncate">{profile?.nama || 'Pendamping'}</h2>
+                  <p className="text-slate-500 text-sm truncate">{profile?.email}</p>
                 </div>
               </div>
 

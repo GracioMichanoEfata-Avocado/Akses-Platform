@@ -246,7 +246,7 @@ export default function QuizPage({ params }: { params: { id: string } }) {
     return (
       <div className="flex min-h-screen bg-slate-50">
         <StudentSidebar />
-        <main className="flex-1 sm:ml-60 pb-20 sm:pb-4 flex items-center justify-center p-4">
+        <main className="flex-1 lg:ml-60 pb-20 lg:pb-4 flex items-center justify-center p-4">
           <div className="w-full max-w-sm space-y-5">
             {timeUp && (
               <div className="flex items-center gap-2 p-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-700 text-sm">
@@ -350,7 +350,7 @@ export default function QuizPage({ params }: { params: { id: string } }) {
   return (
     <div className="flex min-h-screen bg-slate-50">
       <StudentSidebar />
-      <main className="flex-1 sm:ml-60 pb-20 sm:pb-4">
+      <main className="flex-1 lg:ml-60 pb-20 lg:pb-4">
         <div className="sticky top-0 z-20 bg-white/90 backdrop-blur-sm border-b border-slate-100 px-4 py-3 flex items-center gap-3">
           <BackButton
             href={`/student/learn/${id}`}

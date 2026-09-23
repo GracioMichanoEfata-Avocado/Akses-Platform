@@ -132,7 +132,7 @@ export default function NotificationsPage() {
   return (
     <div className="flex min-h-screen bg-slate-50">
       <StudentSidebar />
-      <main className="flex-1 sm:ml-60 pb-20 sm:pb-4">
+      <main className="flex-1 lg:ml-60 pb-20 lg:pb-4">
         <div className="sticky top-0 z-20 bg-white/90 backdrop-blur-sm border-b border-slate-100 px-4 py-3 flex items-center justify-between">
           <h1 className="font-bold text-slate-900 flex items-center gap-2">
             <BackButton href="/student/dashboard" />
@@ -149,7 +149,7 @@ export default function NotificationsPage() {
           )}
         </div>
 
-        <div className="p-4 max-w-2xl mx-auto space-y-4">
+        <div className="p-4 max-w-2xl xl:max-w-5xl mx-auto space-y-4">
           {/* Filter */}
           <div className="flex gap-2">
             {(['semua', 'belum'] as const).map(f => (
@@ -173,7 +173,7 @@ export default function NotificationsPage() {
               </p>
             </div>
           ) : (
-            <div className="space-y-2">
+            <div className="space-y-2 xl:space-y-0 xl:grid xl:grid-cols-2 xl:gap-3 xl:items-start">
               {filtered.map(n => (
                 <div key={n.id}
                   className={cn('bg-white rounded-xl border p-4 flex items-start gap-3 transition-all group',
@@ -196,7 +196,7 @@ export default function NotificationsPage() {
                     )}
                   </div>
                   <button onClick={() => deleteNotif(n.id)}
-                    className="p-1 text-slate-300 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all flex-shrink-0">
+                    className="p-1 text-slate-300 hover:text-red-400 opacity-100 can-hover:opacity-0 can-hover:group-hover:opacity-100 focus-visible:opacity-100 transition-all flex-shrink-0">
                     <Trash2 size={13} />
                   </button>
                 </div>

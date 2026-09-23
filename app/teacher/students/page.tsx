@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Search, Users, ChevronRight } from 'lucide-react';
 import TeacherSidebar from '@/components/shared/TeacherSidebar';
+import TeacherMobileNav from '@/components/shared/TeacherMobileNav';
 import AccessibilityBar from '@/components/accessibility/AccessibilityBar';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -72,15 +73,16 @@ export default function StudentsPage() {
   return (
     <div className="flex min-h-screen bg-slate-50">
       <TeacherSidebar />
-      <main id="main-content" className="flex-1 sm:ml-60 pb-4">
-        <div className="sticky top-0 z-20 bg-white/90 backdrop-blur-sm border-b border-slate-100 px-4 py-3">
-          <h1 className="font-bold text-slate-900 flex items-center gap-2">
+      <main id="main-content" className="flex-1 lg:ml-60 pb-4">
+        <div className="sticky top-0 z-20 bg-white/90 backdrop-blur-sm border-b border-slate-100 px-4 py-3 flex items-center gap-2">
+          <TeacherMobileNav />
+          <h1 className="font-bold text-slate-900 flex items-center gap-2 min-w-0">
             <BackButton href="/teacher/dashboard" />
-            <Users size={18} className="text-blue-700" />
-            Manajemen Siswa
+            <Users size={18} className="text-blue-700 flex-shrink-0" />
+            <span className="truncate">Manajemen Siswa</span>
           </h1>
         </div>
-        <div className="p-4 space-y-4 max-w-3xl mx-auto">
+        <div className="p-4 space-y-4 max-w-3xl xl:max-w-6xl mx-auto">
           <div className="relative">
             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <input type="search" value={search} onChange={e => setSearch(e.target.value)}
@@ -108,7 +110,7 @@ export default function StudentsPage() {
           ) : (
             <>
               <p className="text-sm text-slate-500">{filtered.length} siswa ditemukan</p>
-              <div className="space-y-2">
+              <div className="space-y-2 xl:space-y-0 xl:grid xl:grid-cols-2 xl:gap-3">
                 {filtered.length === 0 && (
                   <p className="text-center text-slate-400 text-sm py-8">Belum ada siswa terdaftar</p>
                 )}

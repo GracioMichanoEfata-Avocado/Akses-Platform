@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { BarChart2, Download, TrendingUp, Users, AlertCircle } from 'lucide-react';
 import TeacherSidebar from '@/components/shared/TeacherSidebar';
+import TeacherMobileNav from '@/components/shared/TeacherMobileNav';
 import AccessibilityBar from '@/components/accessibility/AccessibilityBar';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -221,8 +222,8 @@ export default function ReportPage() {
     return (
       <div className="flex min-h-screen">
         <TeacherSidebar />
-        <main className="flex-1 sm:ml-60 p-4">
-          <div className="space-y-4 animate-pulse max-w-3xl mx-auto">
+        <main className="flex-1 lg:ml-60 p-4">
+          <div className="space-y-4 animate-pulse max-w-3xl xl:max-w-5xl mx-auto">
             <div className="h-40 bg-slate-200 rounded-2xl" />
             <div className="h-32 bg-slate-200 rounded-2xl" />
             <div className="h-48 bg-slate-200 rounded-2xl" />
@@ -235,16 +236,17 @@ export default function ReportPage() {
   return (
     <div className="flex min-h-screen bg-slate-50">
       <TeacherSidebar />
-      <main id="main-content" className="flex-1 sm:ml-60 pb-4">
-        <div className="sticky top-0 z-20 bg-white/90 backdrop-blur-sm border-b border-slate-100 px-4 py-3">
-          <h1 className="font-bold text-slate-900 flex items-center gap-2">
+      <main id="main-content" className="flex-1 lg:ml-60 pb-4">
+        <div className="sticky top-0 z-20 bg-white/90 backdrop-blur-sm border-b border-slate-100 px-4 py-3 flex items-center gap-2">
+          <TeacherMobileNav />
+          <h1 className="font-bold text-slate-900 flex items-center gap-2 min-w-0">
             <BackButton href="/teacher/dashboard" />
-            <BarChart2 size={18} className="text-blue-700" />
-            Laporan Aksesibilitas
+            <BarChart2 size={18} className="text-blue-700 flex-shrink-0" />
+            <span className="truncate">Laporan Aksesibilitas</span>
           </h1>
         </div>
 
-        <div className="p-4 max-w-3xl mx-auto space-y-5">
+        <div className="p-4 max-w-3xl xl:max-w-5xl mx-auto space-y-5">
           {/* Ringkasan */}
           <div className="bg-gradient-to-br from-blue-800 to-blue-600 rounded-2xl p-5 text-white">
             <div className="flex items-start gap-3 mb-4">
@@ -339,7 +341,7 @@ export default function ReportPage() {
               {students.length === 0 ? (
                 <p className="text-sm text-slate-400 text-center py-4">Belum ada siswa terdaftar</p>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
                   {students.map(s => (
                     <div key={s.id} className="flex items-center gap-3 p-3 rounded-xl bg-slate-50">
                       <div className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-xs font-bold flex-shrink-0"

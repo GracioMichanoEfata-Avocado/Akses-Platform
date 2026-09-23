@@ -2,8 +2,10 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Radio, Clock, Users, FileText, Contrast } from 'lucide-react';
+import { ArrowLeft, Radio, Clock, Users, FileText, Contrast, X } from 'lucide-react';
 import StudentSidebar from '@/components/shared/StudentSidebar';
+import StudentBottomNav from '@/components/shared/StudentBottomNav';
+import BackButton from '@/components/shared/BackButton';
 import { Card, CardContent } from '@/components/ui/card';
 import { createClient } from '@/lib/supabase/client';
 import {
@@ -47,7 +49,17 @@ function CaptionReceiver({ onCaption }: { onCaption: (text: string, isFinal: boo
 // secara real-time. Baris final tersimpan permanen di `captions`; `liveCaption`
 // cuma pratinjau kalimat yang masih berjalan (tumbuh kata demi kata), supaya
 // tetap terasa real-time tanpa membuat satu baris transkrip per kata. ─────
-function TranscriptPanel({ captions, liveCaption }: { captions: string[]; liveCaption: string }) {
+function TranscriptPanel({
+  captions,
+  liveCaption,
+  open,
+  onClose,
+}: {
+  captions: string[];
+  liveCaption: string;
+  open: boolean;
+  onClose: () => void;
+}) {
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -55,9 +67,29 @@ function TranscriptPanel({ captions, liveCaption }: { captions: string[]; liveCa
   }, [captions, liveCaption]);
 
   return (
-    <div className="fixed top-14 bottom-0 right-0 w-full sm:w-80 bg-white border-l border-slate-200 z-30 flex flex-col shadow-2xl">
+    // Di bawah `sm` panel ini selebar layar penuh, jadi kalau selalu tampil ia
+    // menutupi seluruh video BESERTA kontrol LiveKit (mute/keluar) — siswa jadi
+    // terkunci di dalam kelas. Karena itu di HP panel digeser keluar layar
+    // sampai dibuka lewat tombol "Transkrip" di header. Dari `md` ke atas panel
+    // punya kolom sendiri (`md:mr-80` pada video stage) sehingga selalu tampil.
+    // `invisible` (bukan cuma translate) dipakai supaya saat tertutup panel
+    // benar-benar keluar dari urutan tab & pembacaan screen reader.
+    <div
+      className={cn(
+        'fixed top-14 bottom-0 right-0 w-full md:w-80 bg-white border-l border-slate-200 z-30 flex flex-col shadow-2xl transition-transform duration-200 md:transition-none',
+        open ? 'translate-x-0' : 'translate-x-full invisible md:translate-x-0 md:visible'
+      )}
+      aria-label="Transkrip live"
+    >
       <div className="flex items-center gap-1.5 px-4 py-3 border-b border-slate-100 flex-shrink-0 text-xs font-semibold text-blue-700">
         <FileText size={13} /> Transkrip Live
+        <button
+          onClick={onClose}
+          className="md:hidden ml-auto p-1 -mr-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100"
+          aria-label="Tutup transkrip"
+        >
+          <X size={16} />
+        </button>
       </div>
       <div className="flex-1 overflow-y-auto px-4 py-3 space-y-2.5">
         {captions.length === 0 && !liveCaption ? (
@@ -108,6 +140,9 @@ export default function StudentLivePage() {
   const [elapsed, setElapsed] = useState(0);
   const [captions, setCaptions] = useState<string[]>([]);
   const [liveCaption, setLiveCaption] = useState('');
+  // Hanya berpengaruh di bawah `md`; dari `md` ke atas panel transkrip selalu
+  // tampil di kolomnya sendiri. Lihat <TranscriptPanel />.
+  const [transcriptOpen, setTranscriptOpen] = useState(false);
 
   const handleCaption = useCallback((text: string, isFinal: boolean) => {
     if (!isFinal) {
@@ -206,6 +241,16 @@ export default function StudentLivePage() {
     return () => clearInterval(interval);
   }, [token]);
 
+  // Escape menutup panel transkrip di HP, supaya kontrol kelas cepat terjangkau lagi.
+  useEffect(() => {
+    if (!transcriptOpen) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setTranscriptOpen(false);
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [transcriptOpen]);
+
   const formatElapsed = (s: number) => {
     const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = s % 60;
     return h > 0
@@ -217,12 +262,13 @@ export default function StudentLivePage() {
     return (
       <div className="flex min-h-screen">
         <StudentSidebar />
-        <main className="flex-1 sm:ml-60 flex items-center justify-center bg-slate-50">
+        <main className="flex-1 lg:ml-60 pb-20 lg:pb-0 flex items-center justify-center bg-slate-50">
           <div className="text-center">
             <div className="w-9 h-9 border-2 border-blue-300 border-t-blue-700 rounded-full animate-spin mx-auto mb-3" />
             <p className="text-slate-400 text-sm">Memuat kelas live...</p>
           </div>
         </main>
+        <StudentBottomNav />
       </div>
     );
   }
@@ -232,9 +278,15 @@ export default function StudentLivePage() {
     return (
       <div className="flex min-h-screen">
         <StudentSidebar />
-        <main className="flex-1 sm:ml-60 p-4 max-w-2xl mx-auto w-full">
+        <main id="main-content" className="flex-1 lg:ml-60 p-4 pb-20 lg:pb-4 max-w-2xl mx-auto w-full">
           <div className="mb-6">
-            <h1 className="text-xl font-bold text-slate-900 mb-1">Kelas Live</h1>
+            {/* Di bawah lg sidebar tersembunyi, jadi tanpa tombol ini layar
+                pilih sesi tidak punya jalan keluar sama sekali selain tombol
+                back browser. */}
+            <div className="flex items-center gap-2 mb-1">
+              <BackButton href="/student/dashboard" />
+              <h1 className="text-xl font-bold text-slate-900">Kelas Live</h1>
+            </div>
             <p className="text-sm text-slate-500">Pilih sesi live yang ingin diikuti</p>
           </div>
 
@@ -288,6 +340,9 @@ export default function StudentLivePage() {
             </div>
           )}
         </main>
+        {/* Sengaja hanya di layar pilih sesi, TIDAK di dalam ruang meeting —
+            di sana bottom nav akan menimpa kontrol mic/kamera/keluar LiveKit. */}
+        <StudentBottomNav />
       </div>
     );
   }
@@ -312,6 +367,21 @@ export default function StudentLivePage() {
         </div>
         <div className="flex items-center gap-3 flex-shrink-0">
           <button
+            onClick={() => setTranscriptOpen((v) => !v)}
+            className={cn(
+              'md:hidden relative flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-lg transition-colors',
+              transcriptOpen ? 'bg-white text-slate-900' : 'bg-white/5 text-slate-300 hover:bg-white/10'
+            )}
+            aria-expanded={transcriptOpen}
+            aria-label={transcriptOpen ? 'Tutup transkrip live' : 'Buka transkrip live'}
+          >
+            <FileText size={13} />
+            {/* Penanda ada transkrip baru selagi panel tertutup. */}
+            {!transcriptOpen && (captions.length > 0 || liveCaption) && (
+              <span className="absolute top-0.5 right-0.5 w-1.5 h-1.5 bg-blue-400 rounded-full" />
+            )}
+          </button>
+          <button
             onClick={() => setKontrasAktif((v) => !v)}
             className={cn(
               'flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-lg transition-colors',
@@ -321,9 +391,9 @@ export default function StudentLivePage() {
             title="Filter Kontras video live"
           >
             <Contrast size={13} />
-            <span className="hidden sm:inline">Kontras</span>
+            <span className="hidden md:inline">Kontras</span>
           </button>
-          <div className="hidden sm:flex items-center gap-1.5 text-slate-400 text-xs">
+          <div className="hidden md:flex items-center gap-1.5 text-slate-400 text-xs">
             <Clock size={12} />
             {formatElapsed(elapsed)}
           </div>
@@ -333,7 +403,7 @@ export default function StudentLivePage() {
       {/* ── Video stage — full tampilan LiveKit, ruang kanan disisakan untuk
           panel transkrip/subtitle ── */}
       <div
-        className="flex-1 relative pt-14 sm:mr-80"
+        className="flex-1 relative pt-14 md:mr-80"
         style={{ filter: kontrasAktif ? FILTER_KONTRAS_VIDEO : undefined }}
       >
         <div className="absolute inset-0 top-14">
@@ -359,7 +429,12 @@ export default function StudentLivePage() {
       {/* Panel transkrip dirender DI LUAR div yang difilter, supaya
           `position: fixed`-nya tidak rusak (filter CSS membuat elemen jadi
           containing block baru untuk anak fixed). */}
-      <TranscriptPanel captions={captions} liveCaption={liveCaption} />
+      <TranscriptPanel
+        captions={captions}
+        liveCaption={liveCaption}
+        open={transcriptOpen}
+        onClose={() => setTranscriptOpen(false)}
+      />
     </div>
   );
 }

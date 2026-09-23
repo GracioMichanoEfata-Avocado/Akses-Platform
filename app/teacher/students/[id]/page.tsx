@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { ArrowLeft, Clock, Star, BookOpen, Flame, Mail } from 'lucide-react';
 import TeacherSidebar from '@/components/shared/TeacherSidebar';
+import TeacherMobileNav from '@/components/shared/TeacherMobileNav';
 import AccessibilityBar from '@/components/accessibility/AccessibilityBar';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
@@ -81,12 +82,13 @@ export default function StudentDetailPage() {
     <div className="flex min-h-screen bg-slate-50">
       <TeacherSidebar />
 
-      <main id="main-content" className="flex-1 sm:ml-60 pb-8">
+      <main id="main-content" className="flex-1 lg:ml-60 pb-8">
         {/* Top bar */}
         <div className="sticky top-0 z-20 bg-white/90 backdrop-blur-sm border-b border-slate-100 px-4 py-3 flex items-center gap-3">
+          <TeacherMobileNav />
           <button
             onClick={() => router.push('/teacher/students')}
-            className="flex items-center gap-1.5 text-slate-500 hover:text-slate-800 text-sm transition-colors"
+            className="flex items-center gap-1.5 text-slate-500 hover:text-slate-800 text-sm transition-colors flex-shrink-0"
             aria-label="Kembali ke daftar siswa"
           >
             <ArrowLeft size={16} />
@@ -96,7 +98,7 @@ export default function StudentDetailPage() {
           <span className="text-sm font-semibold text-slate-800 truncate">{student.nama}</span>
         </div>
 
-        <div className="p-4 space-y-5 max-w-3xl mx-auto">
+        <div className="p-4 space-y-5 max-w-3xl xl:max-w-5xl mx-auto">
           {/* Header */}
           <div className="bg-white rounded-2xl p-5 shadow-sm flex items-center gap-4">
             <div
@@ -114,9 +116,9 @@ export default function StudentDetailPage() {
                   {getDisabilitasLabel(student.disabilitas)}
                 </Badge>
               </div>
-              <div className="flex items-center gap-1.5 text-slate-500 text-sm">
-                <Mail size={13} />
-                <span>{student.email}</span>
+              <div className="flex items-center gap-1.5 text-slate-500 text-sm min-w-0">
+                <Mail size={13} className="flex-shrink-0" />
+                <span className="truncate">{student.email}</span>
               </div>
               <p className="text-xs text-slate-400 mt-0.5">{student.kelas}</p>
             </div>

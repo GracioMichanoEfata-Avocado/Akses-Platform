@@ -18,7 +18,7 @@ export default function StudentBottomNav() {
 
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-slate-200 sm:hidden"
+      className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-slate-200 lg:hidden"
       aria-label="Navigasi bawah siswa"
     >
       <div className="flex items-center justify-around h-16 px-2">

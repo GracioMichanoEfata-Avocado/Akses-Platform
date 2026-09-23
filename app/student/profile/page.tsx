@@ -117,7 +117,7 @@ export default function ProfilePage() {
     return (
       <div className="flex min-h-screen">
         <StudentSidebar />
-        <main className="flex-1 sm:ml-60 p-4 pb-24">
+        <main className="flex-1 lg:ml-60 p-4 pb-24">
           <div className="space-y-4 animate-pulse">
             <div className="h-40 bg-slate-200 rounded-2xl" />
             <div className="h-32 bg-slate-200 rounded-2xl" />
@@ -131,7 +131,7 @@ export default function ProfilePage() {
   return (
     <div className="flex min-h-screen bg-slate-50">
       <StudentSidebar />
-      <main className="flex-1 sm:ml-60 pb-20 sm:pb-4">
+      <main className="flex-1 lg:ml-60 pb-20 lg:pb-4">
         <div className="sticky top-0 z-20 bg-white/90 backdrop-blur-sm border-b border-slate-100 px-4 py-3 flex items-center justify-between">
           <h1 className="font-bold text-slate-900 flex items-center gap-2">
             <BackButton href="/student/dashboard" />
@@ -158,9 +158,12 @@ export default function ProfilePage() {
                   style={{ backgroundColor: editColor, '--glow-color': editColor } as React.CSSProperties}>
                   {editAvatar || editNama.charAt(0) || '?'}
                 </div>
-                <div className="pb-1 flex-1">
-                  <h2 className="font-bold text-slate-900 text-lg">{profile?.nama}</h2>
-                  <p className="text-slate-500 text-sm">{profile?.email}</p>
+                {/* min-w-0 wajib: tanpa itu email panjang tanpa spasi memaksa
+                    flex item ini selebar min-content dan mendorong barisnya
+                    melewati tepi layar. */}
+                <div className="pb-1 flex-1 min-w-0">
+                  <h2 className="font-bold text-slate-900 text-lg truncate">{profile?.nama}</h2>
+                  <p className="text-slate-500 text-sm truncate">{profile?.email}</p>
                 </div>
               </div>
               <div className="grid grid-cols-3 gap-2 mb-4">

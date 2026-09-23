@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Users, TrendingUp, Calendar, PlusCircle, ChevronRight } from 'lucide-react';
 import TeacherSidebar from '@/components/shared/TeacherSidebar';
+import TeacherMobileNav from '@/components/shared/TeacherMobileNav';
 import TutorRequestCard from '@/components/teacher/TutorRequestCard';
 import AccessibilityBar from '@/components/accessibility/AccessibilityBar';
 import { Card, CardContent } from '@/components/ui/card';
@@ -124,8 +125,8 @@ export default function TeacherDashboard() {
     return (
       <div className="flex min-h-screen">
         <TeacherSidebar />
-        <main className="flex-1 sm:ml-60 p-4">
-          <div className="space-y-4 animate-pulse max-w-3xl mx-auto">
+        <main className="flex-1 lg:ml-60 p-4">
+          <div className="space-y-4 animate-pulse max-w-3xl xl:max-w-5xl mx-auto">
             <div className="h-32 bg-slate-200 rounded-2xl" />
             <div className="grid grid-cols-3 gap-3">
               {[1,2,3].map(i => <div key={i} className="h-24 bg-slate-200 rounded-xl" />)}
@@ -140,16 +141,16 @@ export default function TeacherDashboard() {
     <div className="flex min-h-screen bg-slate-50">
       <TeacherSidebar />
 
-      <main id="main-content" className="flex-1 sm:ml-60 pb-4">
-        <div className="sticky top-0 z-20 bg-white/90 backdrop-blur-sm border-b border-slate-100 px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-2 sm:hidden">
-            <span className="font-bold text-blue-900">AKSES</span>
-          </div>
-          <div className="hidden sm:block" />
-          <div />
+      <main id="main-content" className="flex-1 lg:ml-60 pb-4">
+        {/* Isinya cuma tombol menu + logo untuk layar kecil; di lg ke atas
+            sidebar sudah mengambil alih keduanya, jadi bar-nya ikut
+            disembunyikan daripada menyisakan garis kosong di puncak halaman. */}
+        <div className="sticky top-0 z-20 lg:hidden bg-white/90 backdrop-blur-sm border-b border-slate-100 px-4 py-3 flex items-center gap-2">
+          <TeacherMobileNav />
+          <span className="font-bold text-blue-900">AKSES</span>
         </div>
 
-        <div className="p-4 space-y-5 max-w-3xl mx-auto">
+        <div className="p-4 space-y-5 max-w-3xl xl:max-w-5xl mx-auto">
           {/* Greeting */}
           <div className="bg-gradient-to-br from-emerald-700 to-emerald-500 rounded-2xl p-5 text-white relative overflow-hidden">
             <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-8 translate-x-8" />

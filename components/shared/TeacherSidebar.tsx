@@ -1,45 +1,19 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { createClient } from '@/lib/supabase/client';
-import { Home, Users, PlusCircle, Zap, BarChart2, GraduationCap, Sparkles, BookOpen, UserCircle } from 'lucide-react';
+import { GraduationCap } from 'lucide-react';
+import { teacherNavItems, isTeacherNavActive } from '@/lib/constants/teacher-nav';
+import { useProfileName } from '@/lib/hooks/useProfileName';
 import { cn } from '@/lib/utils/cn';
-
-const navItems = [
-  { href: '/teacher/dashboard', label: 'Dashboard', icon: Home },
-  { href: '/teacher/students', label: 'Siswa Saya', icon: Users },
-  { href: '/teacher/materials', label: 'Kelola Materi', icon: BookOpen },
-  { href: '/teacher/upload-materi', label: 'Upload Materi AI', icon: Sparkles },
-  { href: '/teacher/create-session', label: 'Buat Sesi', icon: PlusCircle },
-  { href: '/teacher/actions', label: 'Aksi Aktual', icon: Zap },
-  { href: '/teacher/report', label: 'Laporan', icon: BarChart2 },
-  { href: '/teacher/profile', label: 'Profil Saya', icon: UserCircle },
-];
 
 export default function TeacherSidebar() {
   const pathname = usePathname();
-  const [nama, setNama] = useState('');
-
-  useEffect(() => {
-    const supabase = createClient();
-    async function loadNama() {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-      const { data } = await supabase
-        .from('profiles')
-        .select('nama')
-        .eq('id', user.id)
-        .single();
-      if (data?.nama) setNama(data.nama);
-    }
-    loadNama();
-  }, []);
+  const nama = useProfileName();
 
   return (
     <aside
-      className="hidden sm:flex flex-col w-60 min-h-screen bg-white border-r border-slate-200 fixed left-0 top-0 z-30"
+      className="hidden lg:flex flex-col w-60 min-h-screen bg-white border-r border-slate-200 fixed left-0 top-0 z-30"
       aria-label="Sidebar navigasi guru"
     >
       {/* Logo */}
@@ -55,9 +29,9 @@ export default function TeacherSidebar() {
 
       {/* Nav */}
       <nav className="flex-1 px-3 py-4 space-y-1" aria-label="Menu guru">
-        {navItems.map((item) => {
+        {teacherNavItems.map((item) => {
           const Icon = item.icon;
-          const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
+          const isActive = isTeacherNavActive(pathname, item.href);
           return (
             <Link
               key={item.href}

@@ -32,10 +32,13 @@
   margin: 0;
 }
 
+/* Sengaja TANPA `overflow-x: hidden`. Itu cuma menyembunyikan overflow
+   horizontal, bukan memperbaikinya — bug tata letak jadi tak terlihat saat
+   diuji dan baru terasa sebagai konten terpotong. `max-width: 100vw` juga
+   dilepas: 100vw sudah termasuk lebar scrollbar, jadi di Windows justru bisa
+   jadi sumber overflow, bukan penangkalnya. */
 html,
 body {
-  max-width: 100vw;
-  overflow-x: hidden;
   font-family: 'Inter', sans-serif;
   font-size: calc(1rem * var(--font-scale));
 }
@@ -97,11 +100,16 @@ body.high-contrast .glow-tint {
    di kiri seperti biasa, konten utama digeser jauh dari titik tengah layar
    ke kanan, menyisakan gutter kosong di tengah — supaya konten jatuh di
    penglihatan tepi (peripheral), bukan di titik buta tengah. Cuma berlaku
-   dari breakpoint sm ke atas, sejalan dengan sidebar (`sm:ml-60`) yang cuma
+   dari breakpoint lg ke atas, sejalan dengan sidebar (`lg:ml-60`) yang cuma
    tampil di lebar layar itu juga. */
-@media (min-width: 640px) {
+@media (min-width: 1024px) {
+  /* `max(15rem, ...)` itu lantai pengaman, bukan hiasan: 34vw baru melampaui
+     lebar sidebar (w-60 = 15rem) di layar ~706px ke atas. Tanpa lantai ini,
+     di rentang 640–706px konten justru bergeser lebih kiri daripada sidebar
+     dan tertimbun di bawahnya. 15rem sengaja dipakai (bukan 240px) supaya
+     ikut membesar bersama --font-scale, persis seperti w-60 milik sidebar. */
   body.split-mode [class*="ml-60"] {
-    margin-left: min(34vw, 30rem) !important;
+    margin-left: max(15rem, min(34vw, 30rem)) !important;
   }
 
   /* Beberapa halaman membungkus kontennya dengan pembatas lebar + mx-auto

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { PlusCircle, Calendar, Clock, Check, AlertCircle } from 'lucide-react';
 import TeacherSidebar from '@/components/shared/TeacherSidebar';
+import TeacherMobileNav from '@/components/shared/TeacherMobileNav';
 import AccessibilityBar from '@/components/accessibility/AccessibilityBar';
 import { Card, CardContent } from '@/components/ui/card';
 import { createClient } from '@/lib/supabase/client';
@@ -90,12 +91,13 @@ export default function CreateSessionPage() {
     <div className="flex min-h-screen bg-slate-50">
       <TeacherSidebar />
 
-      <main id="main-content" className="flex-1 sm:ml-60 pb-4">
-        <div className="sticky top-0 z-20 bg-white/90 backdrop-blur-sm border-b border-slate-100 px-4 py-3">
-          <h1 className="font-bold text-slate-900 flex items-center gap-2">
+      <main id="main-content" className="flex-1 lg:ml-60 pb-4">
+        <div className="sticky top-0 z-20 bg-white/90 backdrop-blur-sm border-b border-slate-100 px-4 py-3 flex items-center gap-2">
+          <TeacherMobileNav />
+          <h1 className="font-bold text-slate-900 flex items-center gap-2 min-w-0">
             <BackButton href="/teacher/dashboard" />
-            <PlusCircle size={18} className="text-blue-700" />
-            Buat Sesi Ajar
+            <PlusCircle size={18} className="text-blue-700 flex-shrink-0" />
+            <span className="truncate">Buat Sesi Ajar</span>
           </h1>
         </div>
 

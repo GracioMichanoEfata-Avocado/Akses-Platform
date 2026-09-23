@@ -235,7 +235,7 @@ export default function LearnPage() {
     <div className="flex min-h-screen bg-slate-50">
       <StudentSidebar />
 
-      <main id="main-content" className="flex-1 sm:ml-60 pb-20 sm:pb-4">
+      <main id="main-content" className="flex-1 lg:ml-60 pb-20 lg:pb-4">
         {/* Top Bar */}
         <div className="sticky top-0 z-20 bg-white/90 backdrop-blur-sm border-b border-slate-100 px-4 py-3 flex items-center justify-between">
           <h1 className="font-bold text-slate-900 flex items-center gap-2">
@@ -245,7 +245,7 @@ export default function LearnPage() {
           </h1>
         </div>
 
-        <div className="p-4 space-y-4 max-w-3xl mx-auto">
+        <div className="p-4 space-y-4 max-w-3xl xl:max-w-6xl mx-auto">
           {/* Section: Dari Pendamping */}
           {aiLibrary.length > 0 && (
             <section aria-labelledby="ai-section-heading">
@@ -255,7 +255,7 @@ export default function LearnPage() {
                   Dari Pendamping
                 </h2>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
                 {aiLibrary.map((item, idx) => (
                   <Link key={idx} href={`/student/learn/ai-content/${idx}`}>
                     <Card className="hover:shadow-md transition-all card-hover border-0 shadow-sm h-full">
@@ -293,7 +293,7 @@ export default function LearnPage() {
 
           {/* Loading */}
           {loading ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
               {Array.from({ length: 6 }).map((_, i) => <MaterialCardSkeleton key={i} />)}
             </div>
           ) : searching ? (
@@ -309,7 +309,7 @@ export default function LearnPage() {
                   <p className="text-slate-400 text-sm mt-1">Coba kata kunci yang berbeda</p>
                 </div>
               ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
                   {searchResults.map((m) => <MaterialCard key={m.id} m={m} />)}
                 </div>
               )}
@@ -320,7 +320,7 @@ export default function LearnPage() {
                 <BookOpen size={14} />
                 <span>{subjects.length} mata pelajaran</span>
               </div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3" role="list" aria-label="Daftar mata pelajaran">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3" role="list" aria-label="Daftar mata pelajaran">
                 {subjects.map((subj) => {
                   const count = materials.filter((m) => m.mata_pelajaran === subj).length;
                   return (
@@ -367,7 +367,7 @@ export default function LearnPage() {
                   </button>
                 </div>
               ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
                   {subjectMaterials.map((m) => <MaterialCard key={m.id} m={m} />)}
                 </div>
               )}

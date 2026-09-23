@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Check, AlertCircle } from 'lucide-react';
 import TeacherSidebar from '@/components/shared/TeacherSidebar';
+import TeacherMobileNav from '@/components/shared/TeacherMobileNav';
 import { Card, CardContent } from '@/components/ui/card';
 import { createClient } from '@/lib/supabase/client';
 import { cn } from '@/lib/utils/cn';
@@ -72,12 +73,13 @@ export default function EditTeacherProfilePage() {
   return (
     <div className="flex min-h-screen bg-slate-50">
       <TeacherSidebar />
-      <main className="flex-1 sm:ml-60 pb-4">
+      <main className="flex-1 lg:ml-60 pb-4">
         <div className="sticky top-0 z-20 bg-white/90 backdrop-blur-sm border-b border-slate-100 px-4 py-3 flex items-center gap-3">
-          <button onClick={() => router.back()} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-600">
+          <TeacherMobileNav />
+          <button onClick={() => router.back()} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-600 flex-shrink-0" aria-label="Kembali">
             <ArrowLeft size={18} />
           </button>
-          <h1 className="font-bold text-slate-900">Edit Profil Pendamping</h1>
+          <h1 className="font-bold text-slate-900 truncate">Edit Profil Pendamping</h1>
         </div>
 
         <div className="p-4 max-w-lg mx-auto space-y-4">

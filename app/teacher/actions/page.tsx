@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Radio, Clock, PhoneOff, Mic, MicOff, FileText, ArrowLeft } from 'lucide-react';
+import { Radio, Clock, PhoneOff, Mic, MicOff, FileText, ArrowLeft, X } from 'lucide-react';
 import TeacherSidebar from '@/components/shared/TeacherSidebar';
+import TeacherMobileNav from '@/components/shared/TeacherMobileNav';
 import AccessibilityBar from '@/components/accessibility/AccessibilityBar';
 import { Card, CardContent } from '@/components/ui/card';
 import { createClient } from '@/lib/supabase/client';
@@ -25,7 +26,7 @@ const AUDIO_CAPTURE_OPTIONS = { echoCancellation: true, noiseSuppression: true, 
 // ─── Panel Transkrip/Subtitle real-time (harus di dalam LiveKitRoom karena
 // pakai useDataChannel). Guru dikte lewat mic; teks dikirim ke siswa via
 // data channel 'caption' dan disimpan ke session_transcripts. ────────────
-function CaptionPanel({ sessionId }: { sessionId: string }) {
+function CaptionPanel({ sessionId, open, onClose }: { sessionId: string; open: boolean; onClose: () => void }) {
   const { send } = useDataChannel('caption');
   const [recognition, setRecognition] = useState<any>(null);
   const [isListening, setIsListening] = useState(false);
@@ -98,7 +99,29 @@ function CaptionPanel({ sessionId }: { sessionId: string }) {
   };
 
   return (
-    <div className="fixed top-14 bottom-0 right-0 w-full sm:w-80 bg-white border-l border-slate-200 z-30 flex flex-col shadow-2xl">
+    // Sama seperti panel transkrip siswa: di bawah `md` panel ini selebar layar
+    // penuh, jadi kalau selalu tampil ia menutupi video BESERTA kontrol LiveKit
+    // (mic/kamera/keluar) — guru tidak bisa mengelola sesinya sendiri. Di HP
+    // panel digeser keluar layar sampai dibuka dari tombol di header.
+    <div
+      className={cn(
+        'fixed top-14 bottom-0 right-0 w-full md:w-80 bg-white border-l border-slate-200 z-30 flex flex-col shadow-2xl transition-transform duration-200 md:transition-none',
+        open ? 'translate-x-0' : 'translate-x-full invisible md:translate-x-0 md:visible'
+      )}
+      aria-label="Panel caption live"
+    >
+      <div className="flex items-center justify-between px-4 pt-3 md:hidden">
+        <span className="text-xs font-semibold text-blue-700 flex items-center gap-1.5">
+          <FileText size={13} /> Caption Live
+        </span>
+        <button
+          onClick={onClose}
+          className="p-1 -mr-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100"
+          aria-label="Tutup panel caption"
+        >
+          <X size={16} />
+        </button>
+      </div>
       <div className="p-4 border-b border-slate-100 flex-shrink-0">
         <button
           onClick={toggleListening}
@@ -148,6 +171,9 @@ export default function TeacherLivePage() {
   const [error, setError] = useState<string | null>(null);
   const [sessionStarted, setSessionStarted] = useState(false);
   const [elapsed, setElapsed] = useState(0);
+  // Hanya berpengaruh di bawah `md`; dari `md` ke atas panel caption selalu
+  // tampil di kolomnya sendiri. Lihat <CaptionPanel />.
+  const [captionOpen, setCaptionOpen] = useState(false);
 
   useEffect(() => {
     const supabase = createClient();
@@ -225,7 +251,7 @@ export default function TeacherLivePage() {
     return (
       <div className="flex min-h-screen">
         <TeacherSidebar />
-        <main className="flex-1 sm:ml-60 flex items-center justify-center bg-slate-50">
+        <main className="flex-1 lg:ml-60 flex items-center justify-center bg-slate-50">
           <div className="text-center">
             <div className="w-9 h-9 border-2 border-emerald-300 border-t-emerald-700 rounded-full animate-spin mx-auto mb-3" />
             <p className="text-slate-400 text-sm">Memuat sesi...</p>
@@ -258,7 +284,18 @@ export default function TeacherLivePage() {
           <span className="text-white text-sm font-medium truncate">{session?.judul}</span>
         </div>
         <div className="flex items-center gap-3 flex-shrink-0">
-          <div className="hidden sm:flex items-center gap-1.5 text-slate-400 text-xs">
+          <button
+            onClick={() => setCaptionOpen((v) => !v)}
+            className={cn(
+              'md:hidden flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-lg transition-colors',
+              captionOpen ? 'bg-white text-slate-900' : 'bg-white/5 text-slate-300 hover:bg-white/10'
+            )}
+            aria-expanded={captionOpen}
+            aria-label={captionOpen ? 'Tutup panel caption' : 'Buka panel caption'}
+          >
+            <FileText size={13} />
+          </button>
+          <div className="hidden md:flex items-center gap-1.5 text-slate-400 text-xs">
             <Clock size={12} />
             {formatElapsed(elapsed)}
           </div>
@@ -273,7 +310,7 @@ export default function TeacherLivePage() {
       </div>
 
       {/* ── Video stage — ruang kanan disisakan untuk panel transkrip ── */}
-      <div className="flex-1 relative pt-14 sm:mr-80">
+      <div className="flex-1 relative pt-14 md:mr-80">
         <div className="absolute inset-0 top-14">
           <LiveKitRoom
             token={token}
@@ -287,7 +324,11 @@ export default function TeacherLivePage() {
             <RoomAudioRenderer />
             <NoiseFilterSetup />
             {/* CaptionPanel HARUS di dalam LiveKitRoom karena pakai useDataChannel */}
-            <CaptionPanel sessionId={session.id} />
+            <CaptionPanel
+              sessionId={session.id}
+              open={captionOpen}
+              onClose={() => setCaptionOpen(false)}
+            />
           </LiveKitRoom>
         </div>
       </div>
@@ -322,12 +363,15 @@ function SessionSelector({ teacherName, onStart, error }: {
   return (
     <div className="flex min-h-screen">
       <TeacherSidebar />
-      <main className="flex-1 sm:ml-60 p-4 max-w-2xl mx-auto">
+      <main className="flex-1 lg:ml-60 p-4 max-w-2xl mx-auto">
         <div className="mb-6">
-          <h1 className="text-xl font-bold text-slate-900 mb-1 flex items-center gap-2">
-            <BackButton href="/teacher/dashboard" />
-            Kelas Live
-          </h1>
+          <div className="flex items-center gap-2 mb-1">
+            <TeacherMobileNav />
+            <h1 className="text-xl font-bold text-slate-900 flex items-center gap-2 min-w-0">
+              <BackButton href="/teacher/dashboard" />
+              <span className="truncate">Kelas Live</span>
+            </h1>
+          </div>
           <p className="text-sm text-slate-500">Pilih sesi yang ingin dimulai, {teacherName}</p>
         </div>
 

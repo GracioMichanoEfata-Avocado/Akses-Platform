@@ -6,6 +6,7 @@ import {
   ArrowLeft, X, Plus, Trash2, Check, Video, Image as ImageIcon, Save,
 } from 'lucide-react';
 import TeacherSidebar from '@/components/shared/TeacherSidebar';
+import TeacherMobileNav from '@/components/shared/TeacherMobileNav';
 import AccessibilityBar from '@/components/accessibility/AccessibilityBar';
 import { createClient } from '@/lib/supabase/client';
 import { cn } from '@/lib/utils/cn';
@@ -229,7 +230,7 @@ export default function UploadManualPage() {
     return (
       <div className="flex min-h-screen bg-slate-50">
         <TeacherSidebar />
-        <main className="flex-1 sm:ml-60 flex items-center justify-center p-4">
+        <main className="flex-1 lg:ml-60 flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl shadow-xl p-8 max-w-sm w-full text-center">
             <div className="w-14 h-14 bg-emerald-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
               <Check size={28} className="text-white" />
@@ -254,13 +255,14 @@ export default function UploadManualPage() {
   return (
     <div className="flex min-h-screen bg-slate-50">
       <TeacherSidebar />
-      <main id="main-content" className="flex-1 sm:ml-60 pb-24">
+      <main id="main-content" className="flex-1 lg:ml-60 pb-24">
         <div className="sticky top-0 z-20 bg-white/90 backdrop-blur-sm border-b border-slate-100 px-4 py-3 flex items-center gap-2">
+          <TeacherMobileNav />
           <BackButton
             href="/teacher/materials"
             confirmMessage={hasContent ? 'Yakin mau keluar? Perubahan yang belum disimpan akan hilang.' : undefined}
           />
-          <h1 className="font-bold text-slate-900">Upload Manual</h1>
+          <h1 className="font-bold text-slate-900 truncate">Upload Manual</h1>
         </div>
 
         <div className="p-4 max-w-2xl mx-auto space-y-5">

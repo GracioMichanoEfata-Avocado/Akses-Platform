@@ -375,7 +375,7 @@ export default function MaterialDetailPage({ params }: { params: { id: string } 
     <div className="flex min-h-screen bg-slate-50">
       <StudentSidebar />
 
-      <main id="main-content" className="flex-1 sm:ml-60 pb-20 sm:pb-8">
+      <main id="main-content" className="flex-1 lg:ml-60 pb-20 lg:pb-8">
         {/* Header */}
         <div className="sticky top-0 z-20 bg-white/90 backdrop-blur-sm border-b border-slate-100 px-4 py-3 flex items-center gap-3">
           <Link
@@ -430,7 +430,12 @@ export default function MaterialDetailPage({ params }: { params: { id: string } 
                 playsInline
               />
               {/* Custom Controls */}
-              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent px-4 py-3 flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
+              {/* Di perangkat sentuh kontrol ini selalu tampil: tanpa hover,
+                  `opacity-0` bikin play/pause & fullscreen tak pernah terlihat.
+                  Hover-to-reveal cuma berlaku kalau perangkatnya memang punya
+                  hover, dan tetap muncul saat salah satu tombol difokuskan
+                  lewat keyboard. */}
+              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent px-4 py-3 flex items-center gap-3 opacity-100 can-hover:opacity-0 can-hover:group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
                 <button
                   onClick={toggleVideo}
                   className="w-9 h-9 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center text-white hover:bg-white/30 transition-colors"

@@ -25,7 +25,7 @@ export default function AccessibilityBar() {
       {/* Floating Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-20 right-4 z-50 w-12 h-12 bg-blue-800 text-white rounded-full shadow-lg hover:bg-blue-700 flex items-center justify-center focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 sm:bottom-4"
+        className="fixed bottom-20 right-4 z-50 w-12 h-12 bg-blue-800 text-white rounded-full shadow-lg hover:bg-blue-700 flex items-center justify-center focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 lg:bottom-4"
         aria-label="Buka panel aksesibilitas"
         aria-expanded={isOpen}
       >
@@ -36,7 +36,7 @@ export default function AccessibilityBar() {
       {isOpen && (
         <div
           className={cn(
-            "fixed bottom-36 right-4 z-50 w-72 bg-white rounded-2xl shadow-2xl border border-slate-200 p-4 sm:bottom-20",
+            "fixed bottom-36 right-4 z-50 w-72 bg-white rounded-2xl shadow-2xl border border-slate-200 p-4 lg:bottom-20",
             "animate-fade-in"
           )}
           role="dialog"

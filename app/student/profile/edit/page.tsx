@@ -82,7 +82,7 @@ export default function EditStudentProfilePage() {
   return (
     <div className="flex min-h-screen bg-slate-50">
       <StudentSidebar />
-      <main className="flex-1 sm:ml-60 pb-20 sm:pb-4">
+      <main className="flex-1 lg:ml-60 pb-20 lg:pb-4">
         <div className="sticky top-0 z-20 bg-white/90 backdrop-blur-sm border-b border-slate-100 px-4 py-3 flex items-center gap-3">
           <button onClick={() => router.back()} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-600">
             <ArrowLeft size={18} />

@@ -16,7 +16,7 @@ function DashboardSkeleton() {
     <div className="space-y-4 animate-pulse">
       <div className="h-36 bg-slate-200 rounded-2xl" />
       <div className="h-8 bg-slate-200 rounded-lg w-48" />
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 min-[475px]:grid-cols-3 xl:grid-cols-4 gap-3">
         {[1,2,3].map(i => <div key={i} className="h-28 bg-slate-200 rounded-xl" />)}
       </div>
     </div>
@@ -93,7 +93,7 @@ export default function StudentDashboard() {
     return (
       <div className="flex min-h-screen">
         <StudentSidebar />
-        <main className="flex-1 sm:ml-60 p-4 pb-24"><DashboardSkeleton /></main>
+        <main className="flex-1 lg:ml-60 p-4 pb-24"><DashboardSkeleton /></main>
         <StudentBottomNav />
       </div>
     );
@@ -103,19 +103,18 @@ export default function StudentDashboard() {
     <div className="flex min-h-screen bg-slate-50">
       <StudentSidebar />
 
-      <main id="main-content" className="flex-1 sm:ml-60 pb-20 sm:pb-4">
-        <div className="sticky top-0 z-20 bg-white/90 backdrop-blur-sm border-b border-slate-100 px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-2 sm:hidden">
-            <div className="w-8 h-8 bg-blue-800 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-xs">A</span>
-            </div>
-            <span className="font-bold text-blue-900">AKSES</span>
+      <main id="main-content" className="flex-1 lg:ml-60 pb-20 lg:pb-4">
+        {/* Isinya cuma logo untuk layar kecil; di lg ke atas identitas sudah ada
+            di sidebar, jadi bar-nya ikut disembunyikan daripada menyisakan
+            garis kosong setinggi ~49px di puncak halaman. */}
+        <div className="sticky top-0 z-20 lg:hidden bg-white/90 backdrop-blur-sm border-b border-slate-100 px-4 py-3 flex items-center gap-2">
+          <div className="w-8 h-8 bg-blue-800 rounded-lg flex items-center justify-center">
+            <span className="text-white font-bold text-xs">A</span>
           </div>
-          <div className="hidden sm:block" />
-          <div />
+          <span className="font-bold text-blue-900">AKSES</span>
         </div>
 
-        <div className="p-4 space-y-5 max-w-2xl mx-auto sm:max-w-3xl">
+        <div className="p-4 space-y-5 max-w-2xl mx-auto sm:max-w-3xl xl:max-w-5xl">
           {/* Hero Greeting */}
           <div className="bg-gradient-to-br from-blue-800 to-blue-600 rounded-2xl p-5 text-white relative overflow-hidden">
             <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-8 translate-x-8" />
@@ -187,7 +186,9 @@ export default function StudentDashboard() {
                 Lihat semua
               </Link>
             </div>
-            <div className="grid grid-cols-3 gap-3">
+            {/* 3 kolom di layar 320px menyisakan ~85px per kartu untuk judul
+                2 baris — terlalu sesak, jadi turun ke 2 kolom di HP kecil. */}
+            <div className="grid grid-cols-2 min-[475px]:grid-cols-3 xl:grid-cols-4 gap-3">
               {materials.map(m => (
                 <Link key={m.id} href={`/student/learn/${m.id}`}>
                   <div className="bg-white rounded-xl border border-slate-100 p-3 shadow-sm hover:shadow-md transition-shadow cursor-pointer">

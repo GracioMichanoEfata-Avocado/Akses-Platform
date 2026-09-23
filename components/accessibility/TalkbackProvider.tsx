@@ -148,7 +148,7 @@ export default function TalkbackProvider({ children }: { children: React.ReactNo
       {children}
 
       {/* ── Floating kontrol ── */}
-      <div data-voice-ignore className="fixed bottom-20 sm:bottom-6 right-4 z-50 flex flex-col gap-2 items-end">
+      <div data-voice-ignore className="fixed bottom-20 lg:bottom-6 right-4 z-50 flex flex-col gap-2 items-end">
         {/* Indikator mendengarkan */}
         {isVoiceNavAktif && (
           <div className="flex items-center gap-2 bg-blue-800 text-white text-xs px-3 py-1.5 rounded-full shadow-lg">

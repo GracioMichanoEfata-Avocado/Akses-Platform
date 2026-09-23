@@ -75,7 +75,7 @@ export default function AIContentPage() {
     <div className="flex min-h-screen bg-slate-50">
       <StudentSidebar />
 
-      <main id="main-content" className="flex-1 sm:ml-60 pb-20 sm:pb-4">
+      <main id="main-content" className="flex-1 lg:ml-60 pb-20 lg:pb-4">
         {/* Top bar */}
         <div className="sticky top-0 z-20 bg-white/90 backdrop-blur-sm border-b border-slate-100 px-4 py-3 flex items-center gap-3">
           <button

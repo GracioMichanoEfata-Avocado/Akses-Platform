@@ -36,7 +36,7 @@ export default function StudentSidebar() {
 
   return (
     <aside
-      className="hidden sm:flex flex-col w-60 min-h-screen bg-white border-r border-slate-200 fixed left-0 top-0 z-30"
+      className="hidden lg:flex flex-col w-60 min-h-screen bg-white border-r border-slate-200 fixed left-0 top-0 z-30"
       aria-label="Sidebar navigasi siswa"
     >
       {/* Logo */}

@@ -1,4 +1,5 @@
 import type { Config } from "tailwindcss";
+import plugin from "tailwindcss/plugin";
 
 const config: Config = {
   darkMode: ["class"],
@@ -101,7 +102,16 @@ const config: Config = {
       },
     },
   },
-  plugins: [],
+  plugins: [
+    // `can-hover:` hanya aktif di perangkat yang benar-benar punya penunjuk
+    // presisi + hover (mouse/trackpad). Dipakai untuk kontrol yang muncul saat
+    // hover: di layar sentuh hover tidak pernah terjadi, jadi tanpa penjaga ini
+    // tombolnya tak pernah terlihat sama sekali. Sengaja berbasis kemampuan
+    // perangkat, bukan lebar layar — tablet lebar tetap perangkat sentuh.
+    plugin(({ addVariant }) => {
+      addVariant("can-hover", "@media (hover: hover) and (pointer: fine)");
+    }),
+  ],
 };
 
 export default config;

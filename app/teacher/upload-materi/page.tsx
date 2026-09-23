@@ -3,6 +3,7 @@
 import { useState, useRef, useCallback } from 'react';
 import { Upload, X, FileText, File, Plus, Trash2, Play, Square, Sparkles, Check, Film, Loader2 } from 'lucide-react';
 import TeacherSidebar from '@/components/shared/TeacherSidebar';
+import TeacherMobileNav from '@/components/shared/TeacherMobileNav';
 import AccessibilityBar from '@/components/accessibility/AccessibilityBar';
 import { cn } from '@/lib/utils/cn';
 import BackButton from '@/components/shared/BackButton';
@@ -426,11 +427,12 @@ export default function UploadMateriPage() {
     return (
       <div className="flex min-h-screen bg-slate-50">
         <TeacherSidebar />
-        <main id="main-content" className="flex-1 sm:ml-60 pb-8">
+        <main id="main-content" className="flex-1 lg:ml-60 pb-8">
           <div className="sticky top-0 z-20 bg-white/90 backdrop-blur-sm border-b border-slate-100 px-4 py-3 flex items-center gap-2">
+            <TeacherMobileNav />
             <BackButton href="/teacher/materials" confirmMessage={hasContent ? 'Yakin mau keluar? Perubahan yang belum disimpan akan hilang.' : undefined} />
-            <Sparkles size={18} className="text-blue-700" />
-            <h1 className="font-bold text-slate-900">Upload Materi AI</h1>
+            <Sparkles size={18} className="text-blue-700 flex-shrink-0" />
+            <h1 className="font-bold text-slate-900 truncate">Upload Materi AI</h1>
           </div>
 
           <div className="p-4 max-w-2xl mx-auto space-y-5">
@@ -539,7 +541,7 @@ export default function UploadMateriPage() {
     return (
       <div className="flex min-h-screen bg-slate-50">
         <TeacherSidebar />
-        <main className="flex-1 sm:ml-60 flex items-center justify-center p-4">
+        <main className="flex-1 lg:ml-60 flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl shadow-xl p-10 max-w-sm w-full text-center">
             <div className="w-16 h-16 mx-auto mb-6 rounded-full border-4 border-blue-200 border-t-blue-700 animate-spin" aria-hidden="true" />
             <h2 className="text-lg font-bold text-slate-900 mb-2">AI Sedang Memproses</h2>
@@ -561,11 +563,12 @@ export default function UploadMateriPage() {
     <div className="flex min-h-screen bg-slate-50">
       <TeacherSidebar />
 
-      <main id="main-content" className="flex-1 sm:ml-60 pb-8">
+      <main id="main-content" className="flex-1 lg:ml-60 pb-8">
         <div className="sticky top-0 z-20 bg-white/90 backdrop-blur-sm border-b border-slate-100 px-4 py-3 flex items-center gap-2">
+          <TeacherMobileNav />
           <BackButton href="/teacher/materials" confirmMessage="Yakin mau keluar? Hasil AI yang belum disimpan akan hilang." />
-          <Check size={18} className="text-emerald-600" />
-          <h1 className="font-bold text-slate-900">Hasil Pemrosesan AI</h1>
+          <Check size={18} className="text-emerald-600 flex-shrink-0" />
+          <h1 className="font-bold text-slate-900 truncate">Hasil Pemrosesan AI</h1>
         </div>
 
         <div className="p-4 max-w-3xl mx-auto space-y-4">

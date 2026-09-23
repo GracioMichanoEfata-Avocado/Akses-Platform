@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import TeacherSidebar from '@/components/shared/TeacherSidebar';
+import TeacherMobileNav from '@/components/shared/TeacherMobileNav';
 import AccessibilityBar from '@/components/accessibility/AccessibilityBar';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -319,13 +320,16 @@ export default function TeacherMaterialsPage() {
   return (
     <div className="flex min-h-screen bg-slate-50">
       <TeacherSidebar />
-      <main className="flex-1 sm:ml-60 pb-4">
+      <main className="flex-1 lg:ml-60 pb-4">
         <div className="sticky top-0 z-20 bg-white/90 backdrop-blur-sm border-b border-slate-100 px-4 py-3 flex items-center justify-between">
-          <h1 className="font-bold text-slate-900 flex items-center gap-2">
-            <BackButton href="/teacher/dashboard" />
-            <BookOpen size={18} className="text-blue-700" />
-            Kelola Materi ({materials.length})
-          </h1>
+          <div className="flex items-center gap-2 min-w-0">
+            <TeacherMobileNav />
+            <h1 className="font-bold text-slate-900 flex items-center gap-2 min-w-0">
+              <BackButton href="/teacher/dashboard" />
+              <BookOpen size={18} className="text-blue-700 flex-shrink-0" />
+              <span className="truncate">Kelola Materi ({materials.length})</span>
+            </h1>
+          </div>
           <div className="relative">
             <button
               onClick={() => setShowAddMenu((v) => !v)}
@@ -367,7 +371,7 @@ export default function TeacherMaterialsPage() {
           </div>
         </div>
 
-        <div className="p-4 max-w-3xl mx-auto space-y-4">
+        <div className="p-4 max-w-3xl xl:max-w-6xl mx-auto space-y-4">
           <div className="relative">
             <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <input type="search" value={search} onChange={e => setSearch(e.target.value)}
@@ -404,7 +408,7 @@ export default function TeacherMaterialsPage() {
                     {subjek}
                     <span className="text-xs font-normal text-slate-400">({groupedBySubject[subjek].length})</span>
                   </h2>
-                  <div className="space-y-3">
+                  <div className="space-y-3 xl:space-y-0 xl:grid xl:grid-cols-2 xl:gap-3 xl:items-start">
                     {groupedBySubject[subjek].map(m => (
                 <Card key={m.id} className="border-0 shadow-sm overflow-hidden">
                   <CardContent className="p-4">
