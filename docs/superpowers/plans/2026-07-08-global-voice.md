@@ -632,15 +632,15 @@ git commit -m "feat: wire global voice - useAutoVoiceScan, data-voice-ignore, pi
 
 **Files:** (tidak ada perubahan kode; verifikasi perilaku)
 
-- [ ] **Step 1: Build produksi lolos**
+- [x] **Step 1: Build produksi lolos**
 
 Run: `npm run build`
-Expected: Build sukses tanpa error.
+Expected: Build sukses tanpa error. ✓ 27/27 halaman ter-generate, tanpa error.
 
-- [ ] **Step 2: Jalankan semua unit test**
+- [x] **Step 2: Jalankan semua unit test**
 
 Run: `npx vitest run`
-Expected: Semua PASS (`dom-scan`, `content-read`, `quiz-speech`, `keyword-match`).
+Expected: Semua PASS (`dom-scan`, `content-read`, `quiz-speech`, `keyword-match`). ✓ 4 file, 29 test PASS.
 
 - [ ] **Step 3: Uji manual mode tunanetra (dev server)**
 
