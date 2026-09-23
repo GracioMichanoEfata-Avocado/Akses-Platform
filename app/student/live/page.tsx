@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import { ArrowLeft, Radio, Clock, Users, FileText, Contrast, X } from 'lucide-react';
 import StudentSidebar from '@/components/shared/StudentSidebar';
 import StudentBottomNav from '@/components/shared/StudentBottomNav';
-import BackButton from '@/components/shared/BackButton';
 import { Card, CardContent } from '@/components/ui/card';
 import { createClient } from '@/lib/supabase/client';
 import {
@@ -279,14 +278,11 @@ export default function StudentLivePage() {
       <div className="flex min-h-screen">
         <StudentSidebar />
         <main id="main-content" className="flex-1 lg:ml-60 p-4 pb-20 lg:pb-4 max-w-2xl mx-auto w-full">
+          {/* Sengaja tanpa tombol back: navigasi di layar ini sudah dipegang
+              <StudentBottomNav /> di bawah lg dan sidebar di lg ke atas, sama
+              seperti halaman siswa lainnya. */}
           <div className="mb-6">
-            {/* Di bawah lg sidebar tersembunyi, jadi tanpa tombol ini layar
-                pilih sesi tidak punya jalan keluar sama sekali selain tombol
-                back browser. */}
-            <div className="flex items-center gap-2 mb-1">
-              <BackButton href="/student/dashboard" />
-              <h1 className="text-xl font-bold text-slate-900">Kelas Live</h1>
-            </div>
+            <h1 className="text-xl font-bold text-slate-900 mb-1">Kelas Live</h1>
             <p className="text-sm text-slate-500">Pilih sesi live yang ingin diikuti</p>
           </div>
 
