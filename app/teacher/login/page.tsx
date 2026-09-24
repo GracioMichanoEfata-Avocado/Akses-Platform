@@ -149,6 +149,22 @@ export default function TeacherLoginPage() {
                 'Masuk sebagai Pendamping'
               )}
             </button>
+
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-slate-100" />
+              </div>
+              <div className="relative flex justify-center text-xs text-slate-400 bg-white px-3">atau</div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => { setEmail('guru@akses.id'); setPassword('demo1234'); }}
+              className="w-full h-11 border-2 border-emerald-200 text-emerald-700 rounded-xl font-medium text-sm hover:bg-emerald-50 transition-colors"
+              aria-label="Isi form dengan akun demo"
+            >
+              Isi dengan Akun Demo
+            </button>
           </form>
         </div>
 
