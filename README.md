@@ -179,14 +179,17 @@ AKSES mengintegrasikan aksesibilitas langsung ke dalam lapisan aplikasi sehingga
 
 ### Backend & Database
 
-> Platform ini saat ini beroperasi sebagai **frontend-only prototype** dengan mock data JSON.
+> Seluruh data aplikasi disimpan di **Supabase** (PostgreSQL + Auth + RLS). Tidak ada lagi mock data JSON.
 
-| Data | Format | Lokasi |
-|------|--------|--------|
-| Data materi (10 materi) | JSON | `lib/mock-data/materials.json` |
-| Data siswa | JSON | `lib/mock-data/students.json` |
-| Data guru | JSON | `lib/mock-data/teachers.json` |
-| Data sesi | JSON | `lib/mock-data/sessions.json` |
+| Data | Tabel Supabase |
+|------|----------------|
+| Akun & peran | `profiles`, `student_profiles`, `accessibility_settings` |
+| Materi & kuis | `materials`, `material_steps`, `quizzes`, `quiz_questions` |
+| Progress & nilai siswa | `student_material_progress`, `quiz_attempts`, `remedial_attempts` |
+| Kelas live | `live_sessions`, `session_participants` |
+| Pendampingan & notifikasi | `tutor_requests`, `notifications` |
+
+Perubahan skema/policy didokumentasikan sebagai file SQL di `docs/sql/` untuk dijalankan di Supabase → SQL Editor.
 
 ### Development Tools
 
@@ -269,7 +272,6 @@ project_AKSES/
 │   │   ├── learn/
 │   │   │   ├── page.tsx          # Material catalog with search & filter
 │   │   │   ├── [id]/page.tsx     # Material player (TTS, accordion steps, quiz)
-│   │   │   └── ai-content/[id]/  # AI-generated content viewer
 │   │   ├── live/                 # Live class (transcript, Q&A)
 │   │   ├── quiz/[id]/            # Interactive quiz
 │   │   ├── profile/              # Profile & accessibility settings tabs
@@ -306,7 +308,6 @@ project_AKSES/
 │       └── dialog.tsx
 │
 ├── lib/
-│   ├── mock-data/                # Static JSON data
 │   │   ├── materials.json        # 10 learning materials
 │   │   ├── students.json         # Student profiles + progress
 │   │   ├── teachers.json         # Teacher profiles
@@ -388,7 +389,10 @@ Platform menyediakan akun demo yang dapat digunakan langsung tanpa registrasi:
 | Role | Email | Cara Masuk |
 |------|-------|------------|
 | Siswa | `alex@akses.id` | Klik tombol **"Masuk dengan Akun Demo"** di halaman login |
-| Guru | Login via `/teacher/login` | Gunakan data demo yang tersedia |
+| Guru | `guru@akses.id` | Klik tombol **"Isi dengan Akun Demo"** di halaman `/teacher/login` |
+| Siswa lain | `sari@`, `budi@`, `fitri@`, `agus@`, `maya@akses.id` | Isi manual, kata sandi `demo1234` (dibuat oleh `docs/sql/2026-09-24-seed-siswa-demo.sql`) |
+
+Semua akun demo memakai kata sandi `demo1234`.
 
 ### Alur Penggunaan Siswa
 

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import Link from 'next/link';
-import { Search, Clock, BookOpen, Sparkles, ChevronLeft } from 'lucide-react';
+import { Search, Clock, BookOpen, ChevronLeft } from 'lucide-react';
 import StudentBottomNav from '@/components/shared/StudentBottomNav';
 import StudentSidebar from '@/components/shared/StudentSidebar';
 import AccessibilityBar from '@/components/accessibility/AccessibilityBar';
@@ -25,13 +25,6 @@ interface Material {
   thumbnail_color: string;
   thumbnail_emoji: string;
   progress: number;
-}
-
-interface LibraryItem {
-  judul: string;
-  ringkasan: string;
-  poinUtama: string[];
-  savedAt: string;
 }
 
 function MaterialCardSkeleton() {
@@ -97,13 +90,9 @@ export default function LearnPage() {
   const [search, setSearch] = useState('');
   const [selectedSubject, setSelectedSubject] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [aiLibrary, setAiLibrary] = useState<LibraryItem[]>([]);
   const [materials, setMaterials] = useState<Material[]>([]);
 
   useEffect(() => {
-    const lib = JSON.parse(localStorage.getItem('akses-library') || '[]');
-    setAiLibrary(lib);
-
     const supabase = createClient();
 
     async function loadMaterials() {
@@ -246,38 +235,6 @@ export default function LearnPage() {
         </div>
 
         <div className="p-4 space-y-4 max-w-3xl xl:max-w-6xl mx-auto">
-          {/* Section: Dari Pendamping */}
-          {aiLibrary.length > 0 && (
-            <section aria-labelledby="ai-section-heading">
-              <div className="flex items-center gap-2 mb-3">
-                <h2 id="ai-section-heading" className="font-semibold text-slate-900 flex items-center gap-2">
-                  <Sparkles size={16} className="text-purple-600" />
-                  Dari Pendamping
-                </h2>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
-                {aiLibrary.map((item, idx) => (
-                  <Link key={idx} href={`/student/learn/ai-content/${idx}`}>
-                    <Card className="hover:shadow-md transition-all card-hover border-0 shadow-sm h-full">
-                      <CardContent className="p-4">
-                        <div className="flex items-start gap-3">
-                          <div className="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center flex-shrink-0">
-                            <Sparkles size={18} className="text-purple-600" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <Badge className="text-[10px] bg-purple-100 text-purple-700 mb-1">AI Generated</Badge>
-                            <p className="text-sm font-semibold text-slate-800 leading-tight line-clamp-2">{item.judul}</p>
-                            <p className="text-xs text-slate-400 mt-1 line-clamp-2">{item.ringkasan}</p>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </Link>
-                ))}
-              </div>
-            </section>
-          )}
-
           {/* Search */}
           <div className="relative">
             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" aria-hidden="true" />
